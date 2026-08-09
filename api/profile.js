@@ -20,11 +20,14 @@ export default async function handler(req, res) {
 
     if (req.method === 'PUT') {
       const payload = { ...req.body };
-      // Filter payload to core columns to prevent 400 SQL column missing errors
+
       const validColumns = [
         'full_name', 'title', 'bio', 'status_badge', 'location',
-        'available_for_work', 'accent_color', 'email', 'github_url',
-        'twitter_url', 'linkedin_url'
+        'available_for_work', 'accent_color', 'email',
+        'instagram_handle', 'logo_url',
+        'github_url', 'twitter_url', 'linkedin_url',
+        'typewriter_roles', 'now_focus', 'quick_facts',
+        'admin_passcode', 'headline', 'sound_enabled'
       ];
 
       const filteredPayload = {};
@@ -34,7 +37,11 @@ export default async function handler(req, res) {
         }
       }
 
-      const { data: existing } = await supabase.from('profile').select('id').limit(1).maybeSingle();
+      const { data: existing } = await supabase
+        .from('profile')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
 
       let result;
       if (existing) {
@@ -46,10 +53,10 @@ export default async function handler(req, res) {
           .single();
 
         if (error) {
-          console.warn('Profile DB update notice:', error.message);
-          result = { ...existing, ...payload };
+          console.warn('Profile update warning:', error.message);
+          result = { ...existing, ...filteredPayload };
         } else {
-          result = { ...data, ...payload };
+          result = data;
         }
       } else {
         const { data, error } = await supabase
@@ -59,9 +66,9 @@ export default async function handler(req, res) {
           .single();
 
         if (error) {
-          result = { ...payload };
+          result = { ...filteredPayload };
         } else {
-          result = { ...data, ...payload };
+          result = data;
         }
       }
       return res.status(200).json(result);
