@@ -12,8 +12,6 @@ import { ContactTerminal } from './components/ContactTerminal';
 import { AdminModal } from './components/AdminModal';
 import { Footer } from './components/Footer';
 import { Profile, Project, Thought, Skill, GuestbookEntry, ContactMessage } from './types';
-import { handleGoogleRedirect } from './lib/googleAuth';
-handleGoogleRedirect();
 
 export default function App() {
   const [profile, setProfile] = useState<Profile | null>(null);
