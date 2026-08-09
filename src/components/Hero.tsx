@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { Profile } from '../types';
-import { ArrowDown, Terminal, Zap, Globe, Sparkles } from 'lucide-react';
+import { ArrowDown, Terminal, Zap, Globe } from 'lucide-react';
 
 interface HeroProps {
   profile: Profile | null;
@@ -11,14 +11,18 @@ interface HeroProps {
 export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
   const { bgAccentClass, textAccentClass, glowAccentClass, playSound } = useTheme();
 
-  // Dynamic Typewriter Roles
-  const roles = [
+  // Dynamic Typewriter Roles from database or fallback
+  const defaultRoles = [
     'STUDENT & NIGHT CODER',
     'MAKER OF INTERNET THINGS',
     'CLEAN UI EXPERIMENTER',
     'PROBLEM SOLVER',
     'CURIOSITY DRIVEN BUILDER'
   ];
+
+  const roles = (profile?.typewriter_roles && profile.typewriter_roles.length > 0)
+    ? profile.typewriter_roles
+    : defaultRoles;
 
   const [roleIndex, setRoleIndex] = useState(0);
   const [displayText, setDisplayText] = useState('');
@@ -44,7 +48,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
     }, speed);
 
     return () => clearTimeout(timer);
-  }, [displayText, isDeleting, roleIndex]);
+  }, [displayText, isDeleting, roleIndex, roles]);
 
   const scrollToWork = () => {
     playSound('click');
@@ -75,14 +79,14 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
 
           <div className="font-mono text-xs text-zinc-400 flex items-center gap-3 border-l-2 border-zinc-800 pl-4">
             <Globe className="w-3.5 h-3.5" />
-            <span>MUTEEB.IN // PERSONAL WEBSITE</span>
+            <span>{profile?.location || 'MUTEEB.IN // PERSONAL WEBSITE'}</span>
           </div>
         </div>
 
         {/* Oversized Headline - Stark Typography */}
         <div className="space-y-2">
           <h2 className="font-mono text-sm sm:text-base font-extrabold text-zinc-400 tracking-widest uppercase">
-            // HEY, I'M BABA MUTEEB
+            // HEY, I'M {profile?.full_name || 'BABA MUTEEB'}
           </h2>
 
           <h1 className="text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-black text-white tracking-tighter uppercase leading-[0.9] font-sans">
@@ -106,10 +110,10 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
             // ABOUT ME
           </h3>
           <p className="text-zinc-200 text-base sm:text-lg font-medium leading-relaxed">
-            I make things for the internet because it feels like magic you can actually use.
+            {profile?.title || 'I make things for the internet because it feels like magic you can actually use.'}
           </p>
           <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-            On most days, you'll find me in a code editor — breaking something I made yesterday so I can make it a little better today. I'm not trying to be perfect. I just like that feeling when a problem finally makes sense.
+            {profile?.bio || `On most days, you'll find me in a code editor — breaking something I made yesterday so I can make it a little better today. I'm not trying to be perfect. I just like that feeling when a problem finally makes sense.`}
           </p>
           <p className="text-zinc-400 text-sm sm:text-base leading-relaxed italic">
             "I'm a student who codes at night, loves clean design, and genuinely believes the best ideas happen when you aren't trying to force them."
