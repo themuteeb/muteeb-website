@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
@@ -269,21 +269,13 @@ export default function App() {
       <ThemeProvider>
         <div className="bg-black text-white min-h-screen selection:bg-cyan-400 selection:text-black font-sans antialiased">
           <Navbar activeSection={activeSection} />
-
           <Hero profile={profile} onOpenContact={scrollToContact} />
-
           <ProjectsSection projects={projects} />
-
           <NowSection />
-
           <TechMatrix skills={skills} />
-
           <ThoughtsSection thoughts={thoughts} onLikeThought={handleLikeThought} />
-
           <GuestbookSection entries={guestbook} onAddEntry={handleAddGuestbook} />
-
           <ContactTerminal email={profile?.email} onSendMessage={handleSendMessage} />
-
           <Footer profile={profile} />
 
           {isAdminOpen && (
