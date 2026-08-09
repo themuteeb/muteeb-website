@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
@@ -20,11 +20,13 @@ export default function App() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
-  const [, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
+  // Modal state
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [activeSection] = useState('hero');
+  const [activeSection, setActiveSection] = useState('hero');
 
+  // SECRET DEDICATED URL ROUTE DETECTOR
   useEffect(() => {
     const checkSecretRoute = () => {
       const path = window.location.pathname.toLowerCase();
@@ -48,17 +50,21 @@ export default function App() {
     return () => window.removeEventListener('popstate', checkSecretRoute);
   }, []);
 
+  // HIDDEN KEYBOARD COMBINATION LISTENER
   useEffect(() => {
     let keyBuffer = '';
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore when user is actively typing inside an input or textarea
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
 
+      // Combination 1: Ctrl + Shift + A or Cmd + Shift + A or Alt + Shift + A
       if ((e.ctrlKey || e.metaKey || e.altKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault();
         setIsAdminOpen(prev => !prev);
         return;
       }
 
+      // Combination 2: Secret sequence typing "muteeb"
       keyBuffer += e.key.toLowerCase();
       if (keyBuffer.length > 20) keyBuffer = keyBuffer.slice(-20);
 
@@ -72,6 +78,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Fetch initial state from Supabase API endpoints
   const fetchAllData = async () => {
     try {
       setLoading(true);
@@ -119,6 +126,7 @@ export default function App() {
     fetchAllData();
   }, []);
 
+  // Handlers for dynamic actions
   const handleUpdateProfile = async (updates: Partial<Profile>) => {
     const res = await fetch('/api/profile', {
       method: 'PUT',
@@ -255,24 +263,48 @@ export default function App() {
     <AuthProvider>
       <ThemeProvider>
         <div className="bg-black text-white min-h-screen selection:bg-cyan-400 selection:text-black font-sans antialiased">
-          <Navbar activeSection={activeSection} />
+          {/* Top Sticky Header */}
+          <Navbar
+            activeSection={activeSection}
+          />
 
-          <Hero profile={profile} onOpenContact={scrollToContact} />
+          {/* Hero Section */}
+          <Hero
+            profile={profile}
+            onOpenContact={scrollToContact}
+          />
 
+          {/* Projects Section */}
           <ProjectsSection projects={projects} />
 
+          {/* What I'm Focused On Right Now & Quick Facts */}
           <NowSection />
 
+          {/* Things I Use / Tech Stack */}
           <TechMatrix skills={skills} />
 
-          <ThoughtsSection thoughts={thoughts} onLikeThought={handleLikeThought} />
+          {/* Writings & Micro-blog */}
+          <ThoughtsSection
+            thoughts={thoughts}
+            onLikeThought={handleLikeThought}
+          />
 
-          <GuestbookSection entries={guestbook} onAddEntry={handleAddGuestbook} />
+          {/* Interactive Visitor Guestbook */}
+          <GuestbookSection
+            entries={guestbook}
+            onAddEntry={handleAddGuestbook}
+          />
 
-          <ContactTerminal email={profile?.email} onSendMessage={handleSendMessage} />
+          {/* Contact Terminal */}
+          <ContactTerminal
+            email={profile?.email}
+            onSendMessage={handleSendMessage}
+          />
 
+          {/* Footer Signature */}
           <Footer profile={profile} />
 
+          {/* Admin Control CMS Modal */}
           {isAdminOpen && (
             <AdminModal
               profile={profile}
