@@ -1,51 +1,59 @@
 import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { BookOpen, Code, Compass, Lightbulb, Coffee, Music, Languages, Moon } from 'lucide-react';
+import { Profile } from '../types';
+import { BookOpen, Code, Compass, Lightbulb, Coffee, Music, Languages, Moon, Sparkles, Star, Zap, Heart } from 'lucide-react';
 
-export const NowSection: React.FC = () => {
-  const { bgAccentClass, textAccentClass, borderAccentClass } = useTheme();
+interface NowSectionProps {
+  profile: Profile | null;
+}
 
-  const nowFocus = [
-    {
-      title: 'LEARNING',
-      icon: BookOpen,
-      desc: 'Getting deep into the tricky parts of JavaScript — promises, closures, and how the async engine actually works under the hood.'
-    },
-    {
-      title: 'BUILDING',
-      icon: Code,
-      desc: 'Small digital tools that fix highly specific annoyances I have. Nobody asked for them, but they\'re fun to create.'
-    },
-    {
-      title: 'READING',
-      icon: Compass,
-      desc: 'Mostly technical documentation and web design blogs. MDN has essentially become my evening reading.'
-    },
-    {
-      title: 'THINKING',
-      icon: Lightbulb,
-      desc: 'About why certain websites feel instantly comfortable to use, and how to strip unnecessary weight off the web.'
-    }
+const nowIconMap: Record<string, React.ElementType> = {
+  'LEARNING': BookOpen,
+  'BUILDING': Code,
+  'READING': Compass,
+  'THINKING': Lightbulb,
+  'WORKING': Zap,
+  'EXPLORING': Compass,
+  'CREATING': Sparkles,
+};
+
+const factIconList = [Coffee, Music, Languages, Moon, Sparkles, Star, Zap, Heart];
+
+export const NowSection: React.FC<NowSectionProps> = ({ profile }) => {
+  const { textAccentClass, borderAccentClass } = useTheme();
+
+  const defaultNowFocus = [
+    { title: 'LEARNING', desc: 'Getting deep into the tricky parts of JavaScript — promises, closures, and how the async engine actually works under the hood.' },
+    { title: 'BUILDING', desc: "Small digital tools that fix highly specific annoyances I have. Nobody asked for them, but they're fun to create." },
+    { title: 'READING', desc: 'Mostly technical documentation and web design blogs. MDN has essentially become my evening reading.' },
+    { title: 'THINKING', desc: 'About why certain websites feel instantly comfortable to use, and how to strip unnecessary weight off the web.' }
   ];
 
-  const quickFacts = [
-    {
-      icon: Coffee,
-      text: 'I run on tea, not coffee'
-    },
-    {
-      icon: Music,
-      text: "Can't write code in silence"
-    },
-    {
-      icon: Languages,
-      text: 'Know 4 languages, master of none'
-    },
-    {
-      icon: Moon,
-      text: 'Midnight is my most productive hour'
-    }
+  const defaultQuickFacts = [
+    'I run on tea, not coffee',
+    "Can't write code in silence",
+    'Know 4 languages, master of none',
+    'Midnight is my most productive hour'
   ];
+
+  const nowFocusData = (profile?.now_focus && profile.now_focus.length > 0)
+    ? profile.now_focus
+    : defaultNowFocus;
+
+  const quickFactsData = (profile?.quick_facts && profile.quick_facts.length > 0)
+    ? profile.quick_facts
+    : defaultQuickFacts;
+
+  const nowFocus = nowFocusData.map((item, idx) => ({
+    title: item.title,
+    icon: nowIconMap[item.title.toUpperCase()] || [BookOpen, Code, Compass, Lightbulb][idx % 4],
+    desc: item.desc,
+  }));
+
+  const quickFacts = quickFactsData.map((text, idx) => ({
+    icon: factIconList[idx % factIconList.length],
+    text,
+  }));
 
   return (
     <section id="now" className="py-24 bg-black border-b-2 border-zinc-800">
