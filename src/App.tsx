@@ -278,7 +278,7 @@ export default function App() {
           <ProjectsSection projects={projects} />
 
           {/* What I'm Focused On Right Now & Quick Facts */}
-          <NowSection />
+          <NowSection profile={profile} />
 
           {/* Things I Use / Tech Stack */}
           <TechMatrix skills={skills} />
