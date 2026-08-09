@@ -13,7 +13,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
 
   const [name, setName] = useState('');
   const [senderEmail, setSenderEmail] = useState('');
-  const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'rate_limited' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
@@ -23,7 +22,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
     e.preventDefault();
     if (!name.trim() || !senderEmail.trim() || !body.trim()) return;
 
-    // Rate Limit Check: 60s cooldown
     const now = Date.now();
     if (now - lastSentTime < 60000) {
       setStatus('rate_limited');
@@ -36,10 +34,9 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
 
       const cleanName = sanitizeInput(name, 60);
       const cleanEmail = sanitizeInput(senderEmail, 80);
-      const cleanSubject = sanitizeInput(subject || 'Personal Website Inquiry', 100);
       const cleanBody = sanitizeInput(body, 1000);
+      const autoSubject = 'Personal Website Inquiry';
 
-      // Send to Web3Forms (email delivery)
       const web3Response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
@@ -50,19 +47,18 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
           access_key: '0d6b4930-6eab-4420-9e71-5c5523836175',
           name: cleanName,
           email: cleanEmail,
-          subject: cleanSubject,
+          subject: autoSubject,
           message: cleanBody,
         }),
       });
 
       if (!web3Response.ok) throw new Error('Web3Forms failed');
 
-      // Also save to database (for admin inbox)
       try {
         await onSendMessage({
           sender_name: cleanName,
           sender_email: cleanEmail,
-          subject: cleanSubject,
+          subject: autoSubject,
           body: cleanBody,
         });
       } catch (dbErr) {
@@ -73,7 +69,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
       setStatus('success');
       setName('');
       setSenderEmail('');
-      setSubject('');
       setBody('');
     } catch (err) {
       console.error('Contact submit error:', err);
@@ -138,7 +133,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
           {/* Form Column - Neo-Brutalist Terminal */}
           <div className="lg:col-span-7">
             <div className="bg-black border-2 border-white p-6 sm:p-8 font-mono shadow-2xl relative">
-              {/* Terminal Title Bar */}
               <div className="flex items-center justify-between border-b-2 border-zinc-800 pb-4 mb-6">
                 <div className="flex items-center gap-2">
                   <Terminal className={`w-4 h-4 ${textAccentClass}`} />
@@ -197,20 +191,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                         className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-white"
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
-                      SUBJECT
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={100}
-                      placeholder="e.g. Greeting or Collaboration idea"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-white"
-                    />
                   </div>
 
                   <div>
