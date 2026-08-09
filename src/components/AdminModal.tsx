@@ -152,7 +152,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const [messageSearch, setMessageSearch] = useState('');
 
-  const handleAdminLogin = async (e: React.FormEvent) => {
+const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLockedOut) {
       alert(`SECURITY LOCKOUT ENFORCED: 5 FAILED ATTEMPTS. ACCESS BLOCKED FOR ${timeRemainingText}`);
@@ -161,15 +161,22 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
     const entered = password.trim();
     const activePass = getStoredPasscode();
+    const dbPass = profile?.admin_passcode || '';
 
+    // Hash the entered password for comparison
     const enteredHash = await hashPasscode(entered);
     const activeHash = activePass ? await hashPasscode(activePass) : '';
+    const dbHash = dbPass ? await hashPasscode(dbPass) : '';
 
-    if (
+    // Support both plain text and hashed comparison for full special character support
+    const isValid = (
       (activePass && entered === activePass) ||
-      (profile?.admin_passcode && entered === profile.admin_passcode) ||
-      (activeHash && enteredHash === activeHash)
-    ) {
+      (dbPass && entered === dbPass) ||
+      (activeHash && enteredHash === activeHash) ||
+      (dbHash && enteredHash === dbHash)
+    );
+
+    if (isValid) {
       setIsAdmin(true);
       setAuthError(false);
       setFailedAttempts(0);
