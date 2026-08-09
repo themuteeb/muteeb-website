@@ -35,7 +35,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
       const cleanName = sanitizeInput(name, 60);
       const cleanEmail = sanitizeInput(senderEmail, 80);
       const cleanBody = sanitizeInput(body, 1000);
-const autoSubject = 'New message from muteeb.in';
+      const autoSubject = 'New message from muteeb.in';
 
       const web3Response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
