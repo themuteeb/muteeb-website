@@ -9,7 +9,7 @@ interface ContactTerminalProps {
 }
 
 export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendMessage }) => {
-  const { bgAccentClass, borderAccentClass, textAccentClass, playSound } = useTheme();
+  const { bgAccentClass, textAccentClass, playSound } = useTheme();
 
   const [name, setName] = useState('');
   const [senderEmail, setSenderEmail] = useState('');
@@ -33,12 +33,41 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
     try {
       setStatus('sending');
       playSound('submit');
-      await onSendMessage({
-        sender_name: sanitizeInput(name, 60),
-        sender_email: sanitizeInput(senderEmail, 80),
-        subject: sanitizeInput(subject || 'Personal Website Inquiry', 100),
-        body: sanitizeInput(body, 1000),
+
+      const cleanName = sanitizeInput(name, 60);
+      const cleanEmail = sanitizeInput(senderEmail, 80);
+      const cleanSubject = sanitizeInput(subject || 'Personal Website Inquiry', 100);
+      const cleanBody = sanitizeInput(body, 1000);
+
+      // Send to Web3Forms (email delivery)
+      const web3Response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          access_key: '0d6b4930-6eab-4420-9e71-5c5523836175',
+          name: cleanName,
+          email: cleanEmail,
+          subject: cleanSubject,
+          message: cleanBody,
+        }),
       });
+
+      if (!web3Response.ok) throw new Error('Web3Forms failed');
+
+      // Also save to database (for admin inbox)
+      try {
+        await onSendMessage({
+          sender_name: cleanName,
+          sender_email: cleanEmail,
+          subject: cleanSubject,
+          body: cleanBody,
+        });
+      } catch (dbErr) {
+        console.warn('DB save failed but email sent:', dbErr);
+      }
 
       setLastSentTime(Date.now());
       setStatus('success');
