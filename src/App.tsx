@@ -100,7 +100,7 @@ export default function App() {
         fetch('/api/projects'),
         fetch('/api/thoughts'),
         fetch('/api/skills'),
-        fetch('/api/guestbook'),
+        fetch('/api/guestbook', { headers: adminPass ? { 'X-Admin-Auth': adminPass } : {} }),
         fetch('/api/messages'),
       ]);
 
@@ -257,10 +257,11 @@ export default function App() {
     }
   };
 
-  const handleDeleteGuestbook = async (id: number) => {
+    const handleDeleteGuestbook = async (id: number) => {
+    const adminPass = localStorage.getItem('__admin_custom_passcode') || '';
     const res = await fetch('/api/guestbook', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Auth': adminPass },
       body: JSON.stringify({ id }),
     });
     if (res.ok) setGuestbook(prev => prev.filter(g => g.id !== id));
