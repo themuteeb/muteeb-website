@@ -5,10 +5,11 @@ import { sanitizeInput } from '../lib/crypto';
 
 interface ContactTerminalProps {
   email?: string;
+  instagramHandle?: string;
   onSendMessage: (msg: { sender_name: string; sender_email: string; subject: string; body: string }) => Promise<void>;
 }
 
-export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendMessage }) => {
+export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, instagramHandle, onSendMessage }) => {
   const { bgAccentClass, textAccentClass, playSound } = useTheme();
 
   const [name, setName] = useState('');
@@ -77,17 +78,19 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
   };
 
   const handleCopyEmail = () => {
+    if (!email) return;
     playSound('click');
-    navigator.clipboard.writeText(email || 'hello@muteeb.in');
+    navigator.clipboard.writeText(email);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const cleanIgHandle = instagramHandle ? instagramHandle.replace('@', '') : '';
 
   return (
     <section id="contact" className="py-24 bg-zinc-950 border-b-2 border-zinc-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Info Column */}
           <div className="lg:col-span-5 space-y-6">
             <div>
               <div className={`font-mono text-xs font-bold tracking-widest ${textAccentClass} uppercase mb-2`}>
@@ -103,34 +106,39 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
               Always happy to connect, collaborate on creative ideas, or chat about software architecture and design systems. Drop a direct note or copy my email address.
             </p>
 
-            <div className="p-6 bg-black border-2 border-zinc-800 space-y-4 font-mono text-xs">
-              <div className="text-zinc-400 font-bold uppercase">// DIRECT CONTACT ADDRESS</div>
-              <div className="flex items-center justify-between gap-2 p-3 bg-zinc-900 border border-zinc-800">
-                <span className="font-bold text-white tracking-wider">{email || 'hello@muteeb.in'}</span>
-                <button
-                  onClick={handleCopyEmail}
-                  className={`px-3 py-1.5 ${bgAccentClass} font-black text-[10px] uppercase flex items-center gap-1`}
-                >
-                  <Copy className="w-3 h-3" />
-                  {copied ? 'COPIED!' : 'COPY'}
-                </button>
-              </div>
+            {(email || instagramHandle) && (
+              <div className="p-6 bg-black border-2 border-zinc-800 space-y-4 font-mono text-xs">
+                <div className="text-zinc-400 font-bold uppercase">// DIRECT CONTACT ADDRESS</div>
+                {email && (
+                  <div className="flex items-center justify-between gap-2 p-3 bg-zinc-900 border border-zinc-800">
+                    <span className="font-bold text-white tracking-wider">{email}</span>
+                    <button
+                      onClick={handleCopyEmail}
+                      className={`px-3 py-1.5 ${bgAccentClass} font-black text-[10px] uppercase flex items-center gap-1`}
+                    >
+                      <Copy className="w-3 h-3" />
+                      {copied ? 'COPIED!' : 'COPY'}
+                    </button>
+                  </div>
+                )}
 
-              <div className="pt-2 border-t border-zinc-800 flex items-center justify-between">
-                <span className="text-zinc-400 font-bold uppercase">INSTAGRAM:</span>
-                <a
-                  href="https://instagram.com/mr_muteeb_"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`font-bold uppercase ${textAccentClass} hover:underline flex items-center gap-1`}
-                >
-                  <Instagram className="w-3.5 h-3.5" /> @mr_muteeb_
-                </a>
+                {instagramHandle && (
+                  <div className="pt-2 border-t border-zinc-800 flex items-center justify-between">
+                    <span className="text-zinc-400 font-bold uppercase">INSTAGRAM:</span>
+                    <a
+                      href={`https://instagram.com/${cleanIgHandle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`font-bold uppercase ${textAccentClass} hover:underline flex items-center gap-1`}
+                    >
+                      <Instagram className="w-3.5 h-3.5" /> {instagramHandle}
+                    </a>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Form Column - Neo-Brutalist Terminal */}
           <div className="lg:col-span-7">
             <div className="bg-black border-2 border-white p-6 sm:p-8 font-mono shadow-2xl relative">
               <div className="flex items-center justify-between border-b-2 border-zinc-800 pb-4 mb-6">
