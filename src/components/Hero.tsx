@@ -11,14 +11,23 @@ interface HeroProps {
 export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
   const { bgAccentClass, textAccentClass, glowAccentClass, playSound } = useTheme();
 
-  const roles = profile?.typewriter_roles || [];
+  const defaultRoles = [
+    'STUDENT & NIGHT CODER',
+    'MAKER OF INTERNET THINGS',
+    'CLEAN UI EXPERIMENTER',
+    'PROBLEM SOLVER',
+    'CURIOSITY DRIVEN BUILDER'
+  ];
+
+  const roles = (profile?.typewriter_roles && profile.typewriter_roles.length > 0)
+    ? profile.typewriter_roles
+    : defaultRoles;
 
   const [roleIndex, setRoleIndex] = useState(0);
   const [displayText, setDisplayText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    if (roles.length === 0) return;
     const currentFull = roles[roleIndex];
     const speed = isDeleting ? 40 : 80;
 
@@ -52,21 +61,17 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
       <div className="absolute top-1/4 -right-12 w-96 h-96 bg-zinc-900 border border-zinc-800 rounded-full blur-3xl opacity-30 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
-        {profile?.location && (
-          <div className="flex flex-wrap items-center justify-end gap-4 mb-8">
-            <div className="font-mono text-xs text-zinc-400 flex items-center gap-3 border-l-2 border-zinc-800 pl-4">
-              <Globe className="w-3.5 h-3.5" />
-              <span>{profile.location}</span>
-            </div>
+        <div className="flex flex-wrap items-center justify-end gap-4 mb-8">
+          <div className="font-mono text-xs text-zinc-400 flex items-center gap-3 border-l-2 border-zinc-800 pl-4">
+            <Globe className="w-3.5 h-3.5" />
+            <span>{profile?.location || 'MUTEEB.IN // PERSONAL WEBSITE'}</span>
           </div>
-        )}
+        </div>
 
         <div className="space-y-2">
-          {profile?.full_name && (
-            <h2 className="font-mono text-sm sm:text-base font-extrabold text-zinc-400 tracking-widest uppercase">
-              // HEY, I'M {profile.full_name}
-            </h2>
-          )}
+          <h2 className="font-mono text-sm sm:text-base font-extrabold text-zinc-400 tracking-widest uppercase">
+            // HEY, I'M {profile?.full_name || 'BABA MUTEEB'}
+          </h2>
 
           <h1 className="text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-black text-white tracking-tighter uppercase leading-[0.9] font-sans">
             A CURIOUS MIND <br />
@@ -76,36 +81,26 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
           </h1>
         </div>
 
-        {roles.length > 0 && (
-          <div className="mt-6 mb-8 flex items-center gap-2 font-mono text-lg sm:text-2xl font-black text-zinc-200 uppercase bg-zinc-950/80 border-l-4 border-white p-4 max-w-3xl">
-            <Terminal className={`w-5 h-5 shrink-0 ${textAccentClass}`} />
-            <span>{displayText}</span>
-            <span className={`inline-block w-3 h-6 ${bgAccentClass} animate-pulse`} />
-          </div>
-        )}
+        <div className="mt-6 mb-8 flex items-center gap-2 font-mono text-lg sm:text-2xl font-black text-zinc-200 uppercase bg-zinc-950/80 border-l-4 border-white p-4 max-w-3xl">
+          <Terminal className={`w-5 h-5 shrink-0 ${textAccentClass}`} />
+          <span>{displayText}</span>
+          <span className={`inline-block w-3 h-6 ${bgAccentClass} animate-pulse`} />
+        </div>
 
-        {(profile?.title || profile?.bio || profile?.headline) && (
-          <div className="p-6 bg-zinc-950 border-2 border-zinc-800 max-w-3xl mb-10 space-y-3 font-sans">
-            <h3 className={`font-mono text-xs font-extrabold tracking-wider uppercase ${textAccentClass}`}>
-              // ABOUT ME
-            </h3>
-            {profile?.title && (
-              <p className="text-zinc-200 text-base sm:text-lg font-medium leading-relaxed">
-                {profile.title}
-              </p>
-            )}
-            {profile?.bio && (
-              <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-                {profile.bio}
-              </p>
-            )}
-            {profile?.headline && (
-              <p className="text-zinc-400 text-sm sm:text-base leading-relaxed italic">
-                {profile.headline}
-              </p>
-            )}
-          </div>
-        )}
+        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 max-w-3xl mb-10 space-y-3 font-sans">
+          <h3 className={`font-mono text-xs font-extrabold tracking-wider uppercase ${textAccentClass}`}>
+            // ABOUT ME
+          </h3>
+          <p className="text-zinc-200 text-base sm:text-lg font-medium leading-relaxed">
+            {profile?.title || 'I make things for the internet because it feels like magic you can actually use.'}
+          </p>
+          <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
+            {profile?.bio || `On most days, you'll find me in a code editor — breaking something I made yesterday so I can make it a little better today. I'm not trying to be perfect. I just like that feeling when a problem finally makes sense.`}
+          </p>
+          <p className="text-zinc-400 text-sm sm:text-base leading-relaxed italic">
+            {profile?.headline || `"I'm a student who codes at night, loves clean design, and genuinely believes the best ideas happen when you aren't trying to force them."`}
+          </p>
+        </div>
 
         <div className="flex flex-wrap items-center gap-4">
           <button
