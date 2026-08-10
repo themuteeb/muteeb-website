@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { GuestbookEntry } from '../types';
-import { Send, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Send, ShieldAlert } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
+import { Toaster, ToasterType } from './Toaster';
 
 interface GuestbookProps {
   entries: GuestbookEntry[];
@@ -18,13 +19,25 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
   const [selectedBadge, setSelectedBadge] = useState('VISITOR');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rateLimited, setRateLimited] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [lastPostTime, setLastPostTime] = useState(0);
+
+  const [toaster, setToaster] = useState<{
+    show: boolean;
+    type: ToasterType;
+    title: string;
+    message: string;
+  }>({ show: false, type: 'success', title: '', message: '' });
 
   const badges = ['VISITOR', 'DEVELOPER', 'DESIGNER', 'FRIEND'];
   const colors = ['cyan', 'lime', 'rose', 'purple', 'amber'];
 
   const publicEntries = entries.filter(e => e.approved === true);
+
+  const showToaster = (type: ToasterType, title: string, message: string) => {
+    setToaster({ show: true, type, title, message });
+  };
+
+  const closeToaster = () => setToaster(prev => ({ ...prev, show: false }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +46,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
     const now = Date.now();
     if (now - lastPostTime < 60000) {
       setRateLimited(true);
+      showToaster('warning', 'RATE LIMITED', 'Please wait 60 seconds between posts.');
       return;
     }
 
@@ -50,47 +64,41 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
       });
 
       setLastPostTime(Date.now());
-      setSubmitted(true);
       setName('');
       setHandle('');
       setMessage('');
 
-      setTimeout(() => setSubmitted(false), 6000);
+      showToaster('success', 'MESSAGE SUBMITTED', 'Your message is awaiting admin approval.');
     } catch (err) {
       console.error('Error posting guestbook entry:', err);
+      showToaster('error', 'SUBMISSION FAILED', 'Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <section id="guestbook" className="py-24 bg-black border-b-2 border-zinc-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Guestbook Form Column */}
-          <div className="lg:col-span-5">
-            <div className={`font-mono text-xs font-bold tracking-widest ${textAccentClass} uppercase mb-2`}>
-              // PUBLIC FEEDBACK TERMINAL
-            </div>
-            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter uppercase font-sans mb-6">
-              SIGN THE <span className={`underline decoration-4 ${textAccentClass}`}>GUESTBOOK</span>
-            </h2>
+    <>
+      <Toaster
+        show={toaster.show}
+        type={toaster.type}
+        title={toaster.title}
+        message={toaster.message}
+        onClose={closeToaster}
+      />
 
-            {submitted ? (
-              <div className="p-6 bg-emerald-950 border-2 border-emerald-500 space-y-3">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                <h3 className="text-sm font-black text-white uppercase">MESSAGE SUBMITTED SUCCESSFULLY!</h3>
-                <p className="text-xs text-emerald-200 font-mono leading-relaxed">
-                  YOUR MESSAGE HAS BEEN SENT FOR REVIEW. IT WILL APPEAR PUBLICLY ONCE APPROVED BY THE ADMIN. THANK YOU FOR YOUR PATIENCE!
-                </p>
-                <button
-                  onClick={() => setSubmitted(false)}
-                  className="text-[10px] font-bold text-emerald-300 hover:text-white underline uppercase"
-                >
-                  POST ANOTHER MESSAGE
-                </button>
+      <section id="guestbook" className="py-24 bg-black border-b-2 border-zinc-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* Guestbook Form Column */}
+            <div className="lg:col-span-5">
+              <div className={`font-mono text-xs font-bold tracking-widest ${textAccentClass} uppercase mb-2`}>
+                // PUBLIC FEEDBACK TERMINAL
               </div>
-            ) : (
+              <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter uppercase font-sans mb-6">
+                SIGN THE <span className={`underline decoration-4 ${textAccentClass}`}>GUESTBOOK</span>
+              </h2>
+
               <form onSubmit={handleSubmit} className="p-6 bg-zinc-950 border-2 border-zinc-800 space-y-4 font-mono">
                 <div>
                   <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
@@ -174,55 +182,55 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                   {isSubmitting ? 'TRANSMITTING...' : 'POST MESSAGE TO FEED'}
                 </button>
               </form>
-            )}
-          </div>
-
-          {/* Entries Feed Column */}
-          <div className="lg:col-span-7 space-y-4 max-h-[600px] overflow-y-auto pr-2">
-            <div className="font-mono text-xs text-zinc-400 font-bold uppercase mb-2 flex items-center justify-between">
-              <span>LIVE VISITOR FEED ({publicEntries.length})</span>
-              <span className="text-[10px] text-zinc-400">APPROVED POSTS</span>
             </div>
 
-            {publicEntries.length === 0 ? (
-              <div className="p-8 text-center border-2 border-dashed border-zinc-800 bg-zinc-950 font-mono text-zinc-400">
-                BE THE FIRST TO SIGN THE GUESTBOOK.
+            {/* Entries Feed Column */}
+            <div className="lg:col-span-7 space-y-4 max-h-[600px] overflow-y-auto pr-2">
+              <div className="font-mono text-xs text-zinc-400 font-bold uppercase mb-2 flex items-center justify-between">
+                <span>LIVE VISITOR FEED ({publicEntries.length})</span>
+                <span className="text-[10px] text-zinc-400">APPROVED POSTS</span>
               </div>
-            ) : (
-              publicEntries.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="p-5 bg-zinc-950 border-2 border-zinc-800 hover:border-zinc-600 transition-all font-mono"
-                >
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-7 h-7 flex items-center justify-center font-black text-black text-xs ${bgAccentClass}`}>
-                        {entry.name.charAt(0).toUpperCase()}
+
+              {publicEntries.length === 0 ? (
+                <div className="p-8 text-center border-2 border-dashed border-zinc-800 bg-zinc-950 font-mono text-zinc-400">
+                  BE THE FIRST TO SIGN THE GUESTBOOK.
+                </div>
+              ) : (
+                publicEntries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="p-5 bg-zinc-950 border-2 border-zinc-800 hover:border-zinc-600 transition-all font-mono"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-7 h-7 flex items-center justify-center font-black text-black text-xs ${bgAccentClass}`}>
+                          {entry.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <span className="font-bold text-white text-sm uppercase block leading-tight">{entry.name}</span>
+                          <span className="text-[10px] text-zinc-400">{entry.handle}</span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-bold text-white text-sm uppercase block leading-tight">{entry.name}</span>
-                        <span className="text-[10px] text-zinc-400">{entry.handle}</span>
-                      </div>
+
+                      <span className="px-2 py-0.5 bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-300 uppercase">
+                        {entry.badge}
+                      </span>
                     </div>
 
-                    <span className="px-2 py-0.5 bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-300 uppercase">
-                      {entry.badge}
-                    </span>
-                  </div>
+                    <p className="text-sm font-sans text-zinc-300 leading-normal pl-9">
+                      {entry.message}
+                    </p>
 
-                  <p className="text-sm font-sans text-zinc-300 leading-normal pl-9">
-                    {entry.message}
-                  </p>
-
-                  <div className="mt-3 pt-2 border-t border-zinc-900 text-[10px] text-zinc-400 text-right">
-                    {new Date(entry.created_at || Date.now()).toLocaleDateString()}
+                    <div className="mt-3 pt-2 border-t border-zinc-900 text-[10px] text-zinc-400 text-right">
+                      {new Date(entry.created_at || Date.now()).toLocaleDateString()}
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 };
