@@ -58,6 +58,7 @@ export interface GuestbookEntry {
   message: string;
   avatar_color: string;
   badge: string;
+  approved: boolean;
   created_at: string;
 }
 
