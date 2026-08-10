@@ -13,13 +13,35 @@ import { AdminModal } from './components/AdminModal';
 import { Footer } from './components/Footer';
 import { Profile, Project, Thought, Skill, GuestbookEntry, ContactMessage } from './types';
 
+const CACHE_KEY = '__muteeb_cache';
+
+const loadCache = () => {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const saveCache = (data: any) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  } catch {
+    /* ignore quota errors */
+  }
+};
+
 export default function App() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [thoughts, setThoughts] = useState<Thought[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
-  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const cached = loadCache();
+
+  const [profile, setProfile] = useState<Profile | null>(cached?.profile || null);
+  const [projects, setProjects] = useState<Project[]>(cached?.projects || []);
+  const [thoughts, setThoughts] = useState<Thought[]>(cached?.thoughts || []);
+  const [skills, setSkills] = useState<Skill[]>(cached?.skills || []);
+  const [guestbook, setGuestbook] = useState<GuestbookEntry[]>(cached?.guestbook || []);
+  const [messages, setMessages] = useState<ContactMessage[]>(cached?.messages || []);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [activeSection] = useState('hero');
 
@@ -82,30 +104,52 @@ export default function App() {
         fetch('/api/messages'),
       ]);
 
+      const freshData: any = {};
+
       if (pRes.ok) {
         const pData = await pRes.json();
-        if (pData) setProfile(pData);
+        if (pData) {
+          setProfile(pData);
+          freshData.profile = pData;
+        }
       }
       if (projRes.ok) {
         const projData = await projRes.json();
-        if (Array.isArray(projData)) setProjects(projData);
+        if (Array.isArray(projData)) {
+          setProjects(projData);
+          freshData.projects = projData;
+        }
       }
       if (tRes.ok) {
         const tData = await tRes.json();
-        if (Array.isArray(tData)) setThoughts(tData);
+        if (Array.isArray(tData)) {
+          setThoughts(tData);
+          freshData.thoughts = tData;
+        }
       }
       if (sRes.ok) {
         const sData = await sRes.json();
-        if (Array.isArray(sData)) setSkills(sData);
+        if (Array.isArray(sData)) {
+          setSkills(sData);
+          freshData.skills = sData;
+        }
       }
       if (gRes.ok) {
         const gData = await gRes.json();
-        if (Array.isArray(gData)) setGuestbook(gData);
+        if (Array.isArray(gData)) {
+          setGuestbook(gData);
+          freshData.guestbook = gData;
+        }
       }
       if (mRes.ok) {
         const mData = await mRes.json();
-        if (Array.isArray(mData)) setMessages(mData);
+        if (Array.isArray(mData)) {
+          setMessages(mData);
+          freshData.messages = mData;
+        }
       }
+
+      saveCache(freshData);
     } catch (err) {
       console.error('Error fetching data from API:', err);
     }
@@ -128,6 +172,7 @@ export default function App() {
     if (res.ok) {
       const data = await res.json();
       setProfile(data);
+      fetchAllData();
     }
   };
 
@@ -254,6 +299,7 @@ export default function App() {
       <ThemeProvider>
         <div className="bg-black text-white min-h-screen selection:bg-cyan-400 selection:text-black font-sans antialiased">
           <Navbar activeSection={activeSection} />
+
           <Hero profile={profile} onOpenContact={scrollToContact} />
 
           <ProjectsSection projects={projects} />
@@ -266,11 +312,7 @@ export default function App() {
 
           <GuestbookSection entries={guestbook} onAddEntry={handleAddGuestbook} />
 
-          <ContactTerminal
-            email={profile?.email}
-            instagramHandle={profile?.instagram_handle}
-            onSendMessage={handleSendMessage}
-          />
+          <ContactTerminal email={profile?.email} onSendMessage={handleSendMessage} />
 
           <Footer profile={profile} />
 
