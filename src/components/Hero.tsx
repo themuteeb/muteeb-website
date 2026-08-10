@@ -61,17 +61,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
       <div className="absolute top-1/4 -right-12 w-96 h-96 bg-zinc-900 border border-zinc-800 rounded-full blur-3xl opacity-30 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div className="inline-flex items-center gap-2.5 px-3 py-1.5 bg-zinc-950 border border-zinc-800 font-mono text-xs">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-emerald-400" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-            </span>
-            <span className="text-zinc-200 font-bold uppercase tracking-wider">
-              {profile?.status_badge || 'A CURIOUS MIND WITH RESTLESS HANDS'}
-            </span>
-          </div>
-
+        <div className="flex flex-wrap items-center justify-end gap-4 mb-8">
           <div className="font-mono text-xs text-zinc-400 flex items-center gap-3 border-l-2 border-zinc-800 pl-4">
             <Globe className="w-3.5 h-3.5" />
             <span>{profile?.location || 'MUTEEB.IN // PERSONAL WEBSITE'}</span>
