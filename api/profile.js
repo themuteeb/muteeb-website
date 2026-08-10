@@ -46,6 +46,13 @@ export default async function handler(req, res) {
       const filteredPayload = {};
       for (const key of validColumns) {
         if (payload[key] !== undefined) {
+          // CRITICAL: Never overwrite admin_passcode with empty/null value
+          if (key === 'admin_passcode') {
+            if (payload[key] && String(payload[key]).trim().length > 0) {
+              filteredPayload[key] = String(payload[key]).trim();
+            }
+            continue;
+          }
           filteredPayload[key] = payload[key];
         }
       }
