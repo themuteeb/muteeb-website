@@ -56,17 +56,17 @@ export const Toaster: React.FC<ToasterProps> = ({
   const Icon = c.icon;
 
   return (
-    <div className="fixed top-24 right-4 sm:right-6 z-[100] animate-slideInRight pointer-events-auto max-w-sm w-full sm:w-96">
+    <div className="fixed top-20 sm:top-24 right-3 sm:right-6 z-[100] animate-slideInRight pointer-events-auto w-[calc(100vw-1.5rem)] max-w-[280px] sm:max-w-sm sm:w-96">
       <div className={`${c.bgColor} border-2 ${c.borderColor} shadow-2xl font-mono overflow-hidden`}>
-        <div className="p-4 flex items-start gap-3">
-          <Icon className={`w-5 h-5 ${c.iconColor} shrink-0 mt-0.5`} />
+        <div className="p-3 sm:p-4 flex items-start gap-2 sm:gap-3">
+          <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${c.iconColor} shrink-0 mt-0.5`} />
 
-          <div className="flex-1 space-y-1">
-            <h4 className="text-xs font-black text-white uppercase tracking-wider">
+          <div className="flex-1 min-w-0 space-y-0.5 sm:space-y-1">
+            <h4 className="text-[10px] sm:text-xs font-black text-white uppercase tracking-wider break-words">
               {title}
             </h4>
             {message && (
-              <p className="text-[11px] text-zinc-300 leading-relaxed">
+              <p className="text-[9px] sm:text-[11px] text-zinc-300 leading-relaxed break-words">
                 {message}
               </p>
             )}
@@ -74,10 +74,10 @@ export const Toaster: React.FC<ToasterProps> = ({
 
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-white transition-colors shrink-0"
+            className="text-zinc-400 hover:text-white transition-colors shrink-0 -mt-0.5"
             aria-label="Close notification"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
 
