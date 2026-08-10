@@ -725,18 +725,76 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               </div>
             )}
 
-            {activeTab === 'guestbook' && (
-              <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                        {activeTab === 'guestbook' && (
+              <div className="space-y-4 max-h-[500px] overflow-y-auto">
                 <h3 className="text-xs font-bold text-zinc-400 uppercase mb-2">MODERATE PUBLIC GUESTBOOK</h3>
-                {guestbook.map((g) => (
-                  <div key={g.id} className="p-3 bg-black border border-zinc-800 flex items-center justify-between text-xs">
-                    <div>
-                      <span className="font-bold text-white">{g.name}</span>
-                      <span className="text-zinc-500 ml-2">"{g.message}"</span>
+
+                {guestbook.filter(g => !g.approved).length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-bold text-amber-400 uppercase flex items-center gap-2">
+                      <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+                      PENDING APPROVAL ({guestbook.filter(g => !g.approved).length})
                     </div>
-                    <button onClick={() => onDeleteGuestbook(g.id)} className="px-2 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900">REMOVE</button>
+                    {guestbook.filter(g => !g.approved).map((g) => (
+                      <div key={g.id} className="p-3 bg-amber-950/30 border border-amber-800 space-y-2 text-xs">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-bold text-white">{g.name}</span>
+                            <span className="text-zinc-500 ml-2">{g.handle}</span>
+                            <span className="ml-2 px-1.5 py-0.5 bg-zinc-900 text-[9px] font-bold text-zinc-400">{g.badge}</span>
+                          </div>
+                        </div>
+                        <p className="text-zinc-300 font-sans">"{g.message}"</p>
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={async () => {
+                              const adminPass = localStorage.getItem('__admin_custom_passcode') || '';
+                              await fetch('/api/guestbook', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', 'X-Admin-Auth': adminPass },
+                                body: JSON.stringify({ id: g.id, approved: true }),
+                              });
+                              window.location.reload();
+                            }}
+                            className="px-3 py-1 bg-emerald-600 text-black font-black uppercase text-[10px]"
+                          >
+                            ✓ APPROVE
+                          </button>
+                          <button
+                            onClick={() => onDeleteGuestbook(g.id)}
+                            className="px-3 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900 font-bold uppercase text-[10px]"
+                          >
+                            ✗ REJECT
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {guestbook.filter(g => g.approved).length > 0 && (
+                  <div className="space-y-2 pt-4 border-t border-zinc-800">
+                    <div className="text-[11px] font-bold text-emerald-400 uppercase flex items-center gap-2">
+                      <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                      APPROVED & PUBLIC ({guestbook.filter(g => g.approved).length})
+                    </div>
+                    {guestbook.filter(g => g.approved).map((g) => (
+                      <div key={g.id} className="p-3 bg-black border border-zinc-800 flex items-center justify-between text-xs">
+                        <div>
+                          <span className="font-bold text-white">{g.name}</span>
+                          <span className="text-zinc-500 ml-2">"{g.message}"</span>
+                        </div>
+                        <button onClick={() => onDeleteGuestbook(g.id)} className="px-2 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900">REMOVE</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {guestbook.length === 0 && (
+                  <div className="p-6 text-center border border-zinc-800 text-zinc-500 text-xs">
+                    NO GUESTBOOK ENTRIES YET.
+                  </div>
+                )}
               </div>
             )}
 
