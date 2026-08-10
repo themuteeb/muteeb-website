@@ -253,8 +253,7 @@ export default function App() {
     <AuthProvider>
       <ThemeProvider>
         <div className="bg-black text-white min-h-screen selection:bg-cyan-400 selection:text-black font-sans antialiased">
-          <Navbar activeSection={activeSection} profile={profile} />
-
+          <Navbar activeSection={activeSection} />
           <Hero profile={profile} onOpenContact={scrollToContact} />
 
           <ProjectsSection projects={projects} />
