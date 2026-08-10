@@ -158,10 +158,6 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                   />
                 </div>
 
-                <div className="p-2.5 bg-amber-950/50 border border-amber-800 text-amber-300 text-[10px] font-bold uppercase leading-relaxed">
-                  NOTE: ALL MESSAGES ARE REVIEWED BEFORE APPEARING PUBLICLY.
-                </div>
-
                 {rateLimited && (
                   <div className="p-3 bg-amber-950 border border-amber-500 text-amber-300 text-xs font-bold flex items-center gap-2">
                     <ShieldAlert className="w-4 h-4 shrink-0" />
