@@ -57,14 +57,10 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
 
   return (
     <section id="hero" className="relative min-h-screen pt-28 pb-16 flex flex-col justify-center border-b-2 border-zinc-800 bg-black overflow-hidden">
-      {/* High-Contrast Grid Background Effect */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#18181b_1px,transparent_1px),linear-gradient(to_bottom,#18181b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30" />
-
-      {/* Floating Graphic Accents */}
       <div className="absolute top-1/4 -right-12 w-96 h-96 bg-zinc-900 border border-zinc-800 rounded-full blur-3xl opacity-30 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
-        {/* Top Status & Location Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div className="inline-flex items-center gap-2.5 px-3 py-1.5 bg-zinc-950 border border-zinc-800 font-mono text-xs">
             <span className="relative flex h-2.5 w-2.5">
@@ -82,7 +78,6 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
           </div>
         </div>
 
-        {/* Oversized Headline - Stark Typography */}
         <div className="space-y-2">
           <h2 className="font-mono text-sm sm:text-base font-extrabold text-zinc-400 tracking-widest uppercase">
             // HEY, I'M {profile?.full_name || 'BABA MUTEEB'}
@@ -96,14 +91,12 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
           </h1>
         </div>
 
-        {/* Dynamic Typewriter Subheadline */}
         <div className="mt-6 mb-8 flex items-center gap-2 font-mono text-lg sm:text-2xl font-black text-zinc-200 uppercase bg-zinc-950/80 border-l-4 border-white p-4 max-w-3xl">
           <Terminal className={`w-5 h-5 shrink-0 ${textAccentClass}`} />
           <span>{displayText}</span>
           <span className={`inline-block w-3 h-6 ${bgAccentClass} animate-pulse`} />
         </div>
 
-        {/* About Statement */}
         <div className="p-6 bg-zinc-950 border-2 border-zinc-800 max-w-3xl mb-10 space-y-3 font-sans">
           <h3 className={`font-mono text-xs font-extrabold tracking-wider uppercase ${textAccentClass}`}>
             // ABOUT ME
@@ -111,14 +104,14 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
           <p className="text-zinc-200 text-base sm:text-lg font-medium leading-relaxed">
             {profile?.title || 'I make things for the internet because it feels like magic you can actually use.'}
           </p>
-          <div className="text-zinc-400 text-sm sm:text-base leading-relaxed whitespace-pre-line">
-            {profile?.bio || `On most days, you'll find me in a code editor — breaking something I made yesterday so I can make it a little better today. I'm not trying to be perfect. I just like that feeling when a problem finally makes sense.
-
-"I'm a student who codes at night, loves clean design, and genuinely believes the best ideas happen when you aren't trying to force them."`}
-          </div>
+          <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
+            {profile?.bio || `On most days, you'll find me in a code editor — breaking something I made yesterday so I can make it a little better today. I'm not trying to be perfect. I just like that feeling when a problem finally makes sense.`}
+          </p>
+          <p className="text-zinc-400 text-sm sm:text-base leading-relaxed italic">
+            {profile?.headline || `"I'm a student who codes at night, loves clean design, and genuinely believes the best ideas happen when you aren't trying to force them."`}
+          </p>
         </div>
 
-        {/* High Impact Action Buttons */}
         <div className="flex flex-wrap items-center gap-4">
           <button
             onClick={scrollToWork}
