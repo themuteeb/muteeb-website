@@ -21,12 +21,9 @@ export default function App() {
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Modal state
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('hero');
+  const [activeSection] = useState('hero');
 
-  // SECRET DEDICATED URL ROUTE DETECTOR
   useEffect(() => {
     const checkSecretRoute = () => {
       const path = window.location.pathname.toLowerCase();
@@ -50,21 +47,17 @@ export default function App() {
     return () => window.removeEventListener('popstate', checkSecretRoute);
   }, []);
 
-  // HIDDEN KEYBOARD COMBINATION LISTENER
   useEffect(() => {
     let keyBuffer = '';
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore when user is actively typing inside an input or textarea
       if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
 
-      // Combination 1: Ctrl + Shift + A or Cmd + Shift + A or Alt + Shift + A
       if ((e.ctrlKey || e.metaKey || e.altKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault();
         setIsAdminOpen(prev => !prev);
         return;
       }
 
-      // Combination 2: Secret sequence typing "muteeb"
       keyBuffer += e.key.toLowerCase();
       if (keyBuffer.length > 20) keyBuffer = keyBuffer.slice(-20);
 
@@ -78,7 +71,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Fetch initial state from Supabase API endpoints
   const fetchAllData = async () => {
     try {
       setLoading(true);
@@ -126,7 +118,6 @@ export default function App() {
     fetchAllData();
   }, []);
 
-  // Handlers for dynamic actions
   const handleUpdateProfile = async (updates: Partial<Profile>) => {
     const res = await fetch('/api/profile', {
       method: 'PUT',
@@ -146,9 +137,7 @@ export default function App() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(project),
     });
-    if (res.ok) {
-      fetchAllData();
-    }
+    if (res.ok) fetchAllData();
   };
 
   const handleDeleteProject = async (id: number) => {
@@ -259,52 +248,38 @@ export default function App() {
     }
   };
 
+  if (loading || !profile) {
+    return (
+      <AuthProvider>
+        <ThemeProvider>
+          <div className="min-h-screen bg-black" />
+        </ThemeProvider>
+      </AuthProvider>
+    );
+  }
+
   return (
     <AuthProvider>
       <ThemeProvider>
         <div className="bg-black text-white min-h-screen selection:bg-cyan-400 selection:text-black font-sans antialiased">
-          {/* Top Sticky Header */}
-          <Navbar
-            activeSection={activeSection}
-          />
+          <Navbar activeSection={activeSection} />
 
-          {/* Hero Section */}
-          <Hero
-            profile={profile}
-            onOpenContact={scrollToContact}
-          />
+          <Hero profile={profile} onOpenContact={scrollToContact} />
 
-          {/* Projects Section */}
           <ProjectsSection projects={projects} />
 
-          {/* What I'm Focused On Right Now & Quick Facts */}
           <NowSection profile={profile} />
 
-          {/* Things I Use / Tech Stack */}
           <TechMatrix skills={skills} />
 
-          {/* Writings & Micro-blog */}
-          <ThoughtsSection
-            thoughts={thoughts}
-            onLikeThought={handleLikeThought}
-          />
+          <ThoughtsSection thoughts={thoughts} onLikeThought={handleLikeThought} />
 
-          {/* Interactive Visitor Guestbook */}
-          <GuestbookSection
-            entries={guestbook}
-            onAddEntry={handleAddGuestbook}
-          />
+          <GuestbookSection entries={guestbook} onAddEntry={handleAddGuestbook} />
 
-          {/* Contact Terminal */}
-          <ContactTerminal
-            email={profile?.email}
-            onSendMessage={handleSendMessage}
-          />
+          <ContactTerminal email={profile?.email} onSendMessage={handleSendMessage} />
 
-          {/* Footer Signature */}
           <Footer profile={profile} />
 
-          {/* Admin Control CMS Modal */}
           {isAdminOpen && (
             <AdminModal
               profile={profile}
