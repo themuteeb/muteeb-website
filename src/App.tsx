@@ -248,7 +248,7 @@ export default function App() {
     }
   };
 
-  if (loading || !profile) {
+    if (loading) {
     return (
       <AuthProvider>
         <ThemeProvider>
