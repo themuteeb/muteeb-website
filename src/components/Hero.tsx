@@ -11,7 +11,6 @@ interface HeroProps {
 export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
   const { bgAccentClass, textAccentClass, glowAccentClass, playSound } = useTheme();
 
-  // Dynamic Typewriter Roles from database or fallback
   const defaultRoles = [
     'STUDENT & NIGHT CODER',
     'MAKER OF INTERNET THINGS',
@@ -112,12 +111,11 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
           <p className="text-zinc-200 text-base sm:text-lg font-medium leading-relaxed">
             {profile?.title || 'I make things for the internet because it feels like magic you can actually use.'}
           </p>
-          <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-            {profile?.bio || `On most days, you'll find me in a code editor — breaking something I made yesterday so I can make it a little better today. I'm not trying to be perfect. I just like that feeling when a problem finally makes sense.`}
-          </p>
-          <p className="text-zinc-400 text-sm sm:text-base leading-relaxed italic">
-            "I'm a student who codes at night, loves clean design, and genuinely believes the best ideas happen when you aren't trying to force them."
-          </p>
+          <div className="text-zinc-400 text-sm sm:text-base leading-relaxed whitespace-pre-line">
+            {profile?.bio || `On most days, you'll find me in a code editor — breaking something I made yesterday so I can make it a little better today. I'm not trying to be perfect. I just like that feeling when a problem finally makes sense.
+
+"I'm a student who codes at night, loves clean design, and genuinely believes the best ideas happen when you aren't trying to force them."`}
+          </div>
         </div>
 
         {/* High Impact Action Buttons */}
