@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Profile, Project, Thought, ContactMessage, GuestbookEntry, Skill } from '../types';
-import { Shield, Lock, Save, Plus, Trash2, Download, ShieldAlert, Check, AlertTriangle, Upload } from 'lucide-react';
+import { Shield, Lock, Save, Plus, Trash2, Download, ShieldAlert, Upload } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { uploadImage } from '../lib/imageUpload';
 
@@ -89,20 +89,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
     return () => clearInterval(interval);
   }, [isLockedOut, lockoutUntil]);
-
-  const getStoredPasscode = (): string => {
-    try {
-      return localStorage.getItem('__admin_custom_passcode') || '';
-    } catch {
-      return '';
-    }
-  };
-
-  const currentPasscode = getStoredPasscode();
-  const [newPasscode, setNewPasscode] = useState('');
-  const [confirmPasscode, setConfirmPasscode] = useState('');
-  const [passcodeSuccessMsg, setPasscodeSuccessMsg] = useState('');
-  const [passcodeErrorMsg, setPasscodeErrorMsg] = useState('');
 
   const [profName, setProfName] = useState(profile?.full_name || 'BABA MUTEEB');
   const [profTitle, setProfTitle] = useState(profile?.title || 'I make things for the internet because it feels like magic you can actually use.');
@@ -196,23 +182,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleSaveProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPasscodeErrorMsg('');
-    setPasscodeSuccessMsg('');
-
-    const wantsToChangePasscode = newPasscode.length > 0 || confirmPasscode.length > 0;
-
-    if (wantsToChangePasscode) {
-      if (newPasscode !== confirmPasscode) {
-        setPasscodeErrorMsg('PASSCODES DO NOT MATCH. PLEASE CONFIRM YOUR NEW PASSCODE.');
-        playSound('toggle');
-        return;
-      }
-      if (newPasscode.trim().length < 4) {
-        setPasscodeErrorMsg('PASSCODE MUST BE AT LEAST 4 CHARACTERS.');
-        playSound('toggle');
-        return;
-      }
-    }
 
     try {
       setProfSaving(true);
@@ -231,20 +200,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         now_focus: nowFocus.map(item => ({ title: sanitizeInput(item.title, 40), desc: sanitizeInput(item.desc, 300) })),
         quick_facts: quickFacts.map(f => sanitizeInput(f, 100)),
       };
-
-      if (wantsToChangePasscode) {
-        const cleanPass = newPasscode.trim();
-        updatePayload.admin_passcode = cleanPass;
-        try {
-          localStorage.setItem('__admin_custom_passcode', cleanPass);
-          setPasscodeSuccessMsg('PASSCODE UPDATED SUCCESSFULLY');
-          setTimeout(() => setPasscodeSuccessMsg(''), 4000);
-        } catch (e) {
-          console.error(e);
-        }
-        setNewPasscode('');
-        setConfirmPasscode('');
-      }
 
       await onUpdateProfile(updatePayload);
       alert('SETTINGS SAVED SUCCESSFULLY!');
@@ -516,38 +471,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   <textarea rows={3} maxLength={300} value={profHeadline} onChange={(e) => setProfHeadline(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs italic" />
                 </div>
 
-                <div className="p-4 bg-zinc-900 border border-zinc-800 space-y-3">
-                  <h4 className="text-xs font-bold text-white uppercase">// SECURITY PASSCODE CONTROL</h4>
+                <div className="p-4 bg-zinc-900 border border-zinc-800">
+                  <h4 className="text-xs font-bold text-white uppercase mb-2">// PASSCODE INFO</h4>
                   <p className="text-[10px] text-zinc-500 leading-relaxed">
-                    LEAVE BOTH FIELDS BLANK TO KEEP YOUR CURRENT PASSCODE UNCHANGED. ONLY FILL IN IF YOU WANT TO SET A NEW ONE.
+                    TO CHANGE YOUR ADMIN PASSCODE, GO TO YOUR SUPABASE DASHBOARD → PROFILE TABLE → EDIT THE <span className="text-white font-bold">admin_passcode</span> COLUMN DIRECTLY. THIS IS MORE SECURE THAN CHANGING IT FROM HERE.
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-bold text-zinc-400 uppercase mb-1">NEW ADMIN PASSCODE</label>
-                      <input type="password" maxLength={50} placeholder="LEAVE BLANK TO KEEP CURRENT" value={newPasscode} onChange={(e) => { setNewPasscode(e.target.value); setPasscodeErrorMsg(''); }} className="w-full px-3 py-2 bg-black border border-zinc-700 text-white text-xs font-bold" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-zinc-400 uppercase mb-1">CONFIRM NEW ADMIN PASSCODE</label>
-                      <input type="password" maxLength={50} placeholder="LEAVE BLANK TO KEEP CURRENT" value={confirmPasscode} onChange={(e) => { setConfirmPasscode(e.target.value); setPasscodeErrorMsg(''); }} className="w-full px-3 py-2 bg-black border border-zinc-700 text-white text-xs font-bold" />
-                    </div>
-                  </div>
-
-                  {passcodeErrorMsg && (
-                    <div className="p-2 bg-rose-950 border border-rose-500 text-rose-300 text-xs font-bold flex items-center gap-1.5">
-                      <AlertTriangle className="w-4 h-4 shrink-0" /> {passcodeErrorMsg}
-                    </div>
-                  )}
-
-                  {passcodeSuccessMsg && (
-                    <div className="p-2 bg-emerald-950 border border-emerald-500 text-emerald-300 text-xs font-bold flex items-center gap-1.5">
-                      <Check className="w-4 h-4 shrink-0" /> {passcodeSuccessMsg}
-                    </div>
-                  )}
                 </div>
 
                 <button type="submit" disabled={profSaving} className={`px-6 py-3 ${bgAccentClass} font-black text-xs uppercase flex items-center gap-2`}>
                   <Save className="w-4 h-4" />
-                  {profSaving ? 'SAVING...' : 'SAVE ALL BRANDING & PASSCODE SETTINGS'}
+                  {profSaving ? 'SAVING...' : 'SAVE ALL BRANDING SETTINGS'}
                 </button>
               </form>
             )}
