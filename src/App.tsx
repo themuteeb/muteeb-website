@@ -245,15 +245,15 @@ export default function App() {
     if (res.ok) fetchAllData();
   };
 
-  const handleAddGuestbook = async (entry: { name: string; handle: string; message: string; avatar_color: string; badge: string }) => {
+    const handleAddGuestbook = async (entry: { name: string; handle: string; message: string; avatar_color: string; badge: string }) => {
     const res = await fetch('/api/guestbook', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(entry),
     });
     if (res.ok) {
-      const newEntry = await res.json();
-      setGuestbook(prev => [newEntry, ...prev]);
+      await res.json();
+      // Don't add to public list - needs admin approval first
     }
   };
 
