@@ -99,8 +99,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const currentPasscode = getStoredPasscode();
-  const [newPasscode, setNewPasscode] = useState(currentPasscode);
-  const [confirmPasscode, setConfirmPasscode] = useState(currentPasscode);
+  const [newPasscode, setNewPasscode] = useState('');
+  const [confirmPasscode, setConfirmPasscode] = useState('');
   const [passcodeSuccessMsg, setPasscodeSuccessMsg] = useState('');
   const [passcodeErrorMsg, setPasscodeErrorMsg] = useState('');
 
@@ -199,28 +199,26 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setPasscodeErrorMsg('');
     setPasscodeSuccessMsg('');
 
-    if (newPasscode !== confirmPasscode) {
-      setPasscodeErrorMsg('PASSCODES DO NOT MATCH. PLEASE CONFIRM YOUR NEW PASSCODE.');
-      playSound('toggle');
-      return;
+    const wantsToChangePasscode = newPasscode.length > 0 || confirmPasscode.length > 0;
+
+    if (wantsToChangePasscode) {
+      if (newPasscode !== confirmPasscode) {
+        setPasscodeErrorMsg('PASSCODES DO NOT MATCH. PLEASE CONFIRM YOUR NEW PASSCODE.');
+        playSound('toggle');
+        return;
+      }
+      if (newPasscode.trim().length < 4) {
+        setPasscodeErrorMsg('PASSCODE MUST BE AT LEAST 4 CHARACTERS.');
+        playSound('toggle');
+        return;
+      }
     }
 
     try {
       setProfSaving(true);
       playSound('submit');
 
-      const cleanPass = newPasscode.trim();
-      if (cleanPass) {
-        try {
-          localStorage.setItem('__admin_custom_passcode', cleanPass);
-          setPasscodeSuccessMsg(`PASSCODE UPDATED SUCCESSFULLY`);
-          setTimeout(() => setPasscodeSuccessMsg(''), 4000);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      await onUpdateProfile({
+      const updatePayload: Partial<Profile> = {
         full_name: sanitizeInput(profName, 60),
         title: sanitizeInput(profTitle, 200),
         bio: sanitizeInput(profBio, 1000),
@@ -232,8 +230,23 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         typewriter_roles: roles.map(r => sanitizeInput(r, 60)),
         now_focus: nowFocus.map(item => ({ title: sanitizeInput(item.title, 40), desc: sanitizeInput(item.desc, 300) })),
         quick_facts: quickFacts.map(f => sanitizeInput(f, 100)),
-        admin_passcode: cleanPass,
-      });
+      };
+
+      if (wantsToChangePasscode) {
+        const cleanPass = newPasscode.trim();
+        updatePayload.admin_passcode = cleanPass;
+        try {
+          localStorage.setItem('__admin_custom_passcode', cleanPass);
+          setPasscodeSuccessMsg('PASSCODE UPDATED SUCCESSFULLY');
+          setTimeout(() => setPasscodeSuccessMsg(''), 4000);
+        } catch (e) {
+          console.error(e);
+        }
+        setNewPasscode('');
+        setConfirmPasscode('');
+      }
+
+      await onUpdateProfile(updatePayload);
       alert('SETTINGS SAVED SUCCESSFULLY!');
     } catch (err) {
       console.error(err);
@@ -505,14 +518,17 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
                 <div className="p-4 bg-zinc-900 border border-zinc-800 space-y-3">
                   <h4 className="text-xs font-bold text-white uppercase">// SECURITY PASSCODE CONTROL</h4>
+                  <p className="text-[10px] text-zinc-500 leading-relaxed">
+                    LEAVE BOTH FIELDS BLANK TO KEEP YOUR CURRENT PASSCODE UNCHANGED. ONLY FILL IN IF YOU WANT TO SET A NEW ONE.
+                  </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[10px] font-bold text-zinc-400 uppercase mb-1">NEW ADMIN PASSCODE</label>
-                      <input type="password" maxLength={50} placeholder="ENTER NEW PASSCODE" value={newPasscode} onChange={(e) => { setNewPasscode(e.target.value); setPasscodeErrorMsg(''); }} className="w-full px-3 py-2 bg-black border border-zinc-700 text-white text-xs font-bold" />
+                      <input type="password" maxLength={50} placeholder="LEAVE BLANK TO KEEP CURRENT" value={newPasscode} onChange={(e) => { setNewPasscode(e.target.value); setPasscodeErrorMsg(''); }} className="w-full px-3 py-2 bg-black border border-zinc-700 text-white text-xs font-bold" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-zinc-400 uppercase mb-1">CONFIRM NEW ADMIN PASSCODE</label>
-                      <input type="password" maxLength={50} placeholder="CONFIRM NEW PASSCODE" value={confirmPasscode} onChange={(e) => { setConfirmPasscode(e.target.value); setPasscodeErrorMsg(''); }} className="w-full px-3 py-2 bg-black border border-zinc-700 text-white text-xs font-bold" />
+                      <input type="password" maxLength={50} placeholder="LEAVE BLANK TO KEEP CURRENT" value={confirmPasscode} onChange={(e) => { setConfirmPasscode(e.target.value); setPasscodeErrorMsg(''); }} className="w-full px-3 py-2 bg-black border border-zinc-700 text-white text-xs font-bold" />
                     </div>
                   </div>
 
