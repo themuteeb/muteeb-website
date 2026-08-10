@@ -3,7 +3,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Profile, Project, Thought, ContactMessage, GuestbookEntry, Skill } from '../types';
 import { Shield, Lock, Save, Plus, Trash2, Download, ShieldAlert, Check, AlertTriangle, Upload } from 'lucide-react';
-import { hashPasscode, sanitizeInput } from '../lib/crypto';
+import { sanitizeInput } from '../lib/crypto';
 import { uploadImage } from '../lib/imageUpload';
 
 interface AdminModalProps {
@@ -92,14 +92,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const getStoredPasscode = (): string => {
     try {
-      return (
-        localStorage.getItem('__admin_custom_passcode') ||
-        sessionStorage.getItem('__admin_custom_passcode') ||
-        profile?.admin_passcode ||
-        ''
-      );
+      return localStorage.getItem('__admin_custom_passcode') || '';
     } catch {
-      return profile?.admin_passcode || '';
+      return '';
     }
   };
 
@@ -160,9 +155,24 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
 
     const entered = password.trim();
-    const dbPass = (profile?.admin_passcode || '').trim();
 
-    if (dbPass && entered === dbPass) {
+    let isValid = false;
+    try {
+      const verifyRes = await fetch('/api/profile', {
+        headers: { 'X-Admin-Auth': entered }
+      });
+      if (verifyRes.ok) {
+        const verifyData = await verifyRes.json();
+        if (verifyData && verifyData.admin_passcode === entered) {
+          isValid = true;
+          localStorage.setItem('__admin_custom_passcode', entered);
+        }
+      }
+    } catch (err) {
+      console.error('Verify error:', err);
+    }
+
+    if (isValid) {
       setIsAdmin(true);
       setAuthError(false);
       setFailedAttempts(0);
@@ -203,7 +213,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       if (cleanPass) {
         try {
           localStorage.setItem('__admin_custom_passcode', cleanPass);
-          sessionStorage.setItem('__admin_custom_passcode', cleanPass);
           setPasscodeSuccessMsg(`PASSCODE UPDATED SUCCESSFULLY`);
           setTimeout(() => setPasscodeSuccessMsg(''), 4000);
         } catch (e) {
@@ -481,7 +490,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">TAGLINE (MAIN ABOUT LINE)</label>
-                  <textarea rows={2} maxLength={200} value={profTitle} onChange={(e) => setProfTitle(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs" placeholder="e.g. I make things for the internet..." />
+                  <textarea rows={2} maxLength={200} value={profTitle} onChange={(e) => setProfTitle(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs" />
                 </div>
 
                 <div>
@@ -491,7 +500,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
                 <div>
                   <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">ITALIC QUOTE / HEADLINE</label>
-                  <textarea rows={3} maxLength={300} value={profHeadline} onChange={(e) => setProfHeadline(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs italic" placeholder='e.g. "I am a student who codes at night..."' />
+                  <textarea rows={3} maxLength={300} value={profHeadline} onChange={(e) => setProfHeadline(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs italic" />
                 </div>
 
                 <div className="p-4 bg-zinc-900 border border-zinc-800 space-y-3">
