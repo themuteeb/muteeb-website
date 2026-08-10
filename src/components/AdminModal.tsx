@@ -149,7 +149,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       });
       if (verifyRes.ok) {
         const verifyData = await verifyRes.json();
-        if (verifyData && verifyData.admin_passcode === entered) {
+        if (verifyData && verifyData.__admin_verified === true) {
           isValid = true;
           localStorage.setItem('__admin_custom_passcode', entered);
         }
@@ -474,7 +474,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 <div className="p-4 bg-zinc-900 border border-zinc-800">
                   <h4 className="text-xs font-bold text-white uppercase mb-2">// PASSCODE INFO</h4>
                   <p className="text-[10px] text-zinc-500 leading-relaxed">
-                    TO CHANGE YOUR ADMIN PASSCODE, GO TO YOUR SUPABASE DASHBOARD → PROFILE TABLE → EDIT THE <span className="text-white font-bold">admin_passcode</span> COLUMN DIRECTLY. THIS IS MORE SECURE THAN CHANGING IT FROM HERE.
+                    YOUR ADMIN PASSCODE IS STORED SECURELY IN VERCEL ENVIRONMENT VARIABLES. TO CHANGE IT, GO TO VERCEL DASHBOARD → PROJECT SETTINGS → ENVIRONMENT VARIABLES → EDIT <span className="text-white font-bold">ADMIN_PASSWORD</span>.
                   </p>
                 </div>
 
