@@ -1,10 +1,15 @@
 import supabase from './db-client.js';
 
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Admin-Auth');
   if (req.method === 'OPTIONS') return res.status(204).end();
+
+  const adminHeader = req.headers['x-admin-auth'];
+  const isAdmin = ADMIN_PASSWORD && adminHeader === ADMIN_PASSWORD;
 
   try {
     if (req.method === 'GET') {
@@ -17,21 +22,30 @@ export default async function handler(req, res) {
       if (error && error.code !== 'PGRST116') throw error;
 
       if (data) {
-        const adminHeader = req.headers['x-admin-auth'];
-        const isAdmin = adminHeader && adminHeader === data.admin_passcode;
+        // NEVER expose admin_passcode field to anyone
+        delete data.admin_passcode;
 
         if (!isAdmin) {
-          delete data.admin_passcode;
           delete data.email;
           delete data.created_at;
           delete data.updated_at;
         }
       }
 
+      // Return special flag if admin authenticated
+      if (isAdmin) {
+        return res.status(200).json({ ...(data || {}), __admin_verified: true });
+      }
+
       return res.status(200).json(data || null);
     }
 
     if (req.method === 'PUT') {
+      // Require admin auth for any updates
+      if (!isAdmin) {
+        return res.status(401).json({ error: 'Unauthorized. Admin authentication required.' });
+      }
+
       const payload = { ...req.body };
 
       const validColumns = [
@@ -40,35 +54,21 @@ export default async function handler(req, res) {
         'instagram_handle', 'logo_url',
         'github_url', 'twitter_url', 'linkedin_url',
         'typewriter_roles', 'now_focus', 'quick_facts',
-        'admin_passcode', 'headline', 'sound_enabled'
+        'headline', 'sound_enabled'
       ];
 
       const filteredPayload = {};
       for (const key of validColumns) {
         if (payload[key] !== undefined) {
-          // CRITICAL: Never overwrite admin_passcode with empty/null value
-          if (key === 'admin_passcode') {
-            if (payload[key] && String(payload[key]).trim().length > 0) {
-              filteredPayload[key] = String(payload[key]).trim();
-            }
-            continue;
-          }
           filteredPayload[key] = payload[key];
         }
       }
 
       const { data: existing } = await supabase
         .from('profile')
-        .select('id, admin_passcode')
+        .select('id')
         .limit(1)
         .maybeSingle();
-
-      if (existing && existing.admin_passcode) {
-        const adminHeader = req.headers['x-admin-auth'];
-        if (!adminHeader || adminHeader !== existing.admin_passcode) {
-          return res.status(401).json({ error: 'Unauthorized. Admin authentication required.' });
-        }
-      }
 
       let result;
       if (existing) {
@@ -98,6 +98,11 @@ export default async function handler(req, res) {
           result = data;
         }
       }
+
+      if (result) {
+        delete result.admin_passcode;
+      }
+
       return res.status(200).json(result);
     }
 
