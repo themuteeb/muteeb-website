@@ -74,8 +74,9 @@ export default function App() {
   const fetchAllData = async () => {
     try {
       setLoading(true);
+      const adminPass = localStorage.getItem('__admin_custom_passcode') || '';
       const [pRes, projRes, tRes, sRes, gRes, mRes] = await Promise.all([
-        fetch('/api/profile'),
+        fetch('/api/profile', { headers: adminPass ? { 'X-Admin-Auth': adminPass } : {} }),
         fetch('/api/projects'),
         fetch('/api/thoughts'),
         fetch('/api/skills'),
@@ -119,9 +120,13 @@ export default function App() {
   }, []);
 
   const handleUpdateProfile = async (updates: Partial<Profile>) => {
+    const adminPass = localStorage.getItem('__admin_custom_passcode') || '';
     const res = await fetch('/api/profile', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Auth': adminPass,
+      },
       body: JSON.stringify(updates),
     });
     if (res.ok) {
