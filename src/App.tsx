@@ -20,7 +20,6 @@ export default function App() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [activeSection] = useState('hero');
 
@@ -73,7 +72,6 @@ export default function App() {
 
   const fetchAllData = async () => {
     try {
-      setLoading(true);
       const adminPass = localStorage.getItem('__admin_custom_passcode') || '';
       const [pRes, projRes, tRes, sRes, gRes, mRes] = await Promise.all([
         fetch('/api/profile', { headers: adminPass ? { 'X-Admin-Auth': adminPass } : {} }),
@@ -110,8 +108,6 @@ export default function App() {
       }
     } catch (err) {
       console.error('Error fetching data from API:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -259,35 +255,25 @@ export default function App() {
         <div className="bg-black text-white min-h-screen selection:bg-cyan-400 selection:text-black font-sans antialiased">
           <Navbar activeSection={activeSection} profile={profile} />
 
-          {loading ? (
-            <div className="min-h-screen flex items-center justify-center bg-black">
-              <div className="font-mono text-xs text-zinc-400 uppercase tracking-widest animate-pulse">
-                // LOADING MUTEEB.IN ...
-              </div>
-            </div>
-          ) : (
-            <>
-              <Hero profile={profile} onOpenContact={scrollToContact} />
+          <Hero profile={profile} onOpenContact={scrollToContact} />
 
-              <ProjectsSection projects={projects} />
+          <ProjectsSection projects={projects} />
 
-              <NowSection profile={profile} />
+          <NowSection profile={profile} />
 
-              <TechMatrix skills={skills} />
+          <TechMatrix skills={skills} />
 
-              <ThoughtsSection thoughts={thoughts} onLikeThought={handleLikeThought} />
+          <ThoughtsSection thoughts={thoughts} onLikeThought={handleLikeThought} />
 
-              <GuestbookSection entries={guestbook} onAddEntry={handleAddGuestbook} />
+          <GuestbookSection entries={guestbook} onAddEntry={handleAddGuestbook} />
 
-              <ContactTerminal
-                email={profile?.email}
-                instagramHandle={profile?.instagram_handle}
-                onSendMessage={handleSendMessage}
-              />
+          <ContactTerminal
+            email={profile?.email}
+            instagramHandle={profile?.instagram_handle}
+            onSendMessage={handleSendMessage}
+          />
 
-              <Footer profile={profile} />
-            </>
-          )}
+          <Footer profile={profile} />
 
           {isAdminOpen && (
             <AdminModal
