@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
-import { ThemePreset, Profile } from '../types';
+import { ThemePreset } from '../types';
 import { Volume2, VolumeX, Menu, X } from 'lucide-react';
 
 interface NavbarProps {
   activeSection: string;
-  profile?: Profile | null;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeSection, profile }) => {
+export const Navbar: React.FC<NavbarProps> = ({ activeSection }) => {
   const { theme, setTheme, soundEnabled, toggleSound, playSound, borderAccentClass, textAccentClass } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -57,26 +56,26 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection, profile }) => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        {/* Navigation Logo - Uploaded Image */}
         <a
           href="#"
           onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); playSound('click'); }}
           className="group flex items-center gap-3 transition-transform active:scale-95"
           title="MUTEEB.IN"
         >
-          {profile?.logo_url && (
-            <div className="relative w-10 h-10 sm:w-11 sm:h-11 overflow-hidden border-2 border-zinc-800 bg-black group-hover:border-white transition-colors">
-              <img
-                src={profile.logo_url}
-                alt="Logo"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            </div>
-          )}
+          <div className="relative w-10 h-10 sm:w-11 sm:h-11 overflow-hidden border-2 border-zinc-800 bg-black group-hover:border-white transition-colors">
+            <img
+              src="/images/logo.png"
+              alt="Muteeb Logo"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
           <span className="font-sans font-black text-xl tracking-tighter uppercase text-white hover:text-zinc-300 hidden sm:inline-block">
             MUTEEB<span className={textAccentClass}>.IN</span>
           </span>
         </a>
 
+        {/* Desktop Nav Links */}
         <nav className="hidden lg:flex items-center gap-1 font-mono text-xs tracking-wider">
           {navLinks.map((link) => {
             const isActive = activeSection === link.name.toLowerCase();
@@ -98,7 +97,9 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection, profile }) => {
           })}
         </nav>
 
+        {/* Right Quick Controls */}
         <div className="flex items-center gap-3">
+          {/* Theme Palette Switcher */}
           <div className="hidden sm:flex items-center gap-1 bg-zinc-900 border border-zinc-800 p-1 rounded-none">
             {themeOptions.map((t) => (
               <button
@@ -112,6 +113,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection, profile }) => {
             ))}
           </div>
 
+          {/* Sound Effect Toggle */}
           <button
             onClick={() => { toggleSound(); playSound('toggle'); }}
             className={`p-2 border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 transition-colors ${
@@ -122,6 +124,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection, profile }) => {
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
 
+          {/* Mobile Menu Toggle Button */}
           <button
             onClick={() => { setMobileMenuOpen(!mobileMenuOpen); playSound('click'); }}
             className="lg:hidden p-2 border border-zinc-800 bg-zinc-900 text-white"
@@ -131,6 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeSection, profile }) => {
         </div>
       </div>
 
+      {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-b-2 border-zinc-800 bg-black/95 backdrop-blur-xl px-4 py-6 mt-3 space-y-4 font-mono">
           <div className="grid grid-cols-2 gap-2">
