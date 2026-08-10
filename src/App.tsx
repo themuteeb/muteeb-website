@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
@@ -257,7 +257,7 @@ export default function App() {
     <AuthProvider>
       <ThemeProvider>
         <div className="bg-black text-white min-h-screen selection:bg-cyan-400 selection:text-black font-sans antialiased">
-          <Navbar activeSection={activeSection} />
+          <Navbar activeSection={activeSection} profile={profile} />
 
           {loading ? (
             <div className="min-h-screen flex items-center justify-center bg-black">
@@ -279,7 +279,11 @@ export default function App() {
 
               <GuestbookSection entries={guestbook} onAddEntry={handleAddGuestbook} />
 
-              <ContactTerminal email={profile?.email} onSendMessage={handleSendMessage} />
+              <ContactTerminal
+                email={profile?.email}
+                instagramHandle={profile?.instagram_handle}
+                onSendMessage={handleSendMessage}
+              />
 
               <Footer profile={profile} />
             </>
