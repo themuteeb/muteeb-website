@@ -20,7 +20,7 @@ export default function App() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [activeSection] = useState('hero');
 
@@ -247,16 +247,6 @@ export default function App() {
       contactElem.scrollIntoView({ behavior: 'smooth' });
     }
   };
-
-    if (loading) {
-    return (
-      <AuthProvider>
-        <ThemeProvider>
-          <div className="min-h-screen bg-black" />
-        </ThemeProvider>
-      </AuthProvider>
-    );
-  }
 
   return (
     <AuthProvider>
