@@ -110,10 +110,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [passcodeErrorMsg, setPasscodeErrorMsg] = useState('');
 
   const [profName, setProfName] = useState(profile?.full_name || 'BABA MUTEEB');
-  const [profTitle, setProfTitle] = useState(profile?.title || 'STUDENT, DEVELOPER & MAKER');
+  const [profTitle, setProfTitle] = useState(profile?.title || 'I make things for the internet because it feels like magic you can actually use.');
   const [profBio, setProfBio] = useState(profile?.bio || '');
-  const [profStatus, setProfStatus] = useState(profile?.status_badge || 'A CURIOUS MIND WITH RESTLESS HANDS');
-  const [profLoc, setProfLoc] = useState(profile?.location || 'MUTEEB.IN // PERSONAL SPACE');
+  const [profHeadline, setProfHeadline] = useState(profile?.headline || '');
+  const [profLoc, setProfLoc] = useState(profile?.location || 'MUTEEB.IN // PERSONAL WEBSITE');
   const [profEmail, setProfEmail] = useState(profile?.email || 'hello@muteeb.in');
   const [profInstagram, setProfInstagram] = useState(profile?.instagram_handle || '@mr_muteeb_');
   const [profLogoUrl, setProfLogoUrl] = useState(profile?.logo_url || '/images/logo.png');
@@ -130,9 +130,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [newRoleInput, setNewRoleInput] = useState('');
 
   const defaultNow = profile?.now_focus || [
-    { title: 'LEARNING', desc: 'Getting deep into the tricky parts of JavaScript — promises, closures, and async engine.' },
+    { title: 'LEARNING', desc: 'Getting deep into the tricky parts of JavaScript.' },
     { title: 'BUILDING', desc: 'Small digital tools that fix highly specific annoyances I have.' },
-    { title: 'READING', desc: 'Mostly technical documentation and web design blogs. MDN is my evening reading.' },
+    { title: 'READING', desc: 'Mostly technical documentation and web design blogs.' },
     { title: 'THINKING', desc: 'About why certain websites feel instantly comfortable to use.' }
   ];
   const [nowFocus, setNowFocus] = useState(defaultNow);
@@ -152,7 +152,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const [messageSearch, setMessageSearch] = useState('');
 
-const handleAdminLogin = async (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLockedOut) {
       alert(`SECURITY LOCKOUT ENFORCED: 5 FAILED ATTEMPTS. ACCESS BLOCKED FOR ${timeRemainingText}`);
@@ -160,23 +160,9 @@ const handleAdminLogin = async (e: React.FormEvent) => {
     }
 
     const entered = password.trim();
-    const activePass = getStoredPasscode();
-    const dbPass = profile?.admin_passcode || '';
+    const dbPass = (profile?.admin_passcode || '').trim();
 
-    // Hash the entered password for comparison
-    const enteredHash = await hashPasscode(entered);
-    const activeHash = activePass ? await hashPasscode(activePass) : '';
-    const dbHash = dbPass ? await hashPasscode(dbPass) : '';
-
-    // Support both plain text and hashed comparison for full special character support
-    const isValid = (
-      (activePass && entered === activePass) ||
-      (dbPass && entered === dbPass) ||
-      (activeHash && enteredHash === activeHash) ||
-      (dbHash && enteredHash === dbHash)
-    );
-
-    if (isValid) {
+    if (dbPass && entered === dbPass) {
       setIsAdmin(true);
       setAuthError(false);
       setFailedAttempts(0);
@@ -227,13 +213,13 @@ const handleAdminLogin = async (e: React.FormEvent) => {
 
       await onUpdateProfile({
         full_name: sanitizeInput(profName, 60),
-        title: sanitizeInput(profTitle, 80),
+        title: sanitizeInput(profTitle, 200),
         bio: sanitizeInput(profBio, 1000),
-        status_badge: sanitizeInput(profStatus, 80),
+        headline: sanitizeInput(profHeadline, 300),
         location: sanitizeInput(profLoc, 80),
         email: sanitizeInput(profEmail, 80),
         instagram_handle: sanitizeInput(profInstagram, 40),
-        logo_url: sanitizeInput(profLogoUrl, 200),
+        logo_url: sanitizeInput(profLogoUrl, 500),
         typewriter_roles: roles.map(r => sanitizeInput(r, 60)),
         now_focus: nowFocus.map(item => ({ title: sanitizeInput(item.title, 40), desc: sanitizeInput(item.desc, 300) })),
         quick_facts: quickFacts.map(f => sanitizeInput(f, 100)),
@@ -464,17 +450,6 @@ const handleAdminLogin = async (e: React.FormEvent) => {
                     <input type="text" maxLength={60} value={profName} onChange={(e) => setProfName(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">ROLE / SUBTITLE</label>
-                    <input type="text" maxLength={80} value={profTitle} onChange={(e) => setProfTitle(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">STATUS BADGE TEXT</label>
-                    <input type="text" maxLength={80} value={profStatus} onChange={(e) => setProfStatus(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs" />
-                  </div>
-                  <div>
                     <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">LOCATION / DOMAIN TAG</label>
                     <input type="text" maxLength={80} value={profLoc} onChange={(e) => setProfLoc(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs" />
                   </div>
@@ -505,8 +480,18 @@ const handleAdminLogin = async (e: React.FormEvent) => {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">TAGLINE (MAIN ABOUT LINE)</label>
+                  <textarea rows={2} maxLength={200} value={profTitle} onChange={(e) => setProfTitle(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs" placeholder="e.g. I make things for the internet..." />
+                </div>
+
+                <div>
                   <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">SHORT ABOUT PARAGRAPH</label>
                   <textarea rows={4} maxLength={1000} value={profBio} onChange={(e) => setProfBio(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">ITALIC QUOTE / HEADLINE</label>
+                  <textarea rows={3} maxLength={300} value={profHeadline} onChange={(e) => setProfHeadline(e.target.value)} className="w-full px-3 py-2 bg-black border border-zinc-800 text-white text-xs italic" placeholder='e.g. "I am a student who codes at night..."' />
                 </div>
 
                 <div className="p-4 bg-zinc-900 border border-zinc-800 space-y-3">
@@ -550,7 +535,7 @@ const handleAdminLogin = async (e: React.FormEvent) => {
                 </div>
 
                 <div className="flex gap-2">
-                  <input type="text" maxLength={60} placeholder="Add new role (e.g. OPEN SOURCE EXPLORER)" value={newRoleInput} onChange={(e) => setNewRoleInput(e.target.value)} className="flex-1 px-3 py-2 bg-black border border-zinc-800 text-white text-xs" />
+                  <input type="text" maxLength={60} placeholder="Add new role" value={newRoleInput} onChange={(e) => setNewRoleInput(e.target.value)} className="flex-1 px-3 py-2 bg-black border border-zinc-800 text-white text-xs" />
                   <button type="button" onClick={handleAddRole} className={`px-4 py-2 ${bgAccentClass} font-bold text-xs uppercase flex items-center gap-1`}>
                     <Plus className="w-4 h-4" /> ADD ROLE
                   </button>
@@ -560,7 +545,7 @@ const handleAdminLogin = async (e: React.FormEvent) => {
                   {roles.map((role, idx) => (
                     <div key={idx} className="p-3 bg-black border border-zinc-800 flex items-center justify-between text-xs font-bold">
                       <span className="text-white uppercase">{role}</span>
-                      <button onClick={() => handleRemoveRole(idx)} className="p-1 bg-rose-950 text-rose-300 hover:bg-rose-900" title="Remove role">
+                      <button onClick={() => handleRemoveRole(idx)} className="p-1 bg-rose-950 text-rose-300 hover:bg-rose-900">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
