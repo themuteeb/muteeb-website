@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { Thought } from '../types';
@@ -15,6 +15,16 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
   const { playSound } = useTheme();
   const [selectedThought, setSelectedThought] = useState<Thought | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // keep reader modal in sync when likes (or other fields) change in parent
+  useEffect(() => {
+    if (selectedThought) {
+      const fresh = thoughts.find((x) => x.id === selectedThought.id);
+      if (fresh && fresh.likes_count !== selectedThought.likes_count) {
+        setSelectedThought(fresh);
+      }
+    }
+  }, [thoughts]);
   const [committedSearch, setCommittedSearch] = useState('');
 
   const filtered = thoughts.filter((t) => {
@@ -200,6 +210,8 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
             <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 font-mono text-xs">
               <button
                 onClick={() => {
+                  // optimistic update for instant feedback in modal
+                  setSelectedThought((prev) => prev ? { ...prev, likes_count: (prev.likes_count || 0) + 1 } : prev);
                   onLikeThought(selectedThought.id);
                   playSound('toggle');
                 }}
