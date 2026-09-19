@@ -178,7 +178,7 @@ const HeroTerminal = ({ profile }: { profile: Profile | null }) => {
         </div>
 
         {/* code body */}
-        <div className="relative min-h-[340px] overflow-x-auto p-5 font-mono text-[12.5px] leading-[1.75] sm:min-h-[360px] sm:text-[13px]">
+        <div className="relative h-[340px] overflow-x-auto overflow-y-hidden p-5 font-mono text-[12.5px] leading-[1.75] sm:h-[360px] sm:text-[13px]">
           <pre className="whitespace-pre text-ink-2">{renderCode()}
             <span className="ml-0.5 inline-block h-[1.1em] w-[7px] translate-y-[3px] animate-blink bg-accent" />
           </pre>
@@ -219,7 +219,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
       <GridBackground cellSize={44} maskFrom="top" />
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
+        <div className="grid items-start gap-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* left column — words */}
           <div className="min-w-0">
             <motion.p
