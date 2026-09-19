@@ -101,6 +101,13 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Admin studio calls must carry the passcode header — the API no longer
+  // trusts unauthenticated mutations.
+  const adminHeaders = (): Record<string, string> => {
+    const pass = localStorage.getItem('__admin_custom_passcode') || '';
+    return pass ? { 'X-Admin-Auth': pass } : {};
+  };
+
   const fetchAllData = async () => {
     try {
       const adminPass = localStorage.getItem('__admin_custom_passcode') || '';
@@ -110,7 +117,8 @@ export default function App() {
         fetch('/api/thoughts'),
         fetch('/api/skills'),
         fetch('/api/guestbook', { headers: adminPass ? { 'X-Admin-Auth': adminPass } : {} }),
-        fetch('/api/messages'),
+        // inbox is PII — only returned when the owner's passcode is present
+        fetch('/api/messages', { headers: adminPass ? { 'X-Admin-Auth': adminPass } : {} }),
       ]);
 
       const freshData: any = {};
@@ -191,7 +199,7 @@ export default function App() {
     const method = project.id ? 'PUT' : 'POST';
     const res = await fetch('/api/projects', {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
       body: JSON.stringify(project),
     });
     if (res.ok) fetchAllData();
@@ -200,7 +208,7 @@ export default function App() {
   const handleDeleteProject = async (id: number) => {
     const res = await fetch('/api/projects', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
       body: JSON.stringify({ id }),
     });
     if (res.ok) fetchAllData();
@@ -210,7 +218,7 @@ export default function App() {
     const method = thought.id ? 'PUT' : 'POST';
     const res = await fetch('/api/thoughts', {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
       body: JSON.stringify(thought),
     });
     if (res.ok) fetchAllData();
@@ -231,7 +239,7 @@ export default function App() {
   const handleDeleteThought = async (id: number) => {
     const res = await fetch('/api/thoughts', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
       body: JSON.stringify({ id }),
     });
     if (res.ok) fetchAllData();
@@ -241,7 +249,7 @@ export default function App() {
     const method = skill.id ? 'PUT' : 'POST';
     const res = await fetch('/api/skills', {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
       body: JSON.stringify(skill),
     });
     if (res.ok) fetchAllData();
@@ -250,7 +258,7 @@ export default function App() {
   const handleDeleteSkill = async (id: number) => {
     const res = await fetch('/api/skills', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
       body: JSON.stringify({ id }),
     });
     if (res.ok) fetchAllData();
@@ -293,7 +301,7 @@ export default function App() {
   const handleDeleteMessage = async (id: number) => {
     const res = await fetch('/api/messages', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
       body: JSON.stringify({ id }),
     });
     if (res.ok) setMessages(prev => prev.filter(m => m.id !== id));
@@ -357,6 +365,7 @@ export default function App() {
               onDeleteSkill={handleDeleteSkill}
               onDeleteGuestbook={handleDeleteGuestbook}
               onDeleteMessage={handleDeleteMessage}
+              onAdminVerified={fetchAllData}
               onClose={() => setIsAdminOpen(false)}
             />
           )}
