@@ -36,10 +36,9 @@ export const TextGenerateEffect = ({
         <motion.span
           key={word + idx}
           variants={{
-            hidden: { opacity: 0, y: 6, filter: 'blur(8px)' },
+            hidden: { opacity: 0, filter: 'blur(8px)' },
             visible: {
               opacity: 1,
-              y: 0,
               filter: 'blur(0px)',
               transition: { duration: 0.5, ease: 'easeOut' },
             },
