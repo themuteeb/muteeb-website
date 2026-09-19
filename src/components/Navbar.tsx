@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
+import { ThemePreset } from '../types';
 import {
   BookOpen,
   Code2,
@@ -25,7 +26,14 @@ interface NavbarProps {
 const SECTION_IDS = ['hero', 'work', 'now', 'stack', 'thoughts', 'guestbook', 'contact'];
 
 export const Navbar: React.FC<NavbarProps> = () => {
-  const { soundEnabled, toggleSound, playSound } = useTheme();
+  const { theme, setTheme, soundEnabled, toggleSound, playSound } = useTheme();
+
+  const themeOptions: { id: ThemePreset; name: string; color: string }[] = [
+    { id: 'neon', name: 'CYAN', color: 'bg-cyan-400' },
+    { id: 'lime', name: 'LIME', color: 'bg-lime-400' },
+    { id: 'coral', name: 'CORAL', color: 'bg-rose-500' },
+    { id: 'violet', name: 'VIOLET', color: 'bg-purple-500' },
+  ];
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
 
@@ -149,6 +157,20 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
       {/* right controls */}
       <div className="flex items-center gap-1">
+        {/* Theme Palette — 4 colour options (restored) */}
+        <div className="hidden sm:flex items-center gap-1 rounded-full border border-line bg-surface/80 p-1">
+          {themeOptions.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTheme(t.id)}
+              title={`Switch accent to ${t.name}`}
+              className={`h-5 w-5 rounded-full transition-transform ${t.color} ${
+                theme === t.id ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100 hover:scale-105'
+              }`}
+            />
+          ))}
+        </div>
+
         <button
           onClick={() => {
             toggleSound();
@@ -227,6 +249,21 @@ export const Navbar: React.FC<NavbarProps> = () => {
                   {item.label}
                 </motion.button>
               ))}
+              <div className="mt-1 flex items-center justify-between rounded-xl bg-surface px-3.5 py-3">
+                <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-ink-3">
+                  <span className="h-2 w-2 rounded-full bg-accent" /> accent
+                </span>
+                <div className="flex gap-2">
+                  {themeOptions.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setTheme(t.id)}
+                      className={`h-6 w-6 rounded-full ${t.color} ${theme === t.id ? 'ring-2 ring-white scale-110' : 'opacity-60'}`}
+                      title={t.name}
+                    />
+                  ))}
+                </div>
+              </div>
               <div className="mt-1 flex items-center justify-between rounded-xl bg-surface px-3.5 py-3">
                 <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-ink-3">
                   <Wrench className="h-3.5 w-3.5" />

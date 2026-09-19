@@ -232,13 +232,20 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
               </PointerHighlight>
             </motion.div>
 
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.06 }}
+              className="font-mono text-xs font-semibold uppercase tracking-[0.28em] text-ink-3"
+            >
+              hey, i&apos;m
+            </motion.p>
             <motion.h1
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.08 }}
-              className="text-[2.6rem] font-extrabold leading-[1.04] tracking-tight text-ink sm:text-6xl lg:text-7xl"
+              className="-mt-1 text-[2.6rem] font-extrabold leading-[1.04] tracking-tight text-ink sm:text-6xl lg:text-7xl"
             >
-              Hey — I&apos;m{' '}
               <CanvasText
                 text={profile?.full_name || 'Baba Muteeb'}
                 className="tracking-normal"
@@ -356,22 +363,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
         </div>
       </div>
 
-      {/* scroll hint */}
-      <motion.button
-        onClick={scrollToWork}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.6, duration: 0.8 }}
-        className="absolute bottom-7 left-1/2 z-10 hidden -translate-x-1/2 flex-col items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-ink-3 transition-colors hover:text-accent md:flex"
-      >
-        <span>scroll</span>
-        <motion.span
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <ArrowDown className="h-3.5 w-3.5" />
-        </motion.span>
-      </motion.button>
+
     </section>
   );
 };

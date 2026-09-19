@@ -1,12 +1,9 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { ThemePreset } from '../types';
 
-/**
- * Theme + sound context for muteeb.in
- * The visual accent is now a fixed part of the design system (code green
- * #22d472 on a near-black canvas), so this context keeps the interface
- * audio engine and exposes the shared accent classes.
- */
 interface ThemeContextType {
+  theme: ThemePreset;
+  setTheme: (theme: ThemePreset) => void;
   soundEnabled: boolean;
   toggleSound: () => void;
   playSound: (type?: 'click' | 'toggle' | 'submit' | 'hover') => void;
@@ -19,7 +16,17 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+/** 4 accent presets — restored from original site (mono kept for type compat but hidden from UI) */
+const THEME_COLORS: Record<ThemePreset, { accent: string; bright: string; deep: string }> = {
+  neon:   { accent: '#22d3ee', bright: '#67e8f9', deep: '#0891b2' }, // cyan-400
+  lime:   { accent: '#a3e635', bright: '#bef264', deep: '#65a30d' }, // lime-400
+  coral:  { accent: '#f43f5e', bright: '#fda4af', deep: '#be123c' }, // rose-500
+  violet: { accent: '#c084fc', bright: '#d8b4fe', deep: '#7e22ce' }, // purple-400
+  mono:   { accent: '#ffffff', bright: '#e5e5e5', deep: '#a1a1aa' },
+};
+
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [theme, setThemeState] = useState<ThemePreset>('neon');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
 
   // Audio synthesizer using Web Audio API for high-tech micro clicks
@@ -75,22 +82,82 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const setTheme = (newTheme: ThemePreset) => {
+    setThemeState(newTheme);
+    playSound('toggle');
+  };
+
   const toggleSound = () => {
     setSoundEnabled(prev => !prev);
   };
 
-  // Fixed code-green accent classes, shared across the app
-  const themeClasses = {
-    accentClass: 'text-accent',
-    bgAccentClass: 'bg-accent text-black',
-    borderAccentClass: 'border-accent',
-    glowAccentClass: 'shadow-[0_0_24px_rgba(34,212,114,0.35)]',
-    textAccentClass: 'text-accent',
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    // push accent colours into the design-system CSS variables so `text-accent` etc react
+    const c = THEME_COLORS[theme];
+    const root = document.documentElement;
+    root.style.setProperty('--color-accent', c.accent);
+    root.style.setProperty('--color-accent-bright', c.bright);
+    root.style.setProperty('--color-accent-deep', c.deep);
+    // also expose for glow helpers that use rgba
+    // store hex for potential rgba generation via CSS variables
+  }, [theme]);
+
+  // Style helper mapping for high contrast accents — keeps legacy `text-accent` usage working via CSS vars,
+  // but also provides Tailwind class fallback for components that use dynamic classes.
+  const getThemeClasses = () => {
+    switch (theme) {
+      case 'lime':
+        return {
+          accentClass: 'text-lime-400',
+          bgAccentClass: 'bg-lime-400 text-black',
+          borderAccentClass: 'border-lime-400',
+          glowAccentClass: 'shadow-[0_0_20px_rgba(163,230,53,0.4)]',
+          textAccentClass: 'text-lime-400',
+        };
+      case 'coral':
+        return {
+          accentClass: 'text-rose-500',
+          bgAccentClass: 'bg-rose-500 text-white',
+          borderAccentClass: 'border-rose-500',
+          glowAccentClass: 'shadow-[0_0_20px_rgba(244,63,94,0.4)]',
+          textAccentClass: 'text-rose-500',
+        };
+      case 'violet':
+        return {
+          accentClass: 'text-purple-400',
+          bgAccentClass: 'bg-purple-500 text-white',
+          borderAccentClass: 'border-purple-400',
+          glowAccentClass: 'shadow-[0_0_20px_rgba(192,132,252,0.4)]',
+          textAccentClass: 'text-purple-400',
+        };
+      case 'mono':
+        return {
+          accentClass: 'text-white',
+          bgAccentClass: 'bg-white text-black',
+          borderAccentClass: 'border-white',
+          glowAccentClass: 'shadow-[0_0_20px_rgba(255,255,255,0.3)]',
+          textAccentClass: 'text-white',
+        };
+      case 'neon':
+      default:
+        return {
+          accentClass: 'text-cyan-400',
+          bgAccentClass: 'bg-cyan-400 text-black',
+          borderAccentClass: 'border-cyan-400',
+          glowAccentClass: 'shadow-[0_0_20px_rgba(34,211,238,0.4)]',
+          textAccentClass: 'text-cyan-400',
+        };
+    }
   };
+
+  const themeClasses = getThemeClasses();
 
   return (
     <ThemeContext.Provider
       value={{
+        theme,
+        setTheme,
         soundEnabled,
         toggleSound,
         playSound,

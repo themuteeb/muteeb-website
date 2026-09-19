@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
@@ -314,9 +314,6 @@ export default function App() {
     }
   };
 
-  // thin green scroll-progress bar
-  const { scrollYProgress } = useScroll();
-  const scrollProgress = useSpring(scrollYProgress, { stiffness: 180, damping: 30, mass: 0.4 });
 
   return (
     <AuthProvider>
@@ -324,11 +321,6 @@ export default function App() {
         <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
           <AnimatePresence>{!booted && <BootSplash show={!booted} />}</AnimatePresence>
 
-          {/* scroll progress */}
-          <motion.div
-            style={{ scaleX: scrollProgress }}
-            className="fixed inset-x-0 top-0 z-[90] h-[2px] origin-left bg-gradient-to-r from-accent-deep via-accent to-accent-bright"
-          />
 
           <Navbar activeSection={activeSection} />
 
