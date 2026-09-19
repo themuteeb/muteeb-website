@@ -78,6 +78,6 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
     console.error('Thoughts API error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message, cause: err.cause?.code || err.cause?.message || null });
   }
 }

@@ -7,9 +7,17 @@ const supabase = createClient(
   {
     global: {
       fetch: async (url, options) => {
-        const res = await fetch(url, options);
-        if (!res.ok && res.status >= 500) triggerRestore();
-        return res;
+        try {
+          const res = await fetch(url, options);
+          if (!res.ok && res.status >= 500) triggerRestore();
+          return res;
+        } catch (err) {
+          // network-level failure (DNS / connection refused) — the database
+          // project may be paused or waking up; ask the restore service to
+          // bring it back before surfacing the error.
+          triggerRestore();
+          throw err;
+        }
       },
     },
   }
