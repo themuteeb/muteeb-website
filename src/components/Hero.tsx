@@ -9,6 +9,14 @@ import { PointerHighlight } from './ui/pointer-highlight';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { GridBackground } from './ui/grid-background';
 
+// helper to treat "nil" / "null" strings as missing
+const clean = (v: string | undefined | null, fallback: string) => {
+  if (!v) return fallback;
+  const s = v.trim().toLowerCase();
+  if (s === 'nil' || s === 'null' || s === 'undefined' || s === 'n/a' || s === '-') return fallback;
+  return v;
+};
+
 /* CanvasText palette for the hero name — site accent greens + terminal hues */
 const HERO_NAME_COLORS = [
   '#22d472',
@@ -32,9 +40,9 @@ type Token = { text: string; cls?: string };
 
 function useCodeTokens(profile: Profile | null): Token[] {
   return useMemo<Token[]>(() => {
-    const name = profile?.full_name || 'Baba Muteeb';
-    const loc = profile?.location || 'Srinagar, Kashmir';
-    const focus = profile?.typewriter_roles?.[0] || 'clean web applications';
+    const name = clean(profile?.full_name, 'Baba Muteeb');
+    const loc = clean(profile?.location, 'Srinagar, Kashmir');
+    const focus = clean(profile?.typewriter_roles?.[0], 'clean web applications');
     return [
       { text: '// muteeb.ts\n', cls: 'text-ink-3/80 italic' },
       { text: 'type', cls: 'text-accent font-semibold' },
@@ -227,7 +235,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
                 containerClassName="rounded-md"
               >
                 <span className="px-1 font-semibold tracking-wide text-ink-2">
-                  {profile?.location || 'muteeb.in // personal website'}
+                  {clean(profile?.location, 'muteeb.in // personal website')}
                 </span>
               </PointerHighlight>
             </motion.div>
@@ -247,7 +255,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
               className="-mt-1 text-[2.6rem] font-extrabold leading-[1.04] tracking-tight text-ink sm:text-6xl lg:text-7xl"
             >
               <CanvasText
-                text={profile?.full_name || 'Baba Muteeb'}
+                text={clean(profile?.full_name, 'Baba Muteeb')}
                 className="tracking-normal"
                 backgroundClassName="bg-canvas"
                 colors={HERO_NAME_COLORS}
