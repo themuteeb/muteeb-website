@@ -145,7 +145,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
               <div className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-6">
                 <div className="relative space-y-4 font-mono text-xs">
                   <div className="font-bold uppercase tracking-[0.2em] text-ink-3">
-                    {'// direct contact address'}
+                    {'// contact'}
                   </div>
                   <div className="flex items-center justify-between gap-2 rounded-xl border border-line bg-canvas p-3.5">
                     <span className="truncate font-bold tracking-wider text-ink">
