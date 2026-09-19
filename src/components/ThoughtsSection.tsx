@@ -15,6 +15,7 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
   const { playSound } = useTheme();
   const [selectedThought, setSelectedThought] = useState<Thought | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [committedSearch, setCommittedSearch] = useState('');
 
   // keep reader modal in sync when likes (or other fields) change in parent
   useEffect(() => {
@@ -25,7 +26,6 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
       }
     }
   }, [thoughts]);
-  const [committedSearch, setCommittedSearch] = useState('');
 
   const filtered = thoughts.filter((t) => {
     const q = committedSearch.trim().toLowerCase();
@@ -38,8 +38,10 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
   });
 
   const handleSearchSubmit = (value: string) => {
+    if (!value.trim()) return;
     playSound('submit');
-    setCommittedSearch(value);
+    setCommittedSearch(value.trim());
+    setSearchTerm('');
   };
 
   return (
@@ -69,9 +71,8 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
                 'Try “javascript”…',
                 'Try “life”…',
               ]}
-              value={searchTerm}
-              onChange={setSearchTerm}
-              onSubmit={handleSearchSubmit}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onSubmit={() => handleSearchSubmit(searchTerm)}
             />
             {committedSearch && (
               <button
