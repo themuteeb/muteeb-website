@@ -43,7 +43,10 @@ export const BootSplash = ({ show }: { show: boolean }) => {
         </div>
 
         <div className="mt-5 font-mono text-[10px] uppercase tracking-[0.3em] text-ink-3">
-          personal website of baba muteeb
+          welcome to{' '}
+          <a href="https://muteeb.in" className="text-accent underline decoration-accent/30 underline-offset-4 hover:text-accent-bright">
+            muteeb.in
+          </a>
         </div>
       </motion.div>
     </motion.div>
