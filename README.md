@@ -59,6 +59,41 @@ Supabase and is served through the serverless functions in `api/`. The secret ad
 studio is unchanged: open `/admin`, `#admin`, press `Ctrl/Cmd/Alt+Shift+A`, or type
 `muteeb` anywhere. Guestbook entries require admin approval before going public.
 
+## Security
+
+The site is protected in three layers:
+
+1. **Supabase RLS** — enabled on every table with no public policies, so the anon
+   key (held by the browser) can never read or write data directly.
+2. **`api/` serverless functions** — the only data gateway (service-role key).
+   Every mutation, every PII read (the messages inbox contains sender e-mails) and
+   every write to the public `images` bucket requires the `X-Admin-Auth` header
+   matching the `ADMIN_PASSWORD` env var (constant-time compare, fails closed when
+   the env var is unset). Public endpoints are read-only and return no secrets
+   (`admin_passcode` is stripped from every response).
+3. **Shared hardening helpers** (`api/_security.js`) — origin allowlist CORS
+   (never `*`, unknown origins get no headers / 403 preflight), input validation
+   (lengths, e-mail format, http(s)-only URLs, whitelisted visual options),
+   strict JSON body parsing, and 500s that never echo internals.
+
+Environment variables:
+
+| Var                    | Required | Notes                                        |
+| ---------------------- | -------- | -------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL` | yes  | Supabase project URL                         |
+| `SUPABASE_SERVICE_ROLE_KEY` | yes  | Used only inside `api/` functions            |
+| `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | yes | Browser (auth only) |
+| `ADMIN_PASSWORD`       | yes      | Admin studio passcode; all mutations 401 without it |
+| `CORS_ALLOWED_ORIGINS` | no       | Comma-separated extra exact origins (default: `https://muteeb.in`, localhost, `*.vercel.app`) |
+
+Security regression suite (25 tests, runs the real API handlers in-process
+against an in-memory Supabase — no network, no live keys):
+
+```bash
+npm ci
+node security-recovery/run-security-tests.mjs   # expect: 25 passed
+```
+
 ## Structure
 
 | Section             | Component                |

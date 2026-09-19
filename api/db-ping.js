@@ -1,9 +1,22 @@
+import { setupCors, isAdminRequest } from './_security.js';
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 
+/**
+ * Owner-only diagnostics for the Supabase connection.
+ * (It reports which env vars are configured, so it must not be public.)
+ */
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  if (req.method === 'OPTIONS') return res.status(204).end();
+  const corsOk = setupCors(req, res);
+  if (req.method === 'OPTIONS') {
+    return corsOk ? res.status(204).end() : res.status(403).end();
+  }
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+  if (!isAdminRequest(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   // diagnostics only — never expose the full URL or project ref
   const urlInfo = {
@@ -33,14 +46,11 @@ export default async function handler(req, res) {
       restProbe: { status: probe.status, statusText: probe.statusText },
     });
   } catch (err) {
+    // Keep the raw error out of the public response; owner sees enough.
     return res.status(200).json({
       ok: false,
       ...urlInfo,
-      restProbe: {
-        error: err.message,
-        causeCode: err.cause?.code || null,
-        causeMessage: err.cause?.message || null,
-      },
+      restProbe: { error: 'probe failed', causeCode: err.cause?.code || null },
     });
   }
 }
