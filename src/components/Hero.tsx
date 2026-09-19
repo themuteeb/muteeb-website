@@ -5,9 +5,16 @@ import { Profile } from '../types';
 import { ArrowDown, Github, Instagram, MapPin, Sparkles } from 'lucide-react';
 import { FlipWords } from './ui/flip-words';
 import { CanvasText } from './ui/canvas-text';
-import { PointerHighlight } from './ui/pointer-highlight';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { GridBackground } from './ui/grid-background';
+
+// helper to treat "nil" / "null" strings as missing
+const clean = (v: string | undefined | null, fallback: string) => {
+  if (!v) return fallback;
+  const s = v.trim().toLowerCase();
+  if (s === 'nil' || s === 'null' || s === 'undefined' || s === 'n/a' || s === '-') return fallback;
+  return v;
+};
 
 /* CanvasText palette for the hero name — site accent greens + terminal hues */
 const HERO_NAME_COLORS = [
@@ -32,9 +39,9 @@ type Token = { text: string; cls?: string };
 
 function useCodeTokens(profile: Profile | null): Token[] {
   return useMemo<Token[]>(() => {
-    const name = profile?.full_name || 'Baba Muteeb';
-    const loc = profile?.location || 'Srinagar, Kashmir';
-    const focus = profile?.typewriter_roles?.[0] || 'clean web applications';
+    const name = clean(profile?.full_name, 'Baba Muteeb');
+    const loc = clean(profile?.location, 'Srinagar, Kashmir');
+    const focus = clean(profile?.typewriter_roles?.[0], 'clean web applications');
     return [
       { text: '// muteeb.ts\n', cls: 'text-ink-3/80 italic' },
       { text: 'type', cls: 'text-accent font-semibold' },
@@ -207,7 +214,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
   return (
     <section
       id="hero"
-      className="relative flex min-h-screen flex-col justify-center overflow-hidden border-b border-line bg-canvas pb-24 pt-32"
+      className="relative flex min-h-screen flex-col justify-center overflow-hidden border-b border-line bg-canvas pb-16 pt-20 lg:pt-24"
     >
       <GridBackground cellSize={44} maskFrom="top" />
 
@@ -215,23 +222,6 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
         <div className="grid items-center gap-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           {/* left column — words */}
           <div className="min-w-0">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="mb-7 flex flex-wrap items-center gap-3 font-mono text-xs text-ink-3"
-            >
-              <PointerHighlight
-                rectangleClassName="border-accent/40 bg-accent/10"
-                rectangleSize={{ width: '100%', height: '1.6em' }}
-                containerClassName="rounded-md"
-              >
-                <span className="px-1 font-semibold tracking-wide text-ink-2">
-                  {profile?.location || 'muteeb.in // personal website'}
-                </span>
-              </PointerHighlight>
-            </motion.div>
-
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -247,7 +237,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
               className="-mt-1 text-[2.6rem] font-extrabold leading-[1.04] tracking-tight text-ink sm:text-6xl lg:text-7xl"
             >
               <CanvasText
-                text={profile?.full_name || 'Baba Muteeb'}
+                text={clean(profile?.full_name, 'Baba Muteeb')}
                 className="tracking-normal"
                 backgroundClassName="bg-canvas"
                 colors={HERO_NAME_COLORS}

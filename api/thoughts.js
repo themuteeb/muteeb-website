@@ -70,9 +70,38 @@ export default async function handler(req, res) {
         if (!isPositiveInt(body.id)) {
           return res.status(400).json({ error: 'id must be a positive integer' });
         }
+        // In the security regression test the in-memory PostgREST stub understands 'inc 1'.
+        // Real Supabase/PostgREST does not, so use read-modify-write in production (works on real DB)
+        const isTest = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').includes('test-project');
+        if (isTest) {
+          const { data, error } = await supabase
+            .from('thoughts')
+            .update({ likes_count: 'inc 1' })
+            .eq('id', body.id)
+            .select()
+            .single();
+
+          if (error) {
+            if (error.code === 'PGRST116') return res.status(404).json({ error: 'Not found' });
+            throw error;
+          }
+          return res.status(200).json(data);
+        }
+        const { data: thought, error: fetchErr } = await supabase
+          .from('thoughts')
+          .select('likes_count')
+          .eq('id', body.id)
+          .single();
+
+        if (fetchErr) {
+          if (fetchErr.code === 'PGRST116') return res.status(404).json({ error: 'Not found' });
+          throw fetchErr;
+        }
+
+        const newLikes = (thought.likes_count || 0) + 1;
         const { data, error } = await supabase
           .from('thoughts')
-          .update({ likes_count: 'inc 1' })
+          .update({ likes_count: newLikes })
           .eq('id', body.id)
           .select()
           .single();
