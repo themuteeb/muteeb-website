@@ -1,10 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { GridBackground } from './ui/grid-background';
+import { LoaderTwo } from './ui/loader';
 
 /**
  * Boot / loading experience for muteeb.in —
- * simple logo + domain with a quick load bar.
+ * simple logo + domain with an Aceternity loader.
  */
 export const BootSplash = ({ show }: { show: boolean }) => {
   return (
@@ -36,14 +37,9 @@ export const BootSplash = ({ show }: { show: boolean }) => {
           <span className="text-accent">$</span> muteeb.in
         </div>
 
-        {/* quick progress line */}
-        <div className="mt-6 h-[3px] w-44 overflow-hidden rounded-full bg-surface-2">
-          <motion.div
-            initial={{ width: '4%' }}
-            animate={{ width: '100%' }}
-            transition={{ duration: 0.9, ease: [0.3, 0.6, 0.3, 1] }}
-            className="h-full rounded-full bg-accent shadow-[0_0_14px_rgba(34,212,114,0.7)]"
-          />
+        {/* loader */}
+        <div className="mt-6 flex justify-center">
+          <LoaderTwo />
         </div>
 
         <div className="mt-5 font-mono text-[10px] uppercase tracking-[0.3em] text-ink-3">
