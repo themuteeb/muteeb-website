@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { Skill } from '../types';
 import { Code2 } from 'lucide-react';
-import { GlowingEffect } from './ui/glowing-effect';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 
 interface TechMatrixProps {
@@ -50,8 +49,6 @@ export const TechMatrix: React.FC<TechMatrixProps> = ({ skills }) => {
                 onMouseEnter={() => playSound('hover')}
                 className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-line bg-surface p-6 transition-all duration-300 hover:-translate-y-1 hover:border-line-2"
               >
-                <GlowingEffect spread={26} borderRadius={16} />
-
                 <div className="relative mb-5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Code2 className="h-4 w-4 text-accent" />

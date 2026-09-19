@@ -22,6 +22,8 @@ interface AdminModalProps {
   onDeleteSkill: (id: number) => Promise<void>;
   onDeleteGuestbook: (id: number) => Promise<void>;
   onDeleteMessage: (id: number) => Promise<void>;
+  /** Called once the passcode verifies — lets the app re-fetch admin data. */
+  onAdminVerified?: () => void;
   onClose: () => void;
 }
 
@@ -41,6 +43,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onDeleteSkill,
   onDeleteGuestbook,
   onDeleteMessage,
+  onAdminVerified,
   onClose,
 }) => {
   const { bgAccentClass, borderAccentClass, textAccentClass, playSound } = useTheme();
@@ -165,6 +168,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       localStorage.removeItem('__sec_failed_attempts');
       localStorage.removeItem('__sec_lockout_until');
       playSound('submit');
+      // Re-fetch admin-gated data (messages inbox, pending guestbook, etc.)
+      onAdminVerified?.();
     } else {
       const newFailed = failedAttempts + 1;
       setFailedAttempts(newFailed);

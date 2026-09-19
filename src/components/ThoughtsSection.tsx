@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { Thought } from '../types';
 import { ArrowRight, Clock, Heart } from 'lucide-react';
-import { GlowingEffect } from './ui/glowing-effect';
 import { PlaceholdersAndVanishInput } from './ui/placeholders-and-vanish-input';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 
@@ -95,8 +94,6 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
                 transition={{ duration: 0.5, delay: (idx % 2) * 0.08 }}
                 className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-line bg-surface p-6 transition-all duration-300 hover:-translate-y-1 hover:border-line-2"
               >
-                <GlowingEffect spread={26} borderRadius={16} />
-
                 <div className="relative">
                   <div className="mb-3 flex items-center justify-between font-mono text-[11px] text-ink-3">
                     <span className="flex items-center gap-1.5">
