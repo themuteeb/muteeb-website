@@ -25,7 +25,6 @@ display/UI and **JetBrains Mono** for code, labels and terminal chrome.
 | PointerHighlight             | `Hero.tsx` — "Baba Muteeb" and the location chip          |
 | FlipWords                    | `Hero.tsx` — rotating roles line                          |
 | TextGenerateEffect           | Section intros (hero bio, projects, thoughts…)            |
-| GlowingEffect                | Cards across projects / now / stack / guestbook / contact |
 | GridBackground               | Hero + contact sections                                   |
 | CardStack                    | Featured projects — swipe/tap the deck                    |
 | PlaceholdersAndVanishInput   | Thoughts search                                           |

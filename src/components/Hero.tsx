@@ -7,7 +7,6 @@ import { FlipWords } from './ui/flip-words';
 import { PointerHighlight } from './ui/pointer-highlight';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { GridBackground } from './ui/grid-background';
-import { GlowingEffect } from './ui/glowing-effect';
 
 interface HeroProps {
   profile: Profile | null;
@@ -130,8 +129,6 @@ const HeroTerminal = ({ profile }: { profile: Profile | null }) => {
       <div className="absolute -inset-6 rounded-[2rem] bg-accent/[0.06] blur-3xl" />
 
       <div className="group relative overflow-hidden rounded-2xl border border-line bg-surface/90 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] backdrop-blur-sm">
-        <GlowingEffect spread={30} borderRadius={16} />
-
         {/* terminal chrome */}
         <div className="flex items-center justify-between border-b border-line bg-surface-2/70 px-4 py-3">
           <div className="flex items-center gap-2">
