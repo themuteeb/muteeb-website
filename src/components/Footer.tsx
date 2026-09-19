@@ -47,7 +47,7 @@ export const Footer: React.FC<FooterProps> = ({ profile }) => {
           </div>
           <p className="max-w-xl font-sans text-[13px] leading-relaxed text-ink-3">
             {profile?.bio ||
-              'I make things for the internet because it feels like magic you can actually use.'}
+              'Full-stack developer building clean, fast web applications with TypeScript, React, and Supabase.'}
           </p>
         </div>
 
@@ -57,7 +57,7 @@ export const Footer: React.FC<FooterProps> = ({ profile }) => {
             reserved
           </div>
           <div className="flex items-center gap-1.5 uppercase tracking-wider">
-            built with <Heart className="h-3 w-3 fill-accent text-accent" /> and too much chai
+            built with <Heart className="h-3 w-3 fill-accent text-accent" /> by Baba Muteeb
           </div>
         </div>
       </div>
