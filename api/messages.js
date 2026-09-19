@@ -1,13 +1,22 @@
 import supabase from './db-client.js';
+import {
+  setupCors, isAdminRequest, parseBody, cleanText, isValidEmail, isPositiveInt, sendServerError,
+} from './_security.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (req.method === 'OPTIONS') return res.status(204).end();
+  const corsOk = setupCors(req, res);
+  if (req.method === 'OPTIONS') {
+    return corsOk ? res.status(204).end() : res.status(403).end();
+  }
 
   try {
     if (req.method === 'GET') {
+      // The inbox contains sender e-mail addresses (PII). It is ONLY
+      // readable by the site owner — the public page never loads it.
+      if (!isAdminRequest(req)) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -18,19 +27,36 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { sender_name, sender_email, subject, body } = req.body;
-      if (!sender_name || !sender_email || !body) {
-        return res.status(400).json({ error: 'Name, email and message body are required' });
+      // Public contact form.
+      const { ok, status, error: bodyError, body } = parseBody(req);
+      if (!ok) return res.status(status).json({ error: bodyError });
+
+      const sender_name = cleanText(body.sender_name, 100);
+      if (sender_name === null) {
+        return res.status(400).json({ error: 'sender_name is required (max 100 chars)' });
+      }
+      if (!isValidEmail(body.sender_email)) {
+        return res.status(400).json({ error: 'sender_email must be a valid e-mail address' });
+      }
+      const bodyText = cleanText(body.body, 5000);
+      if (bodyText === null) {
+        return res.status(400).json({ error: 'body is required (max 5000 chars)' });
+      }
+      const subject = body.subject === undefined
+        ? 'Portfolio Contact Inquiry'
+        : cleanText(body.subject, 200);
+      if (subject === null) {
+        return res.status(400).json({ error: 'subject must be at most 200 chars' });
       }
 
       const { data, error } = await supabase
         .from('messages')
         .insert([{
           sender_name,
-          sender_email,
-          subject: subject || 'Portfolio Contact Inquiry',
-          body,
-          read_status: false
+          sender_email: body.sender_email.trim(),
+          subject,
+          body: bodyText,
+          read_status: false,
         }])
         .select()
         .single();
@@ -40,19 +66,29 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'DELETE') {
-      const { id } = req.body || req.query;
-      const { error } = await supabase
+      // Deleting inbox messages is an owner operation.
+      if (!isAdminRequest(req)) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { ok, status, error: bodyError, body } = parseBody(req);
+      if (!ok) return res.status(status).json({ error: bodyError });
+
+      if (!isPositiveInt(body.id)) {
+        return res.status(400).json({ error: 'id must be a positive integer' });
+      }
+
+      const { error: dbError } = await supabase
         .from('messages')
         .delete()
-        .eq('id', id);
+        .eq('id', body.id);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
       return res.status(200).json({ ok: true });
     }
 
     res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
-    console.error('Messages API error:', err);
-    res.status(500).json({ error: err.message, cause: err.cause?.code || err.cause?.message || null });
+    sendServerError(res, err);
   }
 }
