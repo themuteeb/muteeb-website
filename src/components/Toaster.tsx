@@ -32,21 +32,18 @@ export const Toaster: React.FC<ToasterProps> = ({
     success: {
       icon: CheckCircle2,
       borderColor: 'border-emerald-500/70',
-      glow: 'shadow-[0_0_32px_rgba(16,185,129,0.22)]',
       iconColor: 'text-emerald-400',
       progressBar: 'bg-emerald-500',
     },
     error: {
       icon: XCircle,
       borderColor: 'border-rose-500/70',
-      glow: 'shadow-[0_0_32px_rgba(244,63,94,0.22)]',
       iconColor: 'text-rose-400',
       progressBar: 'bg-rose-500',
     },
     warning: {
       icon: AlertTriangle,
       borderColor: 'border-amber-500/70',
-      glow: 'shadow-[0_0_32px_rgba(245,158,11,0.22)]',
       iconColor: 'text-amber-400',
       progressBar: 'bg-amber-500',
     },
@@ -58,7 +55,7 @@ export const Toaster: React.FC<ToasterProps> = ({
   return (
     <div className="animate-slideInRight pointer-events-auto fixed right-3 top-20 z-[100] w-[calc(100vw-1.5rem)] max-w-[280px] sm:right-6 sm:top-24 sm:w-96 sm:max-w-sm">
       <div
-        className={`relative overflow-hidden rounded-2xl border bg-surface/95 p-4 backdrop-blur-xl ${c.borderColor} ${c.glow}`}
+        className={`relative overflow-hidden rounded-2xl border bg-surface/95 p-4 backdrop-blur-xl ${c.borderColor}`}
       >
         <div className="flex items-start gap-3">
           <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${c.iconColor}`} />

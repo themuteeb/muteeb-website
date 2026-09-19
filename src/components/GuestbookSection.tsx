@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { GuestbookEntry } from '../types';
-import { BadgeCheck, Send, ShieldAlert } from 'lucide-react';
+import { BadgeCheck, Send, ShieldAlert, User } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
 import { TextGenerateEffect } from './ui/text-generate-effect';
@@ -250,11 +250,10 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                       <div className="relative mb-2.5 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2.5">
                           <div
-                            className={`flex h-9 w-9 items-center justify-center rounded-full border font-mono text-xs font-bold ${
-                              AVATAR_STYLES[entry.avatar_color] || AVATAR_STYLES.cyan
-                            }`}
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-zinc-800 text-zinc-400"
+                            aria-hidden
                           >
-                            {entry.name.charAt(0).toUpperCase()}
+                            <User className="h-5 w-5" strokeWidth={1.8} />
                           </div>
                           <div>
                             <span className="block font-mono text-sm font-bold leading-tight text-ink">
