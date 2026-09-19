@@ -24,38 +24,57 @@ function useCodeTokens(profile: Profile | null): Token[] {
   return useMemo<Token[]>(() => {
     const name = profile?.full_name || 'Baba Muteeb';
     const loc = profile?.location || 'Srinagar, Kashmir';
-    const role = profile?.typewriter_roles?.[0] || 'student & night coder';
+    const focus = profile?.typewriter_roles?.[0] || 'clean web applications';
     return [
-      { text: '// muteeb.ts — the human behind the domain\n', cls: 'text-ink-3/80 italic' },
-      { text: 'import', cls: 'text-accent font-semibold' },
-      { text: ' { ' },
-      { text: 'Developer', cls: 'text-[#6ee7ff]' },
-      { text: ' } ' },
-      { text: 'from', cls: 'text-accent font-semibold' },
+      { text: '// muteeb.ts\n', cls: 'text-ink-3/80 italic' },
+      { text: 'type', cls: 'text-accent font-semibold' },
       { text: ' ' },
-      { text: "'life'", cls: 'text-[#f5c97b]' },
+      { text: 'Stack', cls: 'text-[#6ee7ff]' },
+      { text: ' = ' },
+      { text: "'TypeScript'", cls: 'text-[#f5c97b]' },
+      { text: ' | ' },
+      { text: "'React'", cls: 'text-[#f5c97b]' },
+      { text: ' | ' },
+      { text: "'Supabase'", cls: 'text-[#f5c97b]' },
       { text: ';\n\n' },
+      { text: 'interface', cls: 'text-accent font-semibold' },
+      { text: ' ' },
+      { text: 'Developer', cls: 'text-[#6ee7ff]' },
+      { text: ' {\n' },
+      { text: '  name' },
+      { text: ': ' },
+      { text: 'string', cls: 'text-[#6ee7ff]' },
+      { text: ';\n' },
+      { text: '  location' },
+      { text: ': ' },
+      { text: 'string', cls: 'text-[#6ee7ff]' },
+      { text: ';\n' },
+      { text: '  stack' },
+      { text: ': ' },
+      { text: 'Stack', cls: 'text-[#6ee7ff]' },
+      { text: '[];\n' },
+      { text: '  focus' },
+      { text: ': ' },
+      { text: 'string', cls: 'text-[#6ee7ff]' },
+      { text: ';\n' },
+      { text: '  openToWork' },
+      { text: ': ' },
+      { text: 'boolean', cls: 'text-[#6ee7ff]' },
+      { text: ';\n' },
+      { text: '}\n\n' },
       { text: 'const', cls: 'text-accent font-semibold' },
       { text: ' muteeb: ' },
       { text: 'Developer', cls: 'text-[#6ee7ff]' },
       { text: ' = {\n' },
-      { text: '  name', cls: 'text-ink' },
+      { text: '  name' },
       { text: ': ' },
       { text: `'${name}'`, cls: 'text-[#f5c97b]' },
       { text: ',\n' },
-      { text: '  domain', cls: 'text-ink' },
-      { text: ': ' },
-      { text: "'muteeb.in'", cls: 'text-[#f5c97b]' },
-      { text: ',\n' },
-      { text: '  role', cls: 'text-ink' },
-      { text: ': ' },
-      { text: `'${role.toLowerCase()}'`, cls: 'text-[#f5c97b]' },
-      { text: ',\n' },
-      { text: '  location', cls: 'text-ink' },
+      { text: '  location' },
       { text: ': ' },
       { text: `'${loc}'`, cls: 'text-[#f5c97b]' },
       { text: ',\n' },
-      { text: '  stack', cls: 'text-ink' },
+      { text: '  stack' },
       { text: ': [' },
       { text: "'TypeScript'", cls: 'text-[#f5c97b]' },
       { text: ', ' },
@@ -63,21 +82,17 @@ function useCodeTokens(profile: Profile | null): Token[] {
       { text: ', ' },
       { text: "'Supabase'", cls: 'text-[#f5c97b]' },
       { text: '],\n' },
-      { text: '  coffee', cls: 'text-ink' },
+      { text: '  focus' },
       { text: ': ' },
-      { text: 'Infinity', cls: 'text-[#6ee7ff]' },
+      { text: `'${focus.toLowerCase()}'`, cls: 'text-[#f5c97b]' },
       { text: ',\n' },
-      { text: '  ship', cls: 'text-ink' },
-      { text: '() ' },
-      { text: '=>', cls: 'text-accent font-semibold' },
-      { text: ' ' },
-      { text: "'magic you can actually use'", cls: 'text-[#f5c97b]' },
+      { text: '  openToWork' },
+      { text: ': ' },
+      { text: 'true', cls: 'text-[#6ee7ff]' },
       { text: ',\n' },
       { text: '};\n\n' },
       { text: 'export default', cls: 'text-accent font-semibold' },
-      { text: ' muteeb; ' },
-      { text: '// still compiling…', cls: 'text-ink-3/80 italic' },
-      { text: '\n' },
+      { text: ' muteeb;\n' },
     ];
   }, [profile]);
 }
@@ -144,10 +159,7 @@ const HeroTerminal = ({ profile }: { profile: Profile | null }) => {
             <span className="text-ink-3/60">·</span>
             <span>muteeb.ts</span>
           </div>
-          <div className="flex items-center gap-1.5 font-mono text-[10px] text-ink-3">
-            <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-accent" />
-            live
-          </div>
+          <div className="w-[52px]" aria-hidden="true" />
         </div>
 
         {/* code body */}
@@ -157,18 +169,6 @@ const HeroTerminal = ({ profile }: { profile: Profile | null }) => {
           </pre>
         </div>
       </div>
-
-      {/* floating commit chip */}
-      <motion.div
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-        className="absolute -bottom-5 -left-3 flex items-center gap-2 rounded-xl border border-line bg-surface/95 px-3.5 py-2.5 font-mono text-[10.5px] text-ink-2 shadow-xl backdrop-blur-md sm:-left-8"
-      >
-        <span className="text-accent">✓</span>
-        <span>
-          git commit -m <span className="text-[#f5c97b]">"still learning"</span>
-        </span>
-      </motion.div>
     </motion.div>
   );
 };
@@ -181,11 +181,9 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
   const { playSound } = useTheme();
 
   const defaultRoles = [
-    'internet things',
-    'clean interfaces',
-    'small useful tools',
-    'weird side projects',
-    'stuff that ships',
+    'clean web applications',
+    'modern user interfaces',
+    'developer tools',
   ];
   const roles =
     profile?.typewriter_roles && profile.typewriter_roles.length > 0
@@ -215,10 +213,6 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
               transition={{ duration: 0.5 }}
               className="mb-7 flex flex-wrap items-center gap-3 font-mono text-xs text-ink-3"
             >
-              <span className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5">
-                <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-accent" />
-                <span className="text-accent">online</span>
-              </span>
               <PointerHighlight
                 rectangleClassName="border-accent/40 bg-accent/10"
                 rectangleSize={{ width: '100%', height: '1.6em' }}
@@ -266,7 +260,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
             <TextGenerateEffect
               words={
                 profile?.title ||
-                'I make things for the internet because it feels like magic you can actually use.'
+                'Full-stack developer building clean, fast web applications with TypeScript, React, and Supabase.'
               }
               delay={0.55}
               className="mt-6 max-w-xl text-[15px] leading-relaxed text-ink-3 sm:text-base"
@@ -348,7 +342,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
             initial={{ opacity: 0, y: 40, rotate: 1.5 }}
             animate={{ opacity: 1, y: 0, rotate: 0 }}
             transition={{ duration: 0.8, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="relative mx-auto w-full min-w-0 max-w-xl pb-8 lg:max-w-none"
+            className="relative mx-auto w-full min-w-0 max-w-xl lg:max-w-none"
           >
             <HeroTerminal profile={profile} />
           </motion.div>

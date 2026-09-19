@@ -91,7 +91,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   }, [isLockedOut, lockoutUntil]);
 
   const [profName, setProfName] = useState(profile?.full_name || 'BABA MUTEEB');
-  const [profTitle, setProfTitle] = useState(profile?.title || 'I make things for the internet because it feels like magic you can actually use.');
+  const [profTitle, setProfTitle] = useState(profile?.title || 'Full-stack developer building clean, fast web applications with TypeScript, React, and Supabase.');
   const [profBio, setProfBio] = useState(profile?.bio || '');
   const [profHeadline, setProfHeadline] = useState(profile?.headline || '');
   const [profLoc, setProfLoc] = useState(profile?.location || 'MUTEEB.IN // PERSONAL WEBSITE');

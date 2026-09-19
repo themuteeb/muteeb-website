@@ -48,9 +48,9 @@ export default function App() {
   const [activeSection] = useState('hero');
   const [booted, setBooted] = useState(false);
 
-  // boot splash: show while the first data load runs (max ~3s)
+  // boot splash: show while the first data load runs
   useEffect(() => {
-    const safety = setTimeout(() => setBooted(true), 3200);
+    const safety = setTimeout(() => setBooted(true), 1200);
     return () => clearTimeout(safety);
   }, []);
 
