@@ -16,7 +16,6 @@ import {
   Star,
   Zap,
 } from 'lucide-react';
-import { GlowingEffect } from './ui/glowing-effect';
 
 interface NowSectionProps {
   profile: Profile | null;
@@ -83,7 +82,6 @@ export const NowSection: React.FC<NowSectionProps> = ({ profile }) => {
                     transition={{ duration: 0.5, delay: (idx % 2) * 0.1 }}
                     className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-6 transition-all duration-300 hover:-translate-y-1 hover:border-line-2"
                   >
-                    <GlowingEffect spread={26} borderRadius={16} />
                     <div className="relative flex items-center gap-3.5">
                       <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-accent/25 bg-accent/10 text-accent transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(34,212,114,0.35)]">
                         <Icon className="h-5 w-5" />
@@ -126,7 +124,6 @@ export const NowSection: React.FC<NowSectionProps> = ({ profile }) => {
                     onMouseEnter={() => playSound('hover')}
                     className="group relative flex items-center gap-3.5 overflow-hidden rounded-2xl border border-line bg-surface p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_0_24px_rgba(34,212,114,0.12)]"
                   >
-                    <GlowingEffect spread={22} borderRadius={16} glow={false} />
                     <Icon className="relative h-5 w-5 shrink-0 text-accent" />
                     <span className="relative font-mono text-[11px] font-semibold uppercase leading-snug tracking-wide text-ink-2">
                       {fact.text}

@@ -4,7 +4,6 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Project } from '../types';
 import { ExternalLink, Eye, Hand, Star } from 'lucide-react';
 import { CardStack } from './ui/card-stack';
-import { GlowingEffect } from './ui/glowing-effect';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 
 interface ProjectsProps {
@@ -127,8 +126,6 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                 transition={{ duration: 0.5, delay: (idx % 3) * 0.08 }}
                 className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-line bg-surface transition-all duration-300 hover:-translate-y-1 hover:border-line-2 hover:shadow-[0_20px_60px_-16px_rgba(0,0,0,0.9)]"
               >
-                <GlowingEffect spread={26} borderRadius={16} />
-
                 {/* image */}
                 <div className="relative h-52 overflow-hidden border-b border-line bg-surface-2">
                   <img
@@ -278,7 +275,6 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                           key={k}
                           className="group relative overflow-hidden rounded-xl border border-line bg-canvas p-3.5"
                         >
-                          <GlowingEffect spread={30} borderRadius={12} />
                           <div className="text-[10px] uppercase text-ink-3">{k}</div>
                           <div className="mt-0.5 text-lg font-extrabold text-accent">
                             {v}
@@ -342,8 +338,6 @@ const FeaturedProjectCard = ({
 
   return (
     <div className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_30px_70px_-20px_rgba(0,0,0,0.9)]">
-      <GlowingEffect spread={28} borderRadius={16} />
-
       <div className="relative h-44 shrink-0 overflow-hidden border-b border-line bg-surface-2 sm:h-48">
         <img
           src={

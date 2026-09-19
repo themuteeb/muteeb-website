@@ -5,7 +5,6 @@ import { GuestbookEntry } from '../types';
 import { BadgeCheck, Send, ShieldAlert } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
-import { GlowingEffect } from './ui/glowing-effect';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 
 interface GuestbookProps {
@@ -133,8 +132,6 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                 onSubmit={handleSubmit}
                 className="group relative space-y-4 overflow-hidden rounded-2xl border border-line bg-surface p-6"
               >
-                <GlowingEffect spread={24} borderRadius={16} />
-
                 <div className="relative">
                   <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
                     your name *
@@ -250,8 +247,6 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                       transition={{ duration: 0.4, delay: Math.min(idx, 5) * 0.05 }}
                       className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-5 transition-all duration-300 hover:border-line-2"
                     >
-                      <GlowingEffect spread={20} borderRadius={16} glow={false} />
-
                       <div className="relative mb-2.5 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2.5">
                           <div

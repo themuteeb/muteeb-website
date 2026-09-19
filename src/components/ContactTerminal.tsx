@@ -4,7 +4,6 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Copy, Instagram, Send, Terminal } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
-import { GlowingEffect } from './ui/glowing-effect';
 import { GridBackground } from './ui/grid-background';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 
@@ -144,8 +143,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
 
               {/* email card */}
               <div className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-6">
-                <GlowingEffect spread={28} borderRadius={16} />
-
                 <div className="relative space-y-4 font-mono text-xs">
                   <div className="font-bold uppercase tracking-[0.2em] text-ink-3">
                     {'// direct contact address'}
@@ -189,8 +186,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 className="group relative overflow-hidden rounded-2xl border border-line bg-surface/95 shadow-[0_30px_80px_-24px_rgba(0,0,0,0.9)]"
               >
-                <GlowingEffect spread={30} borderRadius={16} />
-
                 <div className="relative flex items-center justify-between border-b border-line bg-surface-2/60 px-5 py-3.5">
                   <div className="flex items-center gap-2.5">
                     <Terminal className="h-4 w-4 text-accent" />

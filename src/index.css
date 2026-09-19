@@ -29,18 +29,12 @@
 
   /* motion */
   --animate-blink: blink 1.1s steps(2, start) infinite;
-  --animate-glow-travel: glow-travel 7s linear infinite;
   --animate-float-slow: float-slow 7s ease-in-out infinite;
   --animate-pulse-dot: pulse-dot 2.2s ease-in-out infinite;
 
   @keyframes blink {
     50% {
       opacity: 0;
-    }
-  }
-  @keyframes glow-travel {
-    to {
-      stroke-dashoffset: -100;
     }
   }
   @keyframes float-slow {
