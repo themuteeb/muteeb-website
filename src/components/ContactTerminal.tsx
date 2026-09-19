@@ -5,6 +5,7 @@ import { Copy, Instagram, Send, Terminal } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
 import { GridBackground } from './ui/grid-background';
+import { PlaceholdersAndVanishInput } from './ui/placeholders-and-vanish-input';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 
 interface ContactTerminalProps {
@@ -26,6 +27,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
   const [name, setName] = useState('');
   const [senderEmail, setSenderEmail] = useState('');
   const [body, setBody] = useState('');
+  const [quickValue, setQuickValue] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending'>('idle');
   const [lastSentTime, setLastSentTime] = useState(0);
 
@@ -108,6 +110,23 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
     showToaster('success', 'EMAIL COPIED', `${email || 'hello@muteeb.in'} copied to clipboard.`);
   };
 
+  const handleQuickVanishSubmit = (value: string) => {
+    const clean = sanitizeInput(value, 1000).trim();
+
+    if (!clean) {
+      showToaster('warning', 'EMPTY PING', 'Type something first — then watch it vanish.');
+      return;
+    }
+
+    playSound('submit');
+    setBody((prev) => (prev.trim() ? `${prev.trim()}\n\n${clean}` : clean));
+    showToaster(
+      'success',
+      'PING STAGED',
+      'Dropped into the message field — add your name + email and hit send.'
+    );
+  };
+
   return (
     <>
       <Toaster
@@ -145,7 +164,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
               <div className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-6">
                 <div className="relative space-y-4 font-mono text-xs">
                   <div className="font-bold uppercase tracking-[0.2em] text-ink-3">
-                    {'// direct contact address'}
+                    {'// contact'}
                   </div>
                   <div className="flex items-center justify-between gap-2 rounded-xl border border-line bg-canvas p-3.5">
                     <span className="truncate font-bold tracking-wider text-ink">
@@ -173,6 +192,32 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                       <Instagram className="h-3.5 w-3.5" /> @mr_muteeb_
                     </a>
                   </div>
+                </div>
+              </div>
+
+              {/* quick ping card — vanish input */}
+              <div className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-6">
+                <div className="relative space-y-4 font-mono text-xs">
+                  <div className="font-bold uppercase tracking-[0.2em] text-ink-3">
+                    {'// quick ping — try the vanish effect'}
+                  </div>
+
+                  <PlaceholdersAndVanishInput
+                    placeholders={[
+                      'Say hello…',
+                      'Let’s collaborate on…',
+                      'Quick idea for muteeb.in…',
+                      'Ping me about…',
+                    ]}
+                    value={quickValue}
+                    onChange={setQuickValue}
+                    onSubmit={handleQuickVanishSubmit}
+                  />
+
+                  <p className="font-sans text-[11.5px] leading-relaxed text-ink-3">
+                    Type anything and hit submit — it explodes, then lands in the message
+                    field ready to send.
+                  </p>
                 </div>
               </div>
             </div>

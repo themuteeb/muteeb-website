@@ -43,7 +43,7 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
         <div className="mb-14 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
             <div className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.25em] text-accent">
-              {'// selected work'}
+              {'// projects'}
             </div>
             <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
               Things I&apos;ve{' '}
