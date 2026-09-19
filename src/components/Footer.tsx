@@ -1,81 +1,56 @@
-const nav = [
-  { label: 'Capabilities', href: '#capabilities' },
-  { label: 'Quality', href: '#quality' },
-  { label: 'Sectors', href: '#sectors' },
-  { label: 'Machines', href: '#machines' },
-  { label: 'Quote', href: '#quote' },
-]
+import React from 'react';
+import { useTheme } from '../contexts/ThemeContext';
+import { Profile } from '../types';
+import { ArrowUp } from 'lucide-react';
 
-export default function Footer() {
+interface FooterProps {
+  profile: Profile | null;
+}
+
+export const Footer: React.FC<FooterProps> = ({ profile }) => {
+  const { bgAccentClass, playSound } = useTheme();
+
+  const scrollToTop = () => {
+    playSound('click');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <footer className="border-t border-primary/30 bg-footer pt-14 pb-28 md:pb-14">
-      <div className="container-k">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <svg width="18" height="18" viewBox="0 0 64 64" aria-hidden="true">
-                <path d="M20 12v40M20 34 42 14M28 26l18 26" stroke="hsl(190 90% 48%)" strokeWidth="6" fill="none" />
-              </svg>
-              <span className="text-[15px] font-bold tracking-tight">
-                KESTREL <span className="font-semibold text-muted-foreground">PRECISION</span>
-              </span>
-            </div>
-            <p className="mt-4 max-w-[28ch] text-sm text-muted-foreground">
-              Five microns, repeatably, at volume.
-            </p>
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-              Contract manufacturing · Coventry · Since 1994
-            </p>
+    <footer className="bg-black text-white border-t-4 border-zinc-800 py-16 font-mono relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        {/* Top Action Bar with Scroll to Top */}
+        <div className="border-b-2 border-zinc-800 pb-8 flex items-center justify-between">
+          <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+            // BACK TO TOP
           </div>
 
-          <div>
-            <h3 className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-              Contact
-            </h3>
-            <address className="mt-4 space-y-1.5 text-sm not-italic text-foreground">
-              <p>Unit 7, Bayton Road Industrial Estate</p>
-              <p>Coventry CV7 9EJ</p>
-              <p className="pt-2 font-mono text-[12px] tabular-nums">024 7655 0140</p>
-            </address>
-          </div>
-
-          <div>
-            <h3 className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-              Certification
-            </h3>
-            <ul className="mt-4 space-y-1.5 font-mono text-[11px] tracking-[0.05em] text-muted-foreground">
-              <li>ISO 9001:2015 · Cert 4482019</li>
-              <li>AS9100 Rev D · Cert 4482020</li>
-              <li>ITAR registered</li>
-              <li>UKAS calibrated</li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-              Navigate
-            </h3>
-            <ul className="mt-4 space-y-2">
-              {nav.map((l) => (
-                <li key={l.href}>
-                  <a href={l.href} className="text-sm text-muted-foreground transition-colors hover:text-primary">
-                    {l.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <button
+            onClick={scrollToTop}
+            className={`p-4 ${bgAccentClass} hover:brightness-110 transition-transform active:scale-95 flex items-center justify-center`}
+            title="Return to top"
+          >
+            <ArrowUp className="w-6 h-6 text-black" />
+          </button>
         </div>
 
-        <div className="mt-12 flex flex-col gap-2 border-t border-border/60 pt-6 md:flex-row md:items-center md:justify-between">
-          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-            © 2026 Kestrel Precision Ltd · Company registration 02918844
-          </span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-primary/70">
-            Five microns, repeatably, at volume.
-          </span>
+        {/* Details Grid */}
+        <div className="text-xs">
+          <div className="text-zinc-500 font-bold uppercase mb-3">// ABOUT MUTEEB.IN</div>
+          <p className="text-zinc-400 leading-relaxed font-sans text-xs max-w-xl">
+            I make things for the internet because it feels like magic you can actually use.
+          </p>
+        </div>
+
+        {/* Bottom Copyright */}
+        <div className="pt-8 border-t border-zinc-900 text-zinc-500 text-[11px] flex flex-col sm:flex-row items-center justify-between gap-4 font-bold">
+          <div>
+            © {new Date().getFullYear()} BABA MUTEEB. ALL RIGHTS RESERVED.
+          </div>
+          <div className="text-zinc-400">
+            MUTEEB.IN
+          </div>
         </div>
       </div>
     </footer>
-  )
-}
+  );
+};
