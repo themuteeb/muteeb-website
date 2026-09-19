@@ -214,7 +214,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
   return (
     <section
       id="hero"
-      className="relative flex min-h-screen flex-col justify-center overflow-hidden border-b border-line bg-canvas pb-16 pt-20 lg:pt-24"
+      className="relative flex min-h-screen flex-col justify-start overflow-hidden border-b border-line bg-canvas pb-12 pt-12 sm:pt-14"
     >
       <GridBackground cellSize={44} maskFrom="top" />
 
