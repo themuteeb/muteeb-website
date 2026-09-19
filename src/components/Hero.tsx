@@ -223,16 +223,16 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
           {/* left column — words */}
           <div className="min-w-0">
             <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.06 }}
               className="font-mono text-xs font-semibold uppercase tracking-[0.28em] text-ink-3"
             >
               hey, i&apos;m
             </motion.p>
             <motion.h1
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.08 }}
               className="-mt-1 text-[2.6rem] font-extrabold leading-[1.04] tracking-tight text-ink sm:text-6xl lg:text-7xl"
             >
@@ -248,8 +248,8 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
             </motion.h1>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-5 flex flex-wrap items-baseline gap-x-2 text-xl font-semibold text-ink-2 sm:text-2xl"
             >
@@ -282,8 +282,8 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
             )}
 
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.75 }}
               className="mt-9 flex flex-wrap items-center gap-4"
             >
@@ -343,8 +343,8 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
 
           {/* right column — floating terminal */}
           <motion.div
-            initial={{ opacity: 0, y: 40, rotate: 1.5 }}
-            animate={{ opacity: 1, y: 0, rotate: 0 }}
+            initial={{ opacity: 0, rotate: 1.5 }}
+            animate={{ opacity: 1, rotate: 0 }}
             transition={{ duration: 0.8, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="relative mx-auto w-full min-w-0 max-w-xl lg:max-w-none"
           >
