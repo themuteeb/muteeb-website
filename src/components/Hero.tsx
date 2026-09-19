@@ -1,125 +1,113 @@
-import React, { useState, useEffect } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
-import { Profile } from '../types';
-import { ArrowDown, Terminal, Zap, Globe } from 'lucide-react';
+import { motion } from 'framer-motion'
 
-interface HeroProps {
-  profile: Profile | null;
-  onOpenContact: () => void;
-}
+const chips = ['ISO 9001:2015', 'AS9100 Rev D', 'ITAR REGISTERED', 'UKAS CALIBRATED']
 
-export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
-  const { bgAccentClass, textAccentClass, glowAccentClass, playSound } = useTheme();
+const EASE = [0.22, 1, 0.36, 1] as const
 
-  const defaultRoles = [
-    'STUDENT & NIGHT CODER',
-    'MAKER OF INTERNET THINGS',
-    'CLEAN UI EXPERIMENTER',
-    'PROBLEM SOLVER',
-    'CURIOSITY DRIVEN BUILDER'
-  ];
-
-  const roles = (profile?.typewriter_roles && profile.typewriter_roles.length > 0)
-    ? profile.typewriter_roles
-    : defaultRoles;
-
-  const [roleIndex, setRoleIndex] = useState(0);
-  const [displayText, setDisplayText] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const currentFull = roles[roleIndex];
-    const speed = isDeleting ? 40 : 80;
-
-    const timer = setTimeout(() => {
-      if (!isDeleting) {
-        setDisplayText(currentFull.substring(0, displayText.length + 1));
-        if (displayText.length === currentFull.length) {
-          setTimeout(() => setIsDeleting(true), 2000);
-        }
-      } else {
-        setDisplayText(currentFull.substring(0, displayText.length - 1));
-        if (displayText === '') {
-          setIsDeleting(false);
-          setRoleIndex((prev) => (prev + 1) % roles.length);
-        }
-      }
-    }, speed);
-
-    return () => clearTimeout(timer);
-  }, [displayText, isDeleting, roleIndex, roles]);
-
-  const scrollToWork = () => {
-    playSound('click');
-    const elem = document.querySelector('#work');
-    if (elem) elem.scrollIntoView({ behavior: 'smooth' });
-  };
-
+export default function Hero() {
   return (
-    <section id="hero" className="relative min-h-screen pt-28 pb-16 flex flex-col justify-center border-b-2 border-zinc-800 bg-black overflow-hidden">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#18181b_1px,transparent_1px),linear-gradient(to_bottom,#18181b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30" />
-      <div className="absolute top-1/4 -right-12 w-96 h-96 bg-zinc-900 border border-zinc-800 rounded-full blur-3xl opacity-30 pointer-events-none" />
+    <section id="top" className="relative overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 [background-image:linear-gradient(to_right,hsl(215_12%_20%/0.35)_1px,transparent_1px),linear-gradient(to_bottom,hsl(215_12%_20%/0.35)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(ellipse_80%_70%_at_50%_30%,black,transparent)]"
+      />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
-        <div className="flex flex-wrap items-center justify-end gap-4 mb-8">
-          <div className="font-mono text-xs text-zinc-400 flex items-center gap-3 border-l-2 border-zinc-800 pl-4">
-            <Globe className="w-3.5 h-3.5" />
-            <span>{profile?.location || 'MUTEEB.IN // PERSONAL WEBSITE'}</span>
+      <div className="container-k grid min-h-[84vh] items-center gap-10 pt-[70px] pb-12 lg:grid-cols-2 lg:gap-14">
+        <div>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.05 }}
+            className="eyebrow"
+          >
+            Contract Manufacturing · Coventry · ISO 9001 &amp; AS9100 · Since 1994
+          </motion.p>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.12 }}
+            className="mt-5 text-[clamp(38px,5vw,72px)] font-bold leading-[1.04] tracking-[-0.025em]"
+          >
+            <span className="text-primary">Five microns,</span>
+            <br />
+            repeatably, at volume.
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.22 }}
+            className="mt-6 max-w-[54ch] text-[17px] text-muted-foreground"
+          >
+            Precision CNC machining and fabrication for aerospace, medical and motorsport. Fourteen
+            machines, in-house CMM inspection, and a quote back within twenty-four hours on standard
+            enquiries.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.32 }}
+            className="mt-8 flex flex-wrap gap-3"
+          >
+            <a href="#quote" className="btn-primary">
+              Request a Quote
+            </a>
+            <a href="#capabilities" className="btn-ghost">
+              See Capabilities
+            </a>
+          </motion.div>
+
+          <ul className="mt-9 flex flex-wrap gap-2.5">
+            {chips.map((c, i) => (
+              <motion.li
+                key={c}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: EASE, delay: 0.55 + i * 0.06 }}
+                className="flex items-center gap-2 border border-border bg-card px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+              >
+                <span aria-hidden="true" className="h-1 w-1 bg-primary" />
+                {c}
+              </motion.li>
+            ))}
+          </ul>
+        </div>
+
+        <motion.div
+          initial={{ clipPath: 'inset(0 100% 0 0)' }}
+          animate={{ clipPath: 'inset(0 0% 0 0)' }}
+          transition={{ duration: 0.9, ease: EASE, delay: 0.35 }}
+          className="relative"
+        >
+          <div className="relative border border-border bg-card">
+            <img
+              src="/images/hero-machining.jpg"
+              alt="Five-axis CNC machining centre mid-cut with coolant spray"
+              className="h-72 w-full object-cover sm:h-96 lg:h-[520px]"
+            />
+            {['left-2 top-2', 'right-2 top-2', 'left-2 bottom-14', 'right-2 bottom-14'].map((pos) => (
+              <span
+                key={pos}
+                aria-hidden="true"
+                className={`pointer-events-none absolute ${pos} font-mono text-[11px] text-primary/60`}
+              >
+                +
+              </span>
+            ))}
+            <div className="flex items-center justify-between gap-3 border-t border-border bg-background/90 px-4 py-3">
+              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                Hermle C42U · 5-axis simultaneous
+              </span>
+              <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-primary">
+                <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                In process
+              </span>
+            </div>
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <h2 className="font-mono text-sm sm:text-base font-extrabold text-zinc-400 tracking-widest uppercase">
-            // HEY, I'M {profile?.full_name || 'BABA MUTEEB'}
-          </h2>
-
-          <h1 className="text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-black text-white tracking-tighter uppercase leading-[0.9] font-sans">
-            A CURIOUS MIND <br />
-            <span className={`inline-block underline decoration-4 ${textAccentClass} ${glowAccentClass}`}>
-              WITH RESTLESS HANDS
-            </span>
-          </h1>
-        </div>
-
-        <div className="mt-6 mb-8 flex items-center gap-2 font-mono text-lg sm:text-2xl font-black text-zinc-200 uppercase bg-zinc-950/80 border-l-4 border-white p-4 max-w-3xl">
-          <Terminal className={`w-5 h-5 shrink-0 ${textAccentClass}`} />
-          <span>{displayText}</span>
-          <span className={`inline-block w-3 h-6 ${bgAccentClass} animate-pulse`} />
-        </div>
-
-        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 max-w-3xl mb-10 space-y-3 font-sans">
-          <h3 className={`font-mono text-xs font-extrabold tracking-wider uppercase ${textAccentClass}`}>
-            // ABOUT ME
-          </h3>
-          <p className="text-zinc-200 text-base sm:text-lg font-medium leading-relaxed">
-            {profile?.title || 'I make things for the internet because it feels like magic you can actually use.'}
-          </p>
-          <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
-            {profile?.bio || `On most days, you'll find me in a code editor — breaking something I made yesterday so I can make it a little better today. I'm not trying to be perfect. I just like that feeling when a problem finally makes sense.`}
-          </p>
-          <p className="text-zinc-400 text-sm sm:text-base leading-relaxed italic">
-            {profile?.headline || `"I'm a student who codes at night, loves clean design, and genuinely believes the best ideas happen when you aren't trying to force them."`}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4">
-          <button
-            onClick={scrollToWork}
-            className={`px-8 py-4 font-black font-mono text-base uppercase transition-all transform hover:-translate-y-1 active:translate-y-0 ${bgAccentClass} flex items-center gap-3 ${glowAccentClass}`}
-          >
-            <span>SEE WHAT I'M UP TO</span>
-            <ArrowDown className="w-5 h-5" />
-          </button>
-
-          <button
-            onClick={() => { playSound('submit'); onOpenContact(); }}
-            className="px-8 py-4 font-black font-mono text-base uppercase bg-zinc-900 text-white border-2 border-zinc-700 hover:border-white transition-all flex items-center gap-2"
-          >
-            <Zap className="w-5 h-5" />
-            <span>SAY HI</span>
-          </button>
-        </div>
+        </motion.div>
       </div>
     </section>
-  );
-};
+  )
+}
