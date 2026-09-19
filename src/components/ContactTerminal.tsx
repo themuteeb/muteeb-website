@@ -120,6 +120,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
 
     playSound('submit');
     setBody((prev) => (prev.trim() ? `${prev.trim()}\n\n${clean}` : clean));
+    setQuickValue('');
     showToaster(
       'success',
       'PING STAGED',
@@ -194,32 +195,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                   </div>
                 </div>
               </div>
-
-              {/* quick ping card — vanish input */}
-              <div className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-6">
-                <div className="relative space-y-4 font-mono text-xs">
-                  <div className="font-bold uppercase tracking-[0.2em] text-ink-3">
-                    {'// quick ping — try the vanish effect'}
-                  </div>
-
-                  <PlaceholdersAndVanishInput
-                    placeholders={[
-                      'Say hello…',
-                      'Let’s collaborate on…',
-                      'Quick idea for muteeb.in…',
-                      'Ping me about…',
-                    ]}
-                    value={quickValue}
-                    onChange={setQuickValue}
-                    onSubmit={handleQuickVanishSubmit}
-                  />
-
-                  <p className="font-sans text-[11.5px] leading-relaxed text-ink-3">
-                    Type anything and hit submit — it explodes, then lands in the message
-                    field ready to send.
-                  </p>
-                </div>
-              </div>
             </div>
 
             {/* form column — terminal */}
@@ -235,7 +210,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                   <div className="flex items-center gap-2.5">
                     <Terminal className="h-4 w-4 text-accent" />
                     <span className="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-ink">
-                      system_mail_interface.sh
+                      contact form
                     </span>
                   </div>
                   <div className="flex gap-1.5">
@@ -243,6 +218,26 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                     <div className="h-3 w-3 rounded-full bg-[#febc2e]" />
                     <div className="h-3 w-3 rounded-full bg-[#28c840]" />
                   </div>
+                </div>
+
+                {/* strip under window chrome */}
+                <div className="space-y-3 border-b border-line bg-surface-2/40 px-5 py-4 sm:px-7">
+                  <div className="font-mono text-[11px] text-ink-3">
+                    <span className="text-accent">$</span> ./vanish-input --into message
+                  </div>
+                  <PlaceholdersAndVanishInput
+                    placeholders={[
+                      'Say hello…',
+                      "Let's collaborate on…",
+                      'Quick idea for muteeb.in…',
+                      'Ping me about…',
+                    ]}
+                    onChange={(e) => setQuickValue(e.target.value)}
+                    onSubmit={() => handleQuickVanishSubmit(quickValue)}
+                  />
+                  <p className="font-sans text-[11.5px] leading-relaxed text-ink-3">
+                    Type anything and hit submit — it explodes, then lands in the message field ready to send.
+                  </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="relative space-y-4 p-5 sm:p-7">
