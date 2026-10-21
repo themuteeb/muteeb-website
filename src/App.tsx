@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
@@ -12,7 +11,6 @@ import { GuestbookSection } from './components/GuestbookSection';
 import { ContactTerminal } from './components/ContactTerminal';
 import { AdminModal } from './components/AdminModal';
 import { Footer } from './components/Footer';
-import { BootSplash } from './components/BootSplash';
 import { Profile, Project, Thought, Skill, GuestbookEntry, ContactMessage } from './types';
 
 const CACHE_KEY = '__muteeb_cache';
@@ -46,13 +44,6 @@ export default function App() {
   const [messages, setMessages] = useState<ContactMessage[]>(cached?.messages || []);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [activeSection] = useState('hero');
-  const [booted, setBooted] = useState(false);
-
-  // boot splash: show while the first data load runs
-  useEffect(() => {
-    const safety = setTimeout(() => setBooted(true), 1200);
-    return () => clearTimeout(safety);
-  }, []);
 
   useEffect(() => {
     const checkSecretRoute = () => {
@@ -169,8 +160,6 @@ export default function App() {
       saveCache(freshData);
     } catch (err) {
       console.error('Error fetching data from API:', err);
-    } finally {
-      setBooted(true);
     }
   };
 
@@ -319,9 +308,6 @@ export default function App() {
     <AuthProvider>
       <ThemeProvider>
         <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
-          <AnimatePresence>{!booted && <BootSplash show={!booted} />}</AnimatePresence>
-
-
           <Navbar activeSection={activeSection} />
 
           <Hero profile={profile} onOpenContact={scrollToContact} />

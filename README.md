@@ -26,9 +26,8 @@ display/UI and **JetBrains Mono** for code, labels and terminal chrome.
 | FlipWords                    | `Hero.tsx` — rotating roles line                          |
 | TextGenerateEffect           | Section intros (hero bio, projects, thoughts…)            |
 | GridBackground               | Hero + contact sections                                   |
-| CardStack                    | Featured projects — swipe/tap the deck                    |
+| ThreeDMarquee                | Projects + guestbook — live, continuously looping cards    |
 | PlaceholdersAndVanishInput   | Thoughts search                                           |
-| LayoutTextFlip               | Boot / loading splash                                     |
 
 ## Develop
 
