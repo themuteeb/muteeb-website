@@ -2,9 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { Project } from '../types';
-import { ExternalLink, Eye, Hand, Star } from 'lucide-react';
-import { CardStack } from './ui/card-stack';
+import { ExternalLink, Eye, Star } from 'lucide-react';
 import { TextGenerateEffect } from './ui/text-generate-effect';
+import { ThreeDMarquee } from './ui/three-d-marquee';
 
 interface ProjectsProps {
   projects: Project[];
@@ -26,15 +26,6 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
     activeCategory === 'ALL'
       ? projects
       : projects.filter((p) => p.category?.toUpperCase() === activeCategory);
-
-  const featuredProjects = useMemo(
-    () =>
-      projects
-        .filter((p) => p.featured)
-        .slice(0, 5)
-        .map((p) => ({ ...p, id: p.id })),
-    [projects]
-  );
 
   return (
     <section id="work" className="relative border-b border-line bg-canvas py-24 sm:py-28">
@@ -77,81 +68,49 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
           </div>
         </div>
 
-        {/* featured card stack */}
-        {featuredProjects.length > 1 && (
-          <div className="mb-16 sm:mb-20">
-            <div className="mb-5 flex items-center justify-between">
-              <div className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-                <Star className="h-3.5 w-3.5 text-accent" />
-                featured — swipe or tap the deck
-              </div>
-              <div className="hidden items-center gap-1.5 font-mono text-[10px] text-ink-3 sm:flex">
-                <Hand className="h-3.5 w-3.5" />
-                drag to shuffle
-              </div>
-            </div>
-
-            <CardStack
-              items={featuredProjects}
-              offset={14}
-              scaleFactor={0.045}
-              className="mx-auto h-[400px] max-w-xl sm:h-[430px]"
-              renderCard={(project, isTop) => (
-                <FeaturedProjectCard
-                  project={project}
-                  isTop={isTop}
-                  onDetails={() => {
-                    playSound('click');
-                    setSelectedProject(project);
-                  }}
-                />
-              )}
-            />
-          </div>
-        )}
-
-        {/* grid */}
         {filteredProjects.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-line bg-surface p-12 text-center font-mono text-sm text-ink-3">
             no projects found in this category.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProjects.map((project, idx) => (
-              <motion.article
-                key={project.id}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.5, delay: (idx % 3) * 0.08 }}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-line bg-surface transition-all duration-300 hover:-translate-y-1 hover:border-line-2 hover:shadow-[0_20px_60px_-16px_rgba(0,0,0,0.9)]"
-              >
-                {/* image */}
-                <div className="relative h-52 overflow-hidden border-b border-line bg-surface-2">
-                  <img
-                    src={
-                      project.image_url ||
-                      'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80'
-                    }
-                    alt={project.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover opacity-80 grayscale transition-all duration-700 group-hover:scale-105 group-hover:opacity-100 group-hover:grayscale-0"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent" />
-                  <div className="absolute left-3 top-3 rounded-full border border-line bg-canvas/85 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-2 backdrop-blur-sm">
-                    {project.category}
+          <>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-3">
+              <span className="flex items-center gap-2">
+                <Star className="h-3.5 w-3.5 text-accent" />
+                project stream · {filteredProjects.length} items
+              </span>
+              <span>new projects appear here automatically</span>
+            </div>
+            <ThreeDMarquee
+              duration={32}
+              items={filteredProjects.map((project) => (
+                <article
+                  key={project.id}
+                  className="group overflow-hidden rounded-2xl border border-line bg-surface transition-colors duration-300 hover:border-line-2"
+                >
+                  <div className="relative h-40 overflow-hidden border-b border-line bg-surface-2 sm:h-44">
+                    <img
+                      src={
+                        project.image_url ||
+                        'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80'
+                      }
+                      alt={project.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover opacity-80 grayscale transition-all duration-700 group-hover:scale-105 group-hover:opacity-100 group-hover:grayscale-0"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent" />
+                    <span className="absolute left-3 top-3 rounded-full border border-line bg-canvas/85 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-2 backdrop-blur-sm">
+                      {project.category}
+                    </span>
+                    {project.featured && (
+                      <span className="absolute right-3 top-3 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-black shadow-[0_0_16px_rgba(34,212,114,0.45)]">
+                        featured
+                      </span>
+                    )}
                   </div>
-                  {project.featured && (
-                    <div className="absolute right-3 top-3 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-black shadow-[0_0_16px_rgba(34,212,114,0.45)]">
-                      featured
-                    </div>
-                  )}
-                </div>
 
-                {/* content */}
-                <div className="relative flex flex-1 flex-col justify-between p-6">
-                  <div>
-                    <h3 className="mb-1.5 text-xl font-bold tracking-tight text-ink transition-colors group-hover:text-accent">
+                  <div className="p-5">
+                    <h3 className="mb-1.5 text-lg font-bold tracking-tight text-ink transition-colors group-hover:text-accent">
                       {project.title}
                     </h3>
                     <p className="mb-4 line-clamp-2 font-mono text-xs leading-relaxed text-ink-3">
@@ -159,21 +118,21 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                     </p>
 
                     {project.metrics && Object.keys(project.metrics).length > 0 && (
-                      <div className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-line bg-canvas p-2.5 font-mono text-[11px]">
+                      <div className="mb-4 flex gap-4 rounded-xl border border-line bg-canvas p-2.5 font-mono text-[11px]">
                         {Object.entries(project.metrics)
                           .slice(0, 2)
-                          .map(([k, v]) => (
-                            <div key={k} className="flex flex-col">
+                          .map(([key, value]) => (
+                            <div key={key} className="flex flex-col">
                               <span className="text-[9px] font-semibold uppercase text-ink-3">
-                                {k}
+                                {key}
                               </span>
-                              <span className={`font-bold ${textAccentClass}`}>{v}</span>
+                              <span className={`font-bold ${textAccentClass}`}>{value}</span>
                             </div>
                           ))}
                       </div>
                     )}
 
-                    <div className="mb-5 flex flex-wrap gap-1.5">
+                    <div className="mb-4 flex flex-wrap gap-1.5">
                       {(project.tags || ['REACT', 'TYPESCRIPT', 'TAILWIND']).map((tag) => (
                         <span
                           key={tag}
@@ -183,36 +142,35 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                         </span>
                       ))}
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-between border-t border-line pt-4 font-mono text-xs">
-                    <button
-                      onClick={() => {
-                        playSound('click');
-                        setSelectedProject(project);
-                      }}
-                      className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-accent transition-opacity hover:opacity-70"
-                    >
-                      <Eye className="h-4 w-4" /> details
-                    </button>
-
-                    {project.live_url && (
-                      <a
-                        href={project.live_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => playSound('click')}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-2 transition-all duration-300 hover:border-accent/60 hover:text-accent hover:shadow-[0_0_16px_rgba(34,212,114,0.25)]"
-                        title="Open live app"
+                    <div className="flex items-center justify-between border-t border-line pt-3 font-mono text-xs">
+                      <button
+                        onClick={() => {
+                          playSound('click');
+                          setSelectedProject(project);
+                        }}
+                        className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-accent transition-opacity hover:opacity-70"
                       >
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    )}
+                        <Eye className="h-4 w-4" /> details
+                      </button>
+                      {project.live_url && (
+                        <a
+                          href={project.live_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => playSound('click')}
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-2 transition-all duration-300 hover:border-accent/60 hover:text-accent"
+                          title="Open live app"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </motion.article>
-            ))}
-          </div>
+                </article>
+              ))}
+            />
+          </>
         )}
       </div>
 
@@ -318,91 +276,5 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
         </div>
       )}
     </section>
-  );
-};
-
-/* ------------------------------------------------------------------ */
-/*  featured card for the CardStack                                     */
-/* ------------------------------------------------------------------ */
-
-const FeaturedProjectCard = ({
-  project,
-  isTop,
-  onDetails,
-}: {
-  project: Project;
-  isTop: boolean;
-  onDetails: () => void;
-}) => {
-  const { playSound } = useTheme();
-
-  return (
-    <div className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_30px_70px_-20px_rgba(0,0,0,0.9)]">
-      <div className="relative h-44 shrink-0 overflow-hidden border-b border-line bg-surface-2 sm:h-48">
-        <img
-          src={
-            project.image_url ||
-            'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80'
-          }
-          alt={project.title}
-          loading="lazy"
-          className="h-full w-full object-cover opacity-85 grayscale-[35%] transition-all duration-500 group-hover:opacity-100 group-hover:grayscale-0"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent" />
-        <div className="absolute left-3 top-3 rounded-full border border-line bg-canvas/85 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-2 backdrop-blur-sm">
-          {project.category}
-        </div>
-        {isTop && (
-          <div className="absolute right-3 top-3 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-black shadow-[0_0_16px_rgba(34,212,114,0.45)]">
-            featured
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col justify-between p-5 sm:p-6">
-        <div>
-          <h3 className="mb-1 text-xl font-bold tracking-tight text-ink sm:text-2xl">
-            {project.title}
-          </h3>
-          <p className="mb-4 line-clamp-2 font-mono text-xs leading-relaxed text-ink-3">
-            {project.subtitle || project.description}
-          </p>
-
-          <div className="flex flex-wrap gap-1.5">
-            {(project.tags || []).slice(0, 4).map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-line bg-canvas px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-ink-2"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-center justify-between border-t border-line pt-4 font-mono text-xs">
-          <button
-            onClick={onDetails}
-            className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-accent transition-opacity hover:opacity-70"
-          >
-            <Eye className="h-4 w-4" /> details
-          </button>
-          {project.live_url && (
-            <a
-              href={project.live_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                e.stopPropagation();
-                playSound('click');
-              }}
-              className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-ink-2 transition-colors hover:text-accent"
-            >
-              live <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          )}
-        </div>
-      </div>
-    </div>
   );
 };

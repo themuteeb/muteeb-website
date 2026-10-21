@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { GuestbookEntry } from '../types';
 import { BadgeCheck, Send, ShieldAlert, User } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
 import { TextGenerateEffect } from './ui/text-generate-effect';
+import { ThreeDMarquee } from './ui/three-d-marquee';
 
 interface GuestbookProps {
   entries: GuestbookEntry[];
@@ -232,31 +232,28 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                 </span>
               </div>
 
-              <div className="max-h-[640px] space-y-4 overflow-y-auto pr-1">
-                {publicEntries.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-line bg-surface p-10 text-center font-mono text-sm text-ink-3">
-                    be the first to sign the guestbook.
-                  </div>
-                ) : (
-                  publicEntries.map((entry, idx) => (
-                    <motion.div
+              {publicEntries.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-line bg-surface p-10 text-center font-mono text-sm text-ink-3">
+                  be the first to sign the guestbook.
+                </div>
+              ) : (
+                <ThreeDMarquee
+                  duration={34}
+                  items={publicEntries.map((entry) => (
+                    <article
                       key={entry.id}
-                      initial={{ opacity: 0, y: 18 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: '-30px' }}
-                      transition={{ duration: 0.4, delay: Math.min(idx, 5) * 0.05 }}
-                      className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-5 transition-all duration-300 hover:border-line-2"
+                      className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-5 transition-colors duration-300 hover:border-line-2"
                     >
                       <div className="relative mb-2.5 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2.5">
                           <div
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-zinc-800 text-zinc-400"
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${AVATAR_STYLES[entry.avatar_color] || 'border-line bg-zinc-800 text-zinc-400'}`}
                             aria-hidden
                           >
                             <User className="h-5 w-5" strokeWidth={1.8} />
                           </div>
-                          <div>
-                            <span className="block font-mono text-sm font-bold leading-tight text-ink">
+                          <div className="min-w-0">
+                            <span className="block truncate font-mono text-sm font-bold leading-tight text-ink">
                               {entry.name}
                             </span>
                             <span className="font-mono text-[10px] text-ink-3">
@@ -265,7 +262,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                           </div>
                         </div>
 
-                        <span className="rounded-full border border-line bg-canvas px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase text-ink-2">
+                        <span className="shrink-0 rounded-full border border-line bg-canvas px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase text-ink-2">
                           {entry.badge}
                         </span>
                       </div>
@@ -275,12 +272,12 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                       </p>
 
                       <div className="relative mt-3 border-t border-line pt-2 text-right font-mono text-[10px] text-ink-3">
-                        {new Date(entry.created_at || Date.now()).toLocaleDateString()}
+                        {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'date unavailable'}
                       </div>
-                    </motion.div>
-                  ))
-                )}
-              </div>
+                    </article>
+                  ))}
+                />
+              )}
             </div>
           </div>
         </div>
