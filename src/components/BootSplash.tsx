@@ -2,6 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { GridBackground } from './ui/grid-background';
 import { LoaderTwo } from './ui/loader';
+import { LayoutTextFlip } from './ui/layout-text-flip';
+
+const BOOT_WORDS = ['something thoughtful', 'interfaces that feel right', 'for the open web'];
 
 /**
  * Boot / loading experience for muteeb.in —
@@ -37,8 +40,17 @@ export const BootSplash = ({ show }: { show: boolean }) => {
           <span className="text-accent">$</span> muteeb.in
         </div>
 
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-2 font-mono text-sm text-ink-2">
+          <span>building</span>
+          <LayoutTextFlip
+            words={BOOT_WORDS}
+            interval={1600}
+            textClassName="font-semibold text-accent"
+          />
+        </div>
+
         {/* loader */}
-        <div className="mt-6 flex justify-center">
+        <div className="mt-5 flex justify-center">
           <LoaderTwo />
         </div>
 

@@ -4,7 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Profile } from '../types';
 import { ArrowDown, Github, Instagram, MapPin, Sparkles } from 'lucide-react';
 import { FlipWords } from './ui/flip-words';
-import { CanvasText } from './ui/canvas-text';
+import { EncryptedText } from './ui/encrypted-text';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { GridBackground } from './ui/grid-background';
 
@@ -15,16 +15,6 @@ const clean = (v: string | undefined | null, fallback: string) => {
   if (s === 'nil' || s === 'null' || s === 'undefined' || s === 'n/a' || s === '-') return fallback;
   return v;
 };
-
-/* CanvasText palette for the hero name — site accent greens + terminal hues */
-const HERO_NAME_COLORS = [
-  '#22d472',
-  '#7cf5ac',
-  '#6ee7ff',
-  '#4ecdc4',
-  '#a3e635',
-  '#f5c97b',
-];
 
 interface HeroProps {
   profile: Profile | null;
@@ -236,13 +226,10 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
               transition={{ duration: 0.6, delay: 0.08 }}
               className="-mt-1 text-[2.6rem] font-extrabold leading-[1.04] tracking-tight text-ink sm:text-6xl lg:text-7xl"
             >
-              <CanvasText
+              <EncryptedText
+                key={clean(profile?.full_name, 'Baba Muteeb')}
                 text={clean(profile?.full_name, 'Baba Muteeb')}
                 className="tracking-normal"
-                backgroundClassName="bg-canvas"
-                colors={HERO_NAME_COLORS}
-                lineGap={6}
-                animationDuration={10}
               />
               .
             </motion.h1>
