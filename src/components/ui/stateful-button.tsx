@@ -36,7 +36,7 @@ export function StatefulButton({
       disabled={disabled || status !== 'idle'}
       aria-live="polite"
       className={cn(
-        'relative flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-white transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-70',
+        'relative flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-accent-foreground transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-70',
         status === 'success' && 'bg-emerald-700',
         status === 'error' && 'bg-rose-800',
         className

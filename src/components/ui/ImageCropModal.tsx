@@ -169,7 +169,7 @@ export function ImageCropModal({ imageUrl, fileName, onCancel, onConfirm }: Imag
             type="button"
             onClick={() => void handleConfirm()}
             disabled={!croppedAreaPixels || isProcessing}
-            className="rounded-full bg-accent px-5 py-2.5 font-mono text-[10px] font-bold uppercase tracking-wider text-white transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+            className="rounded-full bg-accent px-5 py-2.5 font-mono text-[10px] font-bold uppercase tracking-wider text-accent-foreground transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
           >
             {isProcessing ? 'Preparing image…' : 'Use this crop'}
           </button>

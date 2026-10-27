@@ -22,6 +22,7 @@
   --color-accent: #0e7490;
   --color-accent-bright: #0891b2;
   --color-accent-deep: #155e75;
+  --color-accent-foreground: #ffffff;
 
   /* typography */
   --font-sans: "Sora", ui-sans-serif, system-ui, -apple-system, sans-serif;

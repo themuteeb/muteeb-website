@@ -79,4 +79,4 @@ export interface Skill {
   display_order: number;
 }
 
-export type ThemePreset = 'neon' | 'lime' | 'coral' | 'violet' | 'mono';
+export type ThemePreset = 'neon' | 'white' | 'pink' | 'violet' | 'mono';
