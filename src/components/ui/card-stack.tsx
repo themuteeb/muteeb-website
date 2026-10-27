@@ -62,12 +62,19 @@ export function CardStack({
 
   return (
     <div className="flex flex-col items-center">
-      <div className={cn('relative h-60 w-60 sm:w-72 md:w-96', className)}>
+      <motion.div
+        layout
+        transition={{ layout: { type: 'spring', stiffness: 260, damping: 30 } }}
+        className={cn('relative w-60 sm:w-72 md:w-96', className)}
+      >
         {cards.map((card, index) => (
           <motion.div
             key={card.id}
             aria-hidden={index !== 0}
-            className="absolute top-0 flex h-60 w-full flex-col justify-between rounded-3xl border border-line-2 bg-surface p-4 shadow-xl shadow-black/20"
+            className={cn(
+              'flex w-full flex-col rounded-3xl border border-line-2 bg-surface p-4 shadow-xl shadow-black/20',
+              index === 0 ? 'relative' : 'absolute inset-x-0 top-0',
+            )}
             style={{ transformOrigin: 'top center' }}
             animate={{
               top: index * -offset,
@@ -76,10 +83,10 @@ export function CardStack({
             }}
             transition={{ type: 'spring', stiffness: 260, damping: 26 }}
           >
-            <div className="line-clamp-5 overflow-hidden text-sm leading-relaxed text-ink-2">
+            <div className="break-words whitespace-pre-wrap text-sm leading-relaxed text-ink-2">
               {card.content}
             </div>
-            <div className="flex min-w-0 items-center gap-2.5 border-t border-line pt-3">
+            <div className="mt-4 flex min-w-0 items-center gap-2.5 border-t border-line pt-3">
               {card.avatar}
               <div className="min-w-0">
                 <p className="truncate font-mono text-xs font-bold text-ink">{card.name}</p>
@@ -90,7 +97,7 @@ export function CardStack({
             </div>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {cards.length > 1 && (
         <div className="mt-3 flex items-center gap-3">
