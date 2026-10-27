@@ -1,15 +1,16 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, LoaderCircle, Send } from 'lucide-react';
+import { Check, CircleX, LoaderCircle, Send } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../lib/utils';
 
-export type StatefulButtonStatus = 'idle' | 'loading' | 'success';
+export type StatefulButtonStatus = 'idle' | 'loading' | 'success' | 'error';
 
 interface StatefulButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   status: StatefulButtonStatus;
   idleContent?: ReactNode;
   loadingContent?: ReactNode;
   successContent?: ReactNode;
+  errorContent?: ReactNode;
 }
 
 export function StatefulButton({
@@ -17,6 +18,7 @@ export function StatefulButton({
   idleContent = 'Send message',
   loadingContent = 'Sending…',
   successContent = 'Sent successfully',
+  errorContent = 'Could not complete — retry',
   className,
   disabled,
   ...props
@@ -25,6 +27,7 @@ export function StatefulButton({
     idle: <><Send className="h-4 w-4" />{idleContent}</>,
     loading: <><LoaderCircle className="h-4 w-4 animate-spin" />{loadingContent}</>,
     success: <><Check className="h-4 w-4" />{successContent}</>,
+    error: <><CircleX className="h-4 w-4" />{errorContent}</>,
   }[status];
 
   return (
@@ -34,6 +37,8 @@ export function StatefulButton({
       aria-live="polite"
       className={cn(
         'relative flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-white transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-70',
+        status === 'success' && 'bg-emerald-700',
+        status === 'error' && 'bg-rose-800',
         className
       )}
     >
