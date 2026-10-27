@@ -55,7 +55,7 @@ export const Toaster: React.FC<ToasterProps> = ({
   return (
     <div className="animate-slideInRight pointer-events-auto fixed right-3 top-20 z-[100] w-[calc(100vw-1.5rem)] max-w-[280px] sm:right-6 sm:top-24 sm:w-96 sm:max-w-sm">
       <div
-        className={`relative overflow-hidden rounded-2xl border bg-surface/95 p-4 backdrop-blur-xl ${c.borderColor}`}
+        className={`liquid-glass relative overflow-hidden rounded-2xl p-4 ${c.borderColor}`}
       >
         <div className="flex items-start gap-3">
           <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${c.iconColor}`} />

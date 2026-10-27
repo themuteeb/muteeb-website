@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider } from './contexts/AuthContext';
+import { useAuth } from './contexts/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { ProjectsSection } from './components/ProjectsSection';
@@ -14,36 +13,103 @@ import { Footer } from './components/Footer';
 import { Profile, Project, Thought, Skill, GuestbookEntry, ContactMessage } from './types';
 
 const CACHE_KEY = '__muteeb_cache';
+const LEGACY_PASSCODE_KEY = '__admin_custom_passcode';
 
-const loadCache = () => {
+type PublicCache = {
+  profile?: Profile | null;
+  projects?: Project[];
+  thoughts?: Thought[];
+  skills?: Skill[];
+  guestbook?: GuestbookEntry[];
+};
+
+type LegacyProfile = Profile & { admin_passcode?: string };
+
+const sanitizeProfileForCache = (profile: LegacyProfile | null | undefined): Profile | null => {
+  if (!profile) return null;
+  return {
+    id: profile.id,
+    full_name: profile.full_name,
+    title: profile.title,
+    bio: profile.bio,
+    status_badge: profile.status_badge,
+    location: profile.location,
+    available_for_work: profile.available_for_work,
+    accent_color: profile.accent_color,
+    // Contact details are owner-only and are never written to public storage.
+    email: '',
+    instagram_handle: profile.instagram_handle,
+    headline: profile.headline,
+    logo_url: profile.logo_url,
+    sound_enabled: profile.sound_enabled,
+    typewriter_roles: profile.typewriter_roles,
+    now_focus: profile.now_focus,
+    quick_facts: profile.quick_facts,
+    github_url: profile.github_url,
+    twitter_url: profile.twitter_url,
+    linkedin_url: profile.linkedin_url,
+  };
+};
+
+const loadCache = (): PublicCache | null => {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    const saved = JSON.parse(raw) as PublicCache & { messages?: unknown; profile?: LegacyProfile | null };
+    const profile = sanitizeProfileForCache(saved.profile);
+    const safeCache: PublicCache = {
+      profile,
+      projects: Array.isArray(saved.projects) ? saved.projects : [],
+      thoughts: Array.isArray(saved.thoughts) ? saved.thoughts : [],
+      skills: Array.isArray(saved.skills) ? saved.skills : [],
+      // Never persist pending moderation data in the public browser cache.
+      guestbook: Array.isArray(saved.guestbook) ? saved.guestbook.filter((entry) => entry.approved) : [],
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(safeCache));
+    return safeCache;
   } catch {
     return null;
   }
 };
 
-const saveCache = (data: any) => {
+const saveCache = (data: PublicCache) => {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    const safeProfile = sanitizeProfileForCache(data.profile);
+    const safeCache: PublicCache = {
+      profile: safeProfile,
+      projects: data.projects,
+      thoughts: data.thoughts,
+      skills: data.skills,
+      guestbook: data.guestbook?.filter((entry) => entry.approved),
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(safeCache));
   } catch {
     /* ignore quota errors */
   }
 };
 
 export default function App() {
-  const cached = loadCache();
+  const [cached] = useState<PublicCache | null>(() => loadCache());
+  const { adminPasscode, setAdminPasscode } = useAuth();
 
   const [profile, setProfile] = useState<Profile | null>(cached?.profile || null);
   const [projects, setProjects] = useState<Project[]>(cached?.projects || []);
   const [thoughts, setThoughts] = useState<Thought[]>(cached?.thoughts || []);
   const [skills, setSkills] = useState<Skill[]>(cached?.skills || []);
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>(cached?.guestbook || []);
-  const [messages, setMessages] = useState<ContactMessage[]>(cached?.messages || []);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [activeSection] = useState('hero');
+
+  useEffect(() => {
+    // Remove credentials written by earlier versions. The passcode is now held
+    // only in AuthContext memory and disappears when this tab is reloaded.
+    try {
+      localStorage.removeItem(LEGACY_PASSCODE_KEY);
+    } catch {
+      // Browser storage may be disabled; admin auth still uses in-memory state.
+    }
+  }, []);
 
   useEffect(() => {
     const checkSecretRoute = () => {
@@ -75,7 +141,7 @@ export default function App() {
 
       if ((e.ctrlKey || e.metaKey || e.altKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault();
-        setIsAdminOpen(prev => !prev);
+        setIsAdminOpen((prev) => !prev);
         return;
       }
 
@@ -92,69 +158,76 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Admin studio calls must carry the passcode header — the API no longer
-  // trusts unauthenticated mutations.
-  const adminHeaders = (): Record<string, string> => {
-    const pass = localStorage.getItem('__admin_custom_passcode') || '';
-    return pass ? { 'X-Admin-Auth': pass } : {};
+  const clearAdminSession = () => {
+    setAdminPasscode(null);
+    setMessages([]);
+    setGuestbook((current) => current.filter((entry) => entry.approved));
+    setProfile((current) => current ? { ...current, email: '' } : current);
   };
 
-  const fetchAllData = async () => {
+  const fetchAllData = async (passcodeOverride?: string) => {
     try {
-      const adminPass = localStorage.getItem('__admin_custom_passcode') || '';
+      const pass = passcodeOverride ?? adminPasscode ?? '';
+      const headers: Record<string, string> = pass ? { 'X-Admin-Auth': pass } : {};
       const [pRes, projRes, tRes, sRes, gRes, mRes] = await Promise.all([
-        fetch('/api/profile', { headers: adminPass ? { 'X-Admin-Auth': adminPass } : {} }),
+        fetch('/api/profile', { headers }),
         fetch('/api/projects'),
         fetch('/api/thoughts'),
         fetch('/api/skills'),
-        fetch('/api/guestbook', { headers: adminPass ? { 'X-Admin-Auth': adminPass } : {} }),
-        // inbox is PII — only returned when the owner's passcode is present
-        fetch('/api/messages', { headers: adminPass ? { 'X-Admin-Auth': adminPass } : {} }),
+        fetch('/api/guestbook', { headers }),
+        // Inbox is PII; the API returns it only after server-side auth.
+        fetch('/api/messages', { headers }),
       ]);
 
-      const freshData: any = {};
+      const adminAuthRejected = Boolean(
+        pass && [pRes, gRes, mRes].some((response) => response.status === 401),
+      );
+      if (adminAuthRejected) clearAdminSession();
+
+      const freshData: PublicCache = {};
 
       if (pRes.ok) {
-        const pData = await pRes.json();
+        const pData = (await pRes.json()) as Profile;
         if (pData) {
-          setProfile(pData);
-          freshData.profile = pData;
+          const profileData = adminAuthRejected ? sanitizeProfileForCache(pData) : pData;
+          setProfile(profileData);
+          freshData.profile = profileData;
         }
       }
       if (projRes.ok) {
-        const projData = await projRes.json();
+        const projData = (await projRes.json()) as Project[];
         if (Array.isArray(projData)) {
           setProjects(projData);
           freshData.projects = projData;
         }
       }
       if (tRes.ok) {
-        const tData = await tRes.json();
+        const tData = (await tRes.json()) as Thought[];
         if (Array.isArray(tData)) {
           setThoughts(tData);
           freshData.thoughts = tData;
         }
       }
       if (sRes.ok) {
-        const sData = await sRes.json();
+        const sData = (await sRes.json()) as Skill[];
         if (Array.isArray(sData)) {
           setSkills(sData);
           freshData.skills = sData;
         }
       }
       if (gRes.ok) {
-        const gData = await gRes.json();
+        const gData = (await gRes.json()) as GuestbookEntry[];
         if (Array.isArray(gData)) {
-          setGuestbook(gData);
-          freshData.guestbook = gData;
+          const visibleEntries = adminAuthRejected ? gData.filter((entry) => entry.approved) : gData;
+          setGuestbook(visibleEntries);
+          freshData.guestbook = visibleEntries;
         }
       }
-      if (mRes.ok) {
-        const mData = await mRes.json();
-        if (Array.isArray(mData)) {
-          setMessages(mData);
-          freshData.messages = mData;
-        }
+      if (mRes.ok && !adminAuthRejected) {
+        const mData = (await mRes.json()) as ContactMessage[];
+        if (Array.isArray(mData)) setMessages(mData);
+      } else if (!pass || adminAuthRejected) {
+        setMessages([]);
       }
 
       saveCache(freshData);
@@ -164,53 +237,75 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchAllData();
+    const refresh = window.setTimeout(() => void fetchAllData(), 0);
+    return () => window.clearTimeout(refresh);
+    // Initial public page data should load once on mount; admin login and edits
+    // explicitly refresh with their in-memory passcode.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const adminRequest = async (url: string, options: RequestInit = {}) => {
+    if (!adminPasscode) throw new Error('Admin session expired. Please enter the passcode again.');
+
+    const headers = new Headers(options.headers);
+    headers.set('X-Admin-Auth', adminPasscode);
+    const response = await fetch(url, { ...options, headers });
+
+    if (response.status === 401) {
+      clearAdminSession();
+      throw new Error('Admin session expired. Please enter the passcode again.');
+    }
+
+    if (!response.ok) {
+      let message = `Request failed (${response.status})`;
+      try {
+        const body = await response.json() as { error?: string };
+        if (body.error) message = body.error;
+      } catch {
+        // Keep the safe status-based message if the response has no JSON body.
+      }
+      throw new Error(message);
+    }
+
+    return response;
+  };
+
   const handleUpdateProfile = async (updates: Partial<Profile>) => {
-    const adminPass = localStorage.getItem('__admin_custom_passcode') || '';
-    const res = await fetch('/api/profile', {
+    const res = await adminRequest('/api/profile', {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Admin-Auth': adminPass,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     });
-    if (res.ok) {
-      const data = await res.json();
-      setProfile(data);
-      fetchAllData();
-    }
+    const data = await res.json() as Profile;
+    setProfile(data);
+    await fetchAllData();
   };
 
   const handleSaveProject = async (project: Partial<Project>) => {
-    const method = project.id ? 'PUT' : 'POST';
-    const res = await fetch('/api/projects', {
-      method,
-      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+    await adminRequest('/api/projects', {
+      method: project.id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(project),
     });
-    if (res.ok) fetchAllData();
+    await fetchAllData();
   };
 
   const handleDeleteProject = async (id: number) => {
-    const res = await fetch('/api/projects', {
+    await adminRequest('/api/projects', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
-    if (res.ok) fetchAllData();
+    await fetchAllData();
   };
 
   const handleSaveThought = async (thought: Partial<Thought>) => {
-    const method = thought.id ? 'PUT' : 'POST';
-    const res = await fetch('/api/thoughts', {
-      method,
-      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+    await adminRequest('/api/thoughts', {
+      method: thought.id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(thought),
     });
-    if (res.ok) fetchAllData();
+    await fetchAllData();
   };
 
   const handleLikeThought = async (id: number) => {
@@ -220,37 +315,36 @@ export default function App() {
       body: JSON.stringify({ action: 'like', id }),
     });
     if (res.ok) {
-      const updated = await res.json();
-      setThoughts(prev => prev.map(t => t.id === id ? updated : t));
+      const updated = await res.json() as Thought;
+      setThoughts((prev) => prev.map((thought) => thought.id === id ? updated : thought));
     }
   };
 
   const handleDeleteThought = async (id: number) => {
-    const res = await fetch('/api/thoughts', {
+    await adminRequest('/api/thoughts', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
-    if (res.ok) fetchAllData();
+    await fetchAllData();
   };
 
   const handleSaveSkill = async (skill: Partial<Skill>) => {
-    const method = skill.id ? 'PUT' : 'POST';
-    const res = await fetch('/api/skills', {
-      method,
-      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+    await adminRequest('/api/skills', {
+      method: skill.id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(skill),
     });
-    if (res.ok) fetchAllData();
+    await fetchAllData();
   };
 
   const handleDeleteSkill = async (id: number) => {
-    const res = await fetch('/api/skills', {
+    await adminRequest('/api/skills', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
-    if (res.ok) fetchAllData();
+    await fetchAllData();
   };
 
   const handleAddGuestbook = async (entry: { name: string; handle: string; message: string; avatar_color: string; badge: string }) => {
@@ -261,18 +355,29 @@ export default function App() {
     });
     if (res.ok) {
       await res.json();
-      // Don't add to public list - needs admin approval first
+      // New entries stay off the public feed until owner approval.
     }
   };
 
   const handleDeleteGuestbook = async (id: number) => {
-    const adminPass = localStorage.getItem('__admin_custom_passcode') || '';
-    const res = await fetch('/api/guestbook', {
+    await adminRequest('/api/guestbook', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Auth': adminPass },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
-    if (res.ok) setGuestbook(prev => prev.filter(g => g.id !== id));
+    setGuestbook((prev) => prev.filter((entry) => entry.id !== id));
+    saveCache({ profile, projects, thoughts, skills, guestbook: guestbook.filter((entry) => entry.id !== id) });
+  };
+
+  const handleApproveGuestbook = async (id: number) => {
+    const res = await adminRequest('/api/guestbook', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, approved: true }),
+    });
+    const updated = await res.json() as GuestbookEntry;
+    setGuestbook((prev) => prev.map((entry) => entry.id === id ? updated : entry));
+    saveCache({ profile, projects, thoughts, skills, guestbook: guestbook.map((entry) => entry.id === id ? updated : entry) });
   };
 
   const handleSendMessage = async (msg: { sender_name: string; sender_email: string; subject: string; body: string }) => {
@@ -282,73 +387,73 @@ export default function App() {
       body: JSON.stringify(msg),
     });
     if (res.ok) {
-      const newMsg = await res.json();
-      setMessages(prev => [newMsg, ...prev]);
+      const newMsg = await res.json() as ContactMessage;
+      setMessages((prev) => [newMsg, ...prev]);
     }
   };
 
   const handleDeleteMessage = async (id: number) => {
-    const res = await fetch('/api/messages', {
+    await adminRequest('/api/messages', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', ...adminHeaders() },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
-    if (res.ok) setMessages(prev => prev.filter(m => m.id !== id));
+    setMessages((prev) => prev.filter((message) => message.id !== id));
   };
 
   const scrollToContact = () => {
     const contactElem = document.querySelector('#contact');
-    if (contactElem) {
-      contactElem.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (contactElem) contactElem.scrollIntoView({ behavior: 'smooth' });
   };
 
-
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
-          <Navbar activeSection={activeSection} />
+    <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
+      <Navbar activeSection={activeSection} />
 
-          <Hero profile={profile} onOpenContact={scrollToContact} />
+      <Hero profile={profile} onOpenContact={scrollToContact} />
 
-          <ProjectsSection projects={projects} />
+      <ProjectsSection projects={projects} />
 
-          <NowSection profile={profile} />
+      <NowSection profile={profile} />
 
-          <TechMatrix skills={skills} />
+      <TechMatrix skills={skills} />
 
-          <ThoughtsSection thoughts={thoughts} onLikeThought={handleLikeThought} />
+      <ThoughtsSection thoughts={thoughts} onLikeThought={handleLikeThought} />
 
-          <GuestbookSection entries={guestbook} onAddEntry={handleAddGuestbook} />
+      <GuestbookSection entries={guestbook} onAddEntry={handleAddGuestbook} />
 
-          <ContactTerminal email={profile?.email} onSendMessage={handleSendMessage} />
+      <ContactTerminal email={profile?.email} onSendMessage={handleSendMessage} />
 
-          <Footer profile={profile} />
+      <Footer profile={profile} />
 
-          {isAdminOpen && (
-            <AdminModal
-              profile={profile}
-              projects={projects}
-              thoughts={thoughts}
-              skills={skills}
-              messages={messages}
-              guestbook={guestbook}
-              onUpdateProfile={handleUpdateProfile}
-              onSaveProject={handleSaveProject}
-              onDeleteProject={handleDeleteProject}
-              onSaveThought={handleSaveThought}
-              onDeleteThought={handleDeleteThought}
-              onSaveSkill={handleSaveSkill}
-              onDeleteSkill={handleDeleteSkill}
-              onDeleteGuestbook={handleDeleteGuestbook}
-              onDeleteMessage={handleDeleteMessage}
-              onAdminVerified={fetchAllData}
-              onClose={() => setIsAdminOpen(false)}
-            />
-          )}
-        </div>
-      </ThemeProvider>
-    </AuthProvider>
+      {isAdminOpen && (
+        <AdminModal
+          profile={profile}
+          projects={projects}
+          thoughts={thoughts}
+          skills={skills}
+          messages={messages}
+          guestbook={guestbook}
+          onUpdateProfile={handleUpdateProfile}
+          onSaveProject={handleSaveProject}
+          onDeleteProject={handleDeleteProject}
+          onSaveThought={handleSaveThought}
+          onDeleteThought={handleDeleteThought}
+          onSaveSkill={handleSaveSkill}
+          onDeleteSkill={handleDeleteSkill}
+          onDeleteGuestbook={handleDeleteGuestbook}
+          onApproveGuestbook={handleApproveGuestbook}
+          onDeleteMessage={handleDeleteMessage}
+          onAdminVerified={async (passcode) => {
+            setAdminPasscode(passcode);
+            await fetchAllData(passcode);
+          }}
+          onClose={() => {
+            setIsAdminOpen(false);
+            clearAdminSession();
+          }}
+        />
+      )}
+    </div>
   );
 }

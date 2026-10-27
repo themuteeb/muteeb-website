@@ -21,9 +21,10 @@ interface AdminModalProps {
   onSaveSkill: (skill: Partial<Skill>) => Promise<void>;
   onDeleteSkill: (id: number) => Promise<void>;
   onDeleteGuestbook: (id: number) => Promise<void>;
+  onApproveGuestbook: (id: number) => Promise<void>;
   onDeleteMessage: (id: number) => Promise<void>;
   /** Called once the passcode verifies — lets the app re-fetch admin data. */
-  onAdminVerified?: () => void;
+  onAdminVerified?: (passcode: string) => void | Promise<void>;
   onClose: () => void;
 }
 
@@ -42,12 +43,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onSaveSkill,
   onDeleteSkill,
   onDeleteGuestbook,
+  onApproveGuestbook,
   onDeleteMessage,
   onAdminVerified,
   onClose,
 }) => {
   const { bgAccentClass, borderAccentClass, textAccentClass, playSound } = useTheme();
-  const { isAdmin, setIsAdmin } = useAuth();
+  const { isAdmin, setAdminPasscode } = useAuth();
 
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState(false);
@@ -68,30 +70,39 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   });
 
   const [timeRemainingText, setTimeRemainingText] = useState('');
+  const [isLockedOut, setIsLockedOut] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  const isLockedOut = Date.now() < lockoutUntil;
-
   useEffect(() => {
-    if (!isLockedOut) return;
-    const interval = setInterval(() => {
+    const updateLockout = () => {
       const remainingMs = lockoutUntil - Date.now();
       if (remainingMs <= 0) {
-        setFailedAttempts(0);
-        setLockoutUntil(0);
-        localStorage.removeItem('__sec_failed_attempts');
-        localStorage.removeItem('__sec_lockout_until');
-        clearInterval(interval);
-      } else {
-        const hours = Math.floor(remainingMs / (1000 * 60 * 60));
-        const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
-        const secs = Math.floor((remainingMs % (1000 * 60)) / 1000);
-        setTimeRemainingText(`${hours}h ${mins}m ${secs}s`);
+        setIsLockedOut(false);
+        setTimeRemainingText('');
+        if (lockoutUntil > 0) {
+          setFailedAttempts(0);
+          setLockoutUntil(0);
+          localStorage.removeItem('__sec_failed_attempts');
+          localStorage.removeItem('__sec_lockout_until');
+        }
+        window.clearInterval(intervalId);
+        return;
       }
-    }, 1000);
 
-    return () => clearInterval(interval);
-  }, [isLockedOut, lockoutUntil]);
+      setIsLockedOut(true);
+      const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+      const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((remainingMs % (1000 * 60)) / 1000);
+      setTimeRemainingText(`${hours}h ${mins}m ${secs}s`);
+    };
+
+    const initialCheck = window.setTimeout(updateLockout, 0);
+    const intervalId = window.setInterval(updateLockout, 1000);
+    return () => {
+      window.clearTimeout(initialCheck);
+      window.clearInterval(intervalId);
+    };
+  }, [lockoutUntil]);
 
   const [profName, setProfName] = useState(profile?.full_name || 'BABA MUTEEB');
   const [profTitle, setProfTitle] = useState(profile?.title || 'Full-stack developer building clean, fast web applications with TypeScript, React, and Supabase.');
@@ -138,7 +149,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLockedOut) {
+    if (isLockedOut || Date.now() < lockoutUntil) {
       alert(`SECURITY LOCKOUT ENFORCED: 5 FAILED ATTEMPTS. ACCESS BLOCKED FOR ${timeRemainingText}`);
       return;
     }
@@ -154,7 +165,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         const verifyData = await verifyRes.json();
         if (verifyData && verifyData.__admin_verified === true) {
           isValid = true;
-          localStorage.setItem('__admin_custom_passcode', entered);
         }
       }
     } catch (err) {
@@ -162,14 +172,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
 
     if (isValid) {
-      setIsAdmin(true);
+      setAdminPasscode(entered);
+      setPassword('');
       setAuthError(false);
       setFailedAttempts(0);
       localStorage.removeItem('__sec_failed_attempts');
       localStorage.removeItem('__sec_lockout_until');
       playSound('submit');
       // Re-fetch admin-gated data (messages inbox, pending guestbook, etc.)
-      onAdminVerified?.();
+      void onAdminVerified?.(entered);
     } else {
       const newFailed = failedAttempts + 1;
       setFailedAttempts(newFailed);
@@ -182,6 +193,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       }
       setAuthError(true);
       playSound('toggle');
+    }
+  };
+
+  const runAdminAction = async (action: () => Promise<void>) => {
+    try {
+      await action();
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? `ACTION FAILED: ${err.message}` : 'ACTION FAILED. PLEASE TRY AGAIN.');
     }
   };
 
@@ -210,7 +230,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       alert('SETTINGS SAVED SUCCESSFULLY!');
     } catch (err) {
       console.error(err);
-      alert('SETTINGS SAVED LOCALLY!');
+      alert(err instanceof Error ? `SAVE FAILED: ${err.message}` : 'SAVE FAILED. PLEASE TRY AGAIN.');
     } finally {
       setProfSaving(false);
     }
@@ -333,7 +353,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-lg">
-      <div className="bg-surface border border-line rounded-3xl max-w-6xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8 font-mono text-zinc-200 shadow-2xl relative">
+      <div className="liquid-glass max-w-6xl w-full max-h-[92vh] overflow-y-auto rounded-3xl p-6 sm:p-8 font-mono text-zinc-200 relative">
         <div className="flex items-center justify-between border-b border-line pb-4 mb-6">
           <div className="flex items-center gap-2">
             <Shield className={`w-5 h-5 ${textAccentClass}`} />
@@ -374,6 +394,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 <div className="space-y-2">
                   <input
                     type="password"
+                    autoComplete="current-password"
                     placeholder="ENTER ADMIN PASSCODE"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -412,7 +433,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               ].map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => { setActiveTab(t.id as any); playSound('click'); }}
+                  onClick={() => { setActiveTab(t.id as typeof activeTab); playSound('click'); }}
                   className={`px-3 py-2 font-bold text-xs uppercase border rounded-full transition-all ${
                     activeTab === t.id
                       ? `${bgAccentClass} ${borderAccentClass}`
@@ -611,7 +632,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => setEditingProj(p)} className="px-2 py-1 bg-surface-2 text-zinc-300 hover:text-white">EDIT</button>
-                        <button onClick={() => onDeleteProject(p.id)} className="px-2 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900">DELETE</button>
+                        <button onClick={() => void runAdminAction(() => onDeleteProject(p.id))} className="px-2 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900">DELETE</button>
                       </div>
                     </div>
                   ))}
@@ -657,7 +678,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => setEditingSkill(s)} className="px-2 py-1 bg-surface-2 text-zinc-300 hover:text-white">EDIT</button>
-                        <button onClick={() => onDeleteSkill(s.id)} className="px-2 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900">DELETE</button>
+                        <button onClick={() => void runAdminAction(() => onDeleteSkill(s.id))} className="px-2 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900">DELETE</button>
                       </div>
                     </div>
                   ))}
@@ -694,7 +715,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => setEditingThought(t)} className="px-2 py-1 bg-surface-2 text-zinc-300 hover:text-white">EDIT</button>
-                        <button onClick={() => onDeleteThought(t.id)} className="px-2 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900">DELETE</button>
+                        <button onClick={() => void runAdminAction(() => onDeleteThought(t.id))} className="px-2 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900">DELETE</button>
                       </div>
                     </div>
                   ))}
@@ -720,7 +741,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       <div key={m.id} className="p-4 bg-black border border-line space-y-2">
                         <div className="flex justify-between items-center text-xs">
                           <span className="font-bold text-white">{m.sender_name} ({m.sender_email})</span>
-                          <button onClick={() => onDeleteMessage(m.id)} className="px-2 py-0.5 bg-rose-950 text-rose-300 hover:bg-rose-900 text-[10px]">DELETE</button>
+                          <button onClick={() => void runAdminAction(() => onDeleteMessage(m.id))} className="px-2 py-0.5 bg-rose-950 text-rose-300 hover:bg-rose-900 text-[10px]">DELETE</button>
                         </div>
                         <div className={`text-xs font-bold ${textAccentClass}`}>{m.subject}</div>
                         <p className="text-xs text-zinc-300 font-sans">{m.body}</p>
@@ -752,21 +773,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         <p className="text-zinc-300 font-sans">"{g.message}"</p>
                         <div className="flex justify-end gap-2">
                           <button
-                            onClick={async () => {
-                              const adminPass = localStorage.getItem('__admin_custom_passcode') || '';
-                              await fetch('/api/guestbook', {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json', 'X-Admin-Auth': adminPass },
-                                body: JSON.stringify({ id: g.id, approved: true }),
-                              });
-                              window.location.reload();
-                            }}
+                            onClick={() => void runAdminAction(() => onApproveGuestbook(g.id))}
                             className="px-3 py-1 bg-emerald-600 text-black font-black uppercase text-[10px]"
                           >
                             ✓ APPROVE
                           </button>
                           <button
-                            onClick={() => onDeleteGuestbook(g.id)}
+                            onClick={() => void runAdminAction(() => onDeleteGuestbook(g.id))}
                             className="px-3 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900 font-bold uppercase text-[10px]"
                           >
                             ✗ REJECT
@@ -789,7 +802,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                           <span className="font-bold text-white">{g.name}</span>
                           <span className="text-zinc-500 ml-2">"{g.message}"</span>
                         </div>
-                        <button onClick={() => onDeleteGuestbook(g.id)} className="px-2 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900">REMOVE</button>
+                        <button onClick={() => void runAdminAction(() => onDeleteGuestbook(g.id))} className="px-2 py-1 bg-rose-950 text-rose-300 hover:bg-rose-900">REMOVE</button>
                       </div>
                     ))}
                   </div>

@@ -84,5 +84,3 @@ export const TechMatrix: React.FC<TechMatrixProps> = ({ skills }) => {
     </section>
   );
 };
-
-type SkillPropsAlias = { skills: Skill[] };

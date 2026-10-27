@@ -90,7 +90,7 @@ export const NavbarMenu = ({
             }}
             role="menu"
             className={cn(
-              'absolute left-1/2 top-[calc(100%+10px)] z-50 w-72 -translate-x-1/2 rounded-2xl border border-line bg-surface/95 p-2 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl',
+              'liquid-glass absolute left-auto right-0 top-[calc(100%+10px)] z-50 w-[calc(100vw-2rem)] max-w-72 translate-x-0 rounded-2xl p-2 sm:left-1/2 sm:right-auto sm:w-72 sm:-translate-x-1/2',
               panelClassName
             )}
           >

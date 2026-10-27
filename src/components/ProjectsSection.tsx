@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { Project } from '../types';
-import { ExternalLink, Eye, Star } from 'lucide-react';
+import { ExternalLink, Star } from 'lucide-react';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { ThreeDMarquee } from './ui/three-d-marquee';
+import { ExpandableCard } from './ui/expandable-card';
 
 interface ProjectsProps {
   projects: Project[];
@@ -14,7 +14,6 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
   const { textAccentClass, playSound } = useTheme();
 
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const categories = useMemo(() => {
     const cats = new Set<string>();
@@ -84,9 +83,30 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
             <ThreeDMarquee
               duration={32}
               items={filteredProjects.map((project) => (
-                <article
+                <ExpandableCard
                   key={project.id}
+                  actionLabel="view project details"
                   className="group overflow-hidden rounded-2xl border border-line bg-surface transition-colors duration-300 hover:border-line-2"
+                  expandedContent={
+                    <div className="space-y-4">
+                      <div>
+                        <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink-3">
+                          project overview
+                        </span>
+                        <p className="whitespace-pre-line">{project.description}</p>
+                      </div>
+                      {project.github_url && (
+                        <a
+                          href={project.github_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-accent hover:text-accent-bright"
+                        >
+                          source code <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  }
                 >
                   <div className="relative h-40 overflow-hidden border-b border-line bg-surface-2 sm:h-44">
                     <img
@@ -143,17 +163,8 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-line pt-3 font-mono text-xs">
-                      <button
-                        onClick={() => {
-                          playSound('click');
-                          setSelectedProject(project);
-                        }}
-                        className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-accent transition-opacity hover:opacity-70"
-                      >
-                        <Eye className="h-4 w-4" /> details
-                      </button>
-                      {project.live_url && (
+                    {project.live_url && (
+                      <div className="flex justify-end pt-3 font-mono text-xs">
                         <a
                           href={project.live_url}
                           target="_blank"
@@ -164,117 +175,16 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                         >
                           <ExternalLink className="h-4 w-4" />
                         </a>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
-                </article>
+                </ExpandableCard>
               ))}
             />
           </>
         )}
       </div>
 
-      {/* case study modal */}
-      {selectedProject && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
-          onClick={(e) => e.target === e.currentTarget && setSelectedProject(null)}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.94, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-            className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-line bg-surface p-6 font-mono text-ink-2 shadow-2xl sm:p-8"
-          >
-            <div className="mb-6 flex items-start justify-between gap-4 border-b border-line pb-5">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">
-                  {'// project archive'}
-                </span>
-                <h3 className="mt-1 text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
-                  {selectedProject.title}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedProject(null)}
-                className="rounded-full border border-line bg-surface-2 px-3.5 py-1.5 text-[11px] font-bold uppercase text-ink-2 transition-colors hover:border-accent/50 hover:text-accent"
-              >
-                close ✕
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <div className="h-64 overflow-hidden rounded-xl border border-line bg-surface-2 sm:h-72">
-                <img
-                  src={selectedProject.image_url}
-                  alt={selectedProject.title}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-
-              <div>
-                <h4 className="mb-2 text-[10px] font-bold uppercase tracking-[0.25em] text-ink-3">
-                  description / highlights
-                </h4>
-                <p className="whitespace-pre-line font-sans text-sm leading-relaxed text-ink-2">
-                  {selectedProject.description}
-                </p>
-              </div>
-
-              {selectedProject.metrics &&
-                Object.keys(selectedProject.metrics).length > 0 && (
-                  <div>
-                    <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.25em] text-ink-3">
-                      key highlights
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      {Object.entries(selectedProject.metrics).map(([k, v]) => (
-                        <div
-                          key={k}
-                          className="group relative overflow-hidden rounded-xl border border-line bg-canvas p-3.5"
-                        >
-                          <div className="text-[10px] uppercase text-ink-3">{k}</div>
-                          <div className="mt-0.5 text-lg font-extrabold text-accent">
-                            {v}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-              <div>
-                <h4 className="mb-2 text-[10px] font-bold uppercase tracking-[0.25em] text-ink-3">
-                  technologies utilized
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {(selectedProject.tags || []).map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-full border border-line bg-canvas px-3 py-1 text-[11px] font-bold uppercase text-ink"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {selectedProject.live_url && (
-                <div className="flex justify-end border-t border-line pt-5">
-                  <a
-                    href={selectedProject.live_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-xs font-bold uppercase tracking-wider text-black transition-all duration-300 hover:shadow-[0_0_28px_rgba(34,212,114,0.5)]"
-                  >
-                    <ExternalLink className="h-4 w-4" /> visit project
-                  </a>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
-      )}
     </section>
   );
 };
