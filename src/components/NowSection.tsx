@@ -1,187 +1,57 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
-import { AnimatedModal } from './ui/animated-modal';
 import { Profile } from '../types';
-import {
-  BookOpen,
-  Code,
-  Coffee,
-  Compass,
-  Heart,
-  Languages,
-  Lightbulb,
-  Moon,
-  Music,
-  Sparkles,
-  Star,
-  Zap,
-} from 'lucide-react';
+import { Coffee, Heart, Languages, Moon, Music, Sparkles, Star, Zap } from 'lucide-react';
 
 interface NowSectionProps {
   profile: Profile | null;
 }
 
-const nowIconMap: Record<string, React.ElementType> = {
-  LEARNING: BookOpen,
-  BUILDING: Code,
-  READING: Compass,
-  THINKING: Lightbulb,
-  WORKING: Zap,
-  EXPLORING: Compass,
-  CREATING: Sparkles,
-};
-
 const factIconList = [Coffee, Music, Languages, Moon, Sparkles, Star, Zap, Heart];
 
 export const NowSection: React.FC<NowSectionProps> = ({ profile }) => {
   const { playSound } = useTheme();
-
-  const nowFocusData = profile?.now_focus || [];
-  const quickFactsData = profile?.quick_facts || [];
-
-  const nowFocus = nowFocusData.map((item, idx) => ({
-    title: item.title,
-    icon: nowIconMap[item.title.toUpperCase()] || [BookOpen, Code, Compass, Lightbulb][idx % 4],
-    desc: item.desc,
-  }));
-
-  const quickFacts = quickFactsData.map((text, idx) => ({
+  const quickFacts = (profile?.quick_facts || []).map((text, idx) => ({
     icon: factIconList[idx % factIconList.length],
     text,
   }));
 
-  const [activeFocus, setActiveFocus] = useState<{
-    title: string;
-    icon: React.ElementType;
-    desc: string;
-  } | null>(null);
-  const ActiveFocusIcon = activeFocus?.icon;
-
-  if (nowFocus.length === 0 && quickFacts.length === 0) return null;
+  if (quickFacts.length === 0) return null;
 
   return (
-    <section id="now" className="border-b border-line bg-surface/40 py-16 sm:py-20">
-      <div className="mx-auto max-w-7xl space-y-10 px-4 sm:px-6 lg:px-8">
-        {nowFocus.length > 0 && (
-          <div>
-            <div className="mb-6">
-              <div className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-accent">
-                {'// current focus'}
-              </div>
-              <h2 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-                What I&apos;m{' '}
-                <span className="text-accent">up to now</span>
-              </h2>
-              <p className="mt-2.5 max-w-lg font-mono text-[11px] uppercase tracking-wider text-ink-3">
-                where my time and energy are going these days
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {nowFocus.map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <motion.button
-                    key={idx}
-                    type="button"
-                    initial={{ opacity: 0, y: 24 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-40px' }}
-                    transition={{ duration: 0.5, delay: (idx % 2) * 0.1 }}
-                    onClick={() => {
-                      playSound('click');
-                      setActiveFocus(item);
-                    }}
-                    aria-haspopup="dialog"
-                    aria-label={`Open current focus: ${item.title}`}
-                    className="group relative w-full overflow-hidden rounded-2xl liquid-glass p-5 text-left transition-all duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
-                  >
-                    <div className="relative flex items-center gap-3.5">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-accent/10 text-accent transition-all duration-300">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <h3 className="font-mono text-base font-bold uppercase tracking-[0.14em] text-ink">
-                        {item.title}
-                      </h3>
-                    </div>
-                    <p className="relative mt-3 line-clamp-2 font-sans text-sm leading-relaxed text-ink-3">
-                      {item.desc}
-                    </p>
-                    <span className="relative mt-4 inline-flex font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-accent">
-                      explore focus <span aria-hidden="true" className="ml-1">↗</span>
-                    </span>
-                  </motion.button>
-                );
-              })}
-            </div>
+    <section id="now" className="border-b border-line bg-surface/40 py-12 sm:py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-5">
+          <div className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-accent">
+            {'// personal trivia'}
           </div>
-        )}
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+            Quick <span className="text-accent">facts</span>
+          </h2>
+        </div>
 
-        <AnimatedModal
-          open={activeFocus !== null}
-          onClose={() => setActiveFocus(null)}
-          labelledBy="current-focus-modal-title"
-        >
-          {activeFocus && (
-            <div className="pr-8">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-accent">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                current focus
-              </div>
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-accent/25 bg-accent/10 text-accent">
-                {ActiveFocusIcon && <ActiveFocusIcon className="h-7 w-7" />}
-              </div>
-              <h2
-                id="current-focus-modal-title"
-                className="text-2xl font-extrabold uppercase tracking-tight text-ink sm:text-3xl"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {quickFacts.map((fact, idx) => {
+            const Icon = fact.icon;
+            return (
+              <motion.div
+                key={`${fact.text}-${idx}`}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-30px' }}
+                transition={{ duration: 0.35, delay: (idx % 4) * 0.05 }}
+                onMouseEnter={() => playSound('hover')}
+                className="group flex items-center gap-3 rounded-xl liquid-glass p-3.5 transition-transform duration-300 hover:-translate-y-0.5"
               >
-                {activeFocus.title}
-              </h2>
-              <p className="mt-4 whitespace-pre-line font-sans text-base leading-relaxed text-ink-2">
-                {activeFocus.desc}
-              </p>
-              <div className="mt-7 border-t border-white/10 pt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
-                what I&apos;m spending time on right now
-              </div>
-            </div>
-          )}
-        </AnimatedModal>
-
-        {quickFacts.length > 0 && (
-          <div className={nowFocus.length > 0 ? 'border-t border-line pt-10' : ''}>
-            <div className="mb-5">
-              <div className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-accent">
-                {'// personal trivia'}
-              </div>
-              <h3 className="text-xl font-extrabold tracking-tight text-ink sm:text-2xl">
-                Quick <span className="text-accent">facts</span>
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {quickFacts.map((fact, idx) => {
-                const Icon = fact.icon;
-                return (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, y: 18 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-30px' }}
-                    transition={{ duration: 0.4, delay: (idx % 4) * 0.07 }}
-                    onMouseEnter={() => playSound('hover')}
-                    className="group relative flex items-center gap-3 overflow-hidden rounded-2xl liquid-glass p-4 transition-all duration-300 hover:-translate-y-0.5"
-                  >
-                    <Icon className="relative h-5 w-5 shrink-0 text-accent" />
-                    <span className="relative font-mono text-[11px] font-semibold uppercase leading-snug tracking-wide text-ink-2">
-                      {fact.text}
-                    </span>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                <Icon className="h-4 w-4 shrink-0 text-accent" />
+                <span className="font-mono text-[10px] font-semibold uppercase leading-snug tracking-wide text-ink-2">
+                  {fact.text}
+                </span>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

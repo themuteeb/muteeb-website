@@ -431,10 +431,11 @@ export default function App() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(entry),
     });
-    if (res.ok) {
-      await res.json();
-      // New entries stay off the public feed until owner approval.
+    if (!res.ok) {
+      throw new Error('Guestbook submission failed. Please try again.');
     }
+    await res.json();
+    // New entries stay off the public feed until owner approval.
   };
 
   const handleDeleteGuestbook = async (id: number) => {

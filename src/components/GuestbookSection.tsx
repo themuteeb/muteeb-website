@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { GuestbookEntry } from '../types';
-import { BadgeCheck, Send, ShieldAlert, User } from 'lucide-react';
+import { BadgeCheck, PenLine, ShieldAlert, User } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { ThreeDMarquee } from './ui/three-d-marquee';
+import { AnimatedModal } from './ui/animated-modal';
+import { StatefulButton, StatefulButtonStatus } from './ui/stateful-button';
 
 interface GuestbookProps {
   entries: GuestbookEntry[];
@@ -30,14 +32,13 @@ const AVATAR_STYLES: Record<string, string> = {
 
 export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry }) => {
   const { playSound } = useTheme();
-
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
   const [selectedBadge, setSelectedBadge] = useState('VISITOR');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<StatefulButtonStatus>('idle');
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [rateLimited, setRateLimited] = useState(false);
   const [lastPostTime, setLastPostTime] = useState(0);
-
   const [toaster, setToaster] = useState<{
     show: boolean;
     type: ToasterType;
@@ -47,8 +48,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
 
   const badges = ['VISITOR', 'DEVELOPER', 'DESIGNER', 'FRIEND'];
   const colors = ['cyan', 'lime', 'rose', 'purple', 'amber'];
-
-  const publicEntries = entries.filter((e) => e.approved === true);
+  const publicEntries = entries.filter((entry) => entry.approved === true);
 
   const showToaster = (type: ToasterType, title: string, message: string) => {
     setToaster({ show: true, type, title, message });
@@ -56,8 +56,15 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
 
   const closeToaster = () => setToaster((prev) => ({ ...prev, show: false }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const openForm = () => {
+    setSubmitStatus('idle');
+    setRateLimited(false);
+    setIsFormOpen(true);
+    playSound('click');
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!name.trim() || !message.trim()) {
       showToaster('warning', 'INCOMPLETE ENTRY', 'Please add your name and a public message.');
       return;
@@ -71,7 +78,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
     }
 
     try {
-      setIsSubmitting(true);
+      setSubmitStatus('loading');
       setRateLimited(false);
       playSound('submit');
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
@@ -85,13 +92,16 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
       setLastPostTime(Date.now());
       setName('');
       setMessage('');
-
+      setSubmitStatus('success');
       showToaster('success', 'MESSAGE SUBMITTED', 'Your message is awaiting admin approval.');
-    } catch (err) {
-      console.error('Error posting guestbook entry:', err);
+      window.setTimeout(() => {
+        setSubmitStatus('idle');
+        setIsFormOpen(false);
+      }, 1100);
+    } catch (error) {
+      console.error('Error posting guestbook entry:', error);
+      setSubmitStatus('idle');
       showToaster('error', 'SUBMISSION FAILED', 'Something went wrong. Please try again.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -105,160 +115,179 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
         onClose={closeToaster}
       />
 
-      <section id="guestbook" className="border-b border-line bg-canvas py-24 sm:py-28">
+      <section id="guestbook" className="border-b border-line bg-canvas py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
-            {/* form column */}
-            <div className="lg:col-span-5">
-              <div className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.25em] text-accent">
+          <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+            <div>
+              <div className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-accent">
                 {'// public feedback'}
               </div>
-              <h2 className="mb-4 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
-                Sign the{' '}
-                <span className="text-accent">guestbook</span>
+              <h2 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+                Sign the <span className="text-accent">guestbook</span>
               </h2>
               <TextGenerateEffect
-                words="Leave a note, a thought, or just proof you were here. Every entry gets a quick moderation pass before it goes live."
-                className="mb-8 max-w-md text-sm leading-relaxed text-ink-3"
+                words="Leave a note or a thought. Entries are reviewed before they appear."
+                className="mt-2.5 max-w-md text-sm leading-relaxed text-ink-3"
                 stagger={0.035}
               />
+            </div>
+            <button
+              type="button"
+              onClick={openForm}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] text-white transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+            >
+              <PenLine className="h-4 w-4" />
+              leave a message
+            </button>
+          </div>
 
-              <form
-                onSubmit={handleSubmit}
-                className="group relative space-y-4 overflow-hidden rounded-2xl liquid-glass p-6"
-              >
-                <div className="relative">
-                  <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
-                    your name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={40}
-                    placeholder="Your name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                <div className="relative">
-                  <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
-                    select your role badge
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {badges.map((b) => (
-                      <button
-                        type="button"
-                        key={b}
-                        onClick={() => {
-                          setSelectedBadge(b);
-                          playSound('click');
-                        }}
-                        className={`rounded-full border px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-all duration-300 ${
-                          selectedBadge === b
-                            ? 'border-accent/60 bg-accent/15 text-accent'
-                            : 'border-line bg-canvas text-ink-3 hover:border-line-2 hover:text-ink'
-                        }`}
-                      >
-                        {b}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="relative">
-                  <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
-                    public message *
-                  </label>
-                  <textarea
-                    required
-                    rows={3}
-                    maxLength={300}
-                    placeholder="Write a public message…"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className={`${inputClass} resize-none`}
-                  />
-                </div>
-
-                {rateLimited && (
-                  <div className="relative flex items-center gap-2 rounded-xl border border-amber-500/50 bg-amber-950/40 p-3 font-mono text-[11px] font-bold text-amber-300">
-                    <ShieldAlert className="h-4 w-4 shrink-0" />
-                    rate limit enforced: please wait 60 seconds between posts.
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="relative flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-white transition-all duration-300 disabled:opacity-60"
-                >
-                  <Send className="h-4 w-4" />
-                  {isSubmitting ? 'transmitting…' : 'post message to feed'}
-                </button>
-              </form>
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-3">
+              <span className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-accent" />
+                live visitor feed ({publicEntries.length})
+              </span>
+              <span className="flex items-center gap-1">
+                <BadgeCheck className="h-3.5 w-3.5 text-accent" />
+                approved posts
+              </span>
             </div>
 
-            {/* entries feed column */}
-            <div className="space-y-4 lg:col-span-7">
-              <div className="mb-2 flex items-center justify-between font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-3">
-                <span className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-accent" />
-                  live visitor feed ({publicEntries.length})
-                </span>
-                <span className="flex items-center gap-1 text-[10px]">
-                  <BadgeCheck className="h-3.5 w-3.5 text-accent" />
-                  approved posts
-                </span>
+            {publicEntries.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-line bg-surface p-8 text-center font-mono text-sm text-ink-3">
+                be the first to sign the guestbook.
               </div>
-
-              {publicEntries.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-line bg-surface p-10 text-center font-mono text-sm text-ink-3">
-                  be the first to sign the guestbook.
-                </div>
-              ) : (
-                <ThreeDMarquee
-                  duration={34}
-                  items={publicEntries.map((entry) => (
-                    <article
-                      key={entry.id}
-                      className="group relative overflow-hidden rounded-2xl liquid-glass p-5 transition-colors duration-300"
-                    >
-                      <div className="relative mb-2.5 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${AVATAR_STYLES[entry.avatar_color] || 'border-line bg-zinc-800 text-zinc-400'}`}
-                            aria-hidden
-                          >
-                            <User className="h-5 w-5" strokeWidth={1.8} />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="block truncate font-mono text-sm font-bold leading-tight text-ink">
-                              {entry.name}
-                            </span>
-                          </div>
+            ) : (
+              <ThreeDMarquee
+                duration={34}
+                items={publicEntries.map((entry) => (
+                  <article
+                    key={entry.id}
+                    className="group relative overflow-hidden rounded-2xl liquid-glass p-5 transition-colors duration-300"
+                  >
+                    <div className="relative mb-2.5 flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <div
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${AVATAR_STYLES[entry.avatar_color] || 'border-line bg-zinc-800 text-zinc-400'}`}
+                          aria-hidden
+                        >
+                          <User className="h-5 w-5" strokeWidth={1.8} />
                         </div>
-
-                        <span className="shrink-0 rounded-full border border-line bg-canvas px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase text-ink-2">
-                          {entry.badge}
+                        <span className="truncate font-mono text-sm font-bold leading-tight text-ink">
+                          {entry.name}
                         </span>
                       </div>
+                      <span className="shrink-0 rounded-full border border-line bg-canvas px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase text-ink-2">
+                        {entry.badge}
+                      </span>
+                    </div>
 
-                      <p className="relative pl-[46px] font-sans text-sm leading-relaxed text-ink-2">
-                        {entry.message}
-                      </p>
-
-                      <div className="relative mt-3 border-t border-line pt-2 text-right font-mono text-[10px] text-ink-3">
-                        {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'date unavailable'}
-                      </div>
-                    </article>
-                  ))}
-                />
-              )}
-            </div>
+                    <p className="relative pl-[46px] font-sans text-sm leading-relaxed text-ink-2">
+                      {entry.message}
+                    </p>
+                    <div className="relative mt-3 border-t border-line pt-2 text-right font-mono text-[10px] text-ink-3">
+                      {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'date unavailable'}
+                    </div>
+                  </article>
+                ))}
+              />
+            )}
           </div>
         </div>
+
+        <AnimatedModal
+          open={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          labelledBy="guestbook-form-title"
+        >
+          <div className="pr-8">
+            <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
+              public feedback
+            </div>
+            <h2 id="guestbook-form-title" className="text-2xl font-extrabold tracking-tight text-ink">
+              Add your name and message
+            </h2>
+            <p className="mt-2 font-sans text-sm leading-relaxed text-ink-3">
+              Your entry will appear publicly after it has been approved.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div>
+              <label htmlFor="guestbook-name" className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
+                your name *
+              </label>
+              <input
+                id="guestbook-name"
+                type="text"
+                required
+                maxLength={40}
+                autoComplete="name"
+                placeholder="Your name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
+                select your role badge
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {badges.map((badge) => (
+                  <button
+                    type="button"
+                    key={badge}
+                    onClick={() => {
+                      setSelectedBadge(badge);
+                      playSound('click');
+                    }}
+                    aria-pressed={selectedBadge === badge}
+                    className={`rounded-full border px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-all duration-300 ${
+                      selectedBadge === badge
+                        ? 'border-accent/60 bg-accent/15 text-accent'
+                        : 'border-line bg-canvas text-ink-3 hover:border-line-2 hover:text-ink'
+                    }`}
+                  >
+                    {badge}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="guestbook-message" className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
+                public message *
+              </label>
+              <textarea
+                id="guestbook-message"
+                required
+                rows={4}
+                maxLength={300}
+                placeholder="Write a public message…"
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                className={`${inputClass} resize-none`}
+              />
+            </div>
+
+            {rateLimited && (
+              <div className="flex items-center gap-2 rounded-xl border border-amber-500/50 bg-amber-950/40 p-3 font-mono text-[11px] font-bold text-amber-300">
+                <ShieldAlert className="h-4 w-4 shrink-0" />
+                rate limit enforced: please wait 60 seconds between posts.
+              </div>
+            )}
+
+            <StatefulButton
+              type="submit"
+              status={submitStatus}
+              idleContent="post message"
+              loadingContent="transmitting…"
+              successContent="message sent"
+            />
+          </form>
+        </AnimatedModal>
       </section>
     </>
   );
