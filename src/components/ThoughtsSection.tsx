@@ -32,25 +32,25 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
   };
 
   return (
-    <section id="thoughts" className="border-b border-line bg-surface/40 py-24 sm:py-28">
+    <section id="thoughts" className="border-b border-line bg-surface/40 py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <div className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.25em] text-accent">
               {'// blog & writings'}
             </div>
-            <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+            <h2 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
               Thoughts &{' '}
               <span className="text-accent">articles</span>
             </h2>
             <TextGenerateEffect
               words="Things I noticed, learned the hard way, or just felt like writing down."
-              className="mt-4 max-w-lg text-sm leading-relaxed text-ink-3"
+              className="mt-2.5 max-w-lg text-sm leading-relaxed text-ink-3"
               stagger={0.04}
             />
           </div>
 
-          <div className="w-full md:w-96">
+          <div className="w-full md:w-80">
             <PlaceholdersAndVanishInput
               placeholders={[
                 'Search articles or tags…',
@@ -80,7 +80,7 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
             no articles match that search.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((thought) => (
               <ExpandableCard
                 key={thought.id}
@@ -94,8 +94,8 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
                   </div>
                 }
               >
-                <div className="relative min-w-0 flex-1 p-5 pb-4">
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 font-mono text-[11px] text-ink-3">
+                <div className="relative min-w-0 flex-1 p-4 pb-3">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 font-mono text-[10px] text-ink-3">
                     <span className="flex shrink-0 items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5" />
                       {(thought.read_time || '3 min read').trim().toLowerCase()}
@@ -112,16 +112,16 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
                     </div>
                   </div>
 
-                  <h3 className="mb-2 line-clamp-2 min-h-[3.5rem] text-xl font-bold tracking-tight text-ink transition-colors group-hover:text-accent sm:text-2xl">
+                  <h3 className="mb-2 line-clamp-2 min-h-[2.75rem] text-lg font-bold tracking-tight text-ink transition-colors group-hover:text-accent sm:text-xl">
                     {thought.title}
                   </h3>
 
-                  <p className="line-clamp-3 min-h-[4.5rem] font-sans text-sm leading-relaxed text-ink-3">
+                  <p className="line-clamp-2 min-h-[3rem] font-sans text-xs leading-relaxed text-ink-3 sm:text-sm">
                     {thought.summary}
                   </p>
                 </div>
 
-                <div className="relative flex justify-end border-t border-line px-5 py-3.5 font-mono text-xs">
+                <div className="relative flex justify-end border-t border-line px-4 py-3 font-mono text-xs">
                   <button
                     onClick={() => {
                       onLikeThought(thought.id);

@@ -44,7 +44,7 @@ export function ExpandableCard({
           setExpanded(nextExpanded);
           onToggle?.(nextExpanded);
         }}
-        className="flex w-full items-center justify-between border-t border-line px-5 py-3.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-accent transition-colors hover:bg-white/[0.025]"
+        className="flex w-full items-center justify-between border-t border-line px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-accent transition-colors hover:bg-white/[0.025]"
       >
         <span>{expanded ? collapseLabel : actionLabel}</span>
         <motion.span
