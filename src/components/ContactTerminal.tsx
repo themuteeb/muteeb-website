@@ -204,7 +204,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-60px' }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="group relative overflow-hidden rounded-2xl border border-line bg-surface/95 shadow-[0_30px_80px_-24px_rgba(0,0,0,0.9)]"
+                className="liquid-glass group relative overflow-hidden rounded-2xl"
               >
                 <div className="relative flex items-center justify-between border-b border-line bg-surface-2/60 px-5 py-3.5">
                   <div className="flex items-center gap-2.5">

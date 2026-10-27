@@ -36,7 +36,9 @@ export function CardStack<T extends CardStackItem>({
   const itemsKey = useMemo(() => items.map((i) => i.id).join('|'), [items]);
 
   useEffect(() => {
-    setOrder(items.map((i) => i.id));
+    const resetOrder = window.setTimeout(() => setOrder(items.map((item) => item.id)), 0);
+    return () => window.clearTimeout(resetOrder);
+    // IDs are summarized in itemsKey so replacing items with the same IDs does not reset the stack.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsKey]);
 

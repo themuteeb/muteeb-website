@@ -27,6 +27,7 @@ display/UI and **JetBrains Mono** for code, labels and terminal chrome.
 | TextGenerateEffect           | Section intros (hero bio, projects, thoughts…)            |
 | GridBackground               | Hero + contact sections                                   |
 | ThreeDMarquee                | Projects + guestbook — live, continuously looping cards    |
+| ExpandableCard               | Projects + thoughts — inline detail reveal                 |
 | PlaceholdersAndVanishInput   | Thoughts search                                           |
 
 ## Develop
@@ -56,6 +57,9 @@ All content (profile, projects, thoughts, skills, guestbook, messages) lives in
 Supabase and is served through the serverless functions in `api/`. The secret admin
 studio is unchanged: open `/admin`, `#admin`, press `Ctrl/Cmd/Alt+Shift+A`, or type
 `muteeb` anywhere. Guestbook entries require admin approval before going public.
+The passcode is verified by the API and kept only in page memory for the active
+admin session; saving content updates React state without reloading the document.
+Closing the studio or reloading the page clears that session.
 
 ## Security
 
@@ -73,6 +77,10 @@ The site is protected in three layers:
    (never `*`, unknown origins get no headers / 403 preflight), input validation
    (lengths, e-mail format, http(s)-only URLs, whitelisted visual options),
    strict JSON body parsing, and 500s that never echo internals.
+
+The browser's failed-attempt pause is a user-interface safeguard, not a substitute
+for server-side rate limiting. Use a long, unique `ADMIN_PASSWORD` and apply
+hosting-level rate limits to `/api/profile` if brute-force resistance is required.
 
 Environment variables:
 

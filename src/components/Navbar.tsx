@@ -1,20 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemePreset } from '../types';
 import {
-  BookOpen,
-  Code2,
   Compass,
   Heart,
   Layers,
   Mail,
-  Menu,
   PenLine,
   Volume2,
   VolumeX,
-  Wrench,
-  X,
 } from 'lucide-react';
 import { FloatingNavbar } from './ui/floating-navbar';
 import { NavbarMenu, type NavbarMenuItem } from './ui/navbar-menu';
@@ -34,7 +28,6 @@ export const Navbar: React.FC<NavbarProps> = () => {
     { id: 'coral', name: 'CORAL', color: 'bg-rose-500' },
     { id: 'violet', name: 'VIOLET', color: 'bg-purple-500' },
   ];
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
 
   // lightweight scroll-spy
@@ -60,7 +53,6 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
   const scrollTo = (href: string) => {
     playSound('click');
-    setMobileMenuOpen(false);
     const target = document.querySelector(href);
     if (target) {
       target.scrollIntoView({ behavior: 'smooth' });
@@ -106,32 +98,73 @@ export const Navbar: React.FC<NavbarProps> = () => {
     }`;
 
   const pill = (
-    <div className="flex items-center gap-1.5 rounded-2xl border border-line bg-canvas/80 p-1.5 pl-2.5 shadow-[0_16px_50px_-12px_rgba(0,0,0,0.85)] backdrop-blur-xl">
-      {/* logo */}
-      <a
-        href="#"
-        onClick={(e) => {
-          e.preventDefault();
-          playSound('click');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        className="group flex items-center gap-2.5 pr-1"
-        title="muteeb.in — back to top"
-      >
-        <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-line transition-colors group-hover:border-accent/50">
-          <img
-            src="/images/logo.png"
-            alt="Muteeb logo"
-            className="h-full w-full object-cover"
-          />
-        </div>
-        <span className="hidden font-mono text-sm font-bold tracking-tight text-ink sm:inline">
-          muteeb<span className="text-accent">.in</span>
-        </span>
-      </a>
+    <div className="liquid-glass flex flex-col gap-1.5 rounded-2xl p-2 sm:flex-row sm:items-center sm:gap-1.5 sm:p-1.5 sm:pl-2.5">
+      <div className="flex items-center justify-between gap-2 sm:contents">
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            playSound('click');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className="group flex items-center gap-2.5 pr-1 sm:order-1"
+          title="muteeb.in — back to top"
+        >
+          <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-line transition-colors group-hover:border-accent/50">
+            <img
+              src="/images/logo.png"
+              alt="Muteeb logo"
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <span className="hidden font-mono text-sm font-bold tracking-tight text-ink sm:inline">
+            muteeb<span className="text-accent">.in</span>
+          </span>
+        </a>
 
-      {/* desktop links */}
-      <nav className="hidden items-center gap-0.5 lg:flex">
+        <div className="flex items-center gap-1 sm:order-3">
+          <div className="liquid-glass-inset flex items-center gap-1 rounded-full p-1">
+            {themeOptions.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTheme(t.id)}
+                title={`Switch accent to ${t.name}`}
+                aria-label={`Switch accent to ${t.name}`}
+                className={`h-4 w-4 rounded-full transition-transform sm:h-5 sm:w-5 ${t.color} ${
+                  theme === t.id ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100 hover:scale-105'
+                }`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => {
+              toggleSound();
+              playSound('toggle');
+            }}
+            className={`flex h-9 w-9 items-center justify-center rounded-full border border-line transition-all duration-300 hover:border-accent/50 hover:text-accent ${
+              soundEnabled ? 'text-accent' : 'text-ink-3 opacity-60'
+            }`}
+            title={soundEnabled ? 'Mute interface audio' : 'Enable interface audio'}
+            aria-label={soundEnabled ? 'Mute interface audio' : 'Enable interface audio'}
+          >
+            {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scrollTo('#contact')}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-black transition-all duration-300 hover:shadow-[0_0_24px_rgba(34,212,114,0.5)] sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:font-mono sm:text-[11px] sm:font-bold sm:uppercase sm:tracking-[0.14em]"
+            title="Say hi"
+            aria-label="Say hi"
+          >
+            <Mail className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Say hi</span>
+          </button>
+        </div>
+      </div>
+
+      <nav className="flex w-full items-center justify-around gap-0.5 border-t border-white/10 pt-1 sm:order-2 sm:w-auto sm:border-0 sm:pt-0">
         <button
           type="button"
           onClick={() => scrollTo('#hero')}
@@ -154,144 +187,12 @@ export const Navbar: React.FC<NavbarProps> = () => {
           onItemClick={(item) => item.href && scrollTo(item.href)}
         />
       </nav>
-
-      {/* right controls */}
-      <div className="flex items-center gap-1">
-        {/* Theme Palette — 4 colour options (restored) */}
-        <div className="hidden sm:flex items-center gap-1 rounded-full border border-line bg-surface/80 p-1">
-          {themeOptions.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTheme(t.id)}
-              title={`Switch accent to ${t.name}`}
-              className={`h-5 w-5 rounded-full transition-transform ${t.color} ${
-                theme === t.id ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100 hover:scale-105'
-              }`}
-            />
-          ))}
-        </div>
-
-        <button
-          onClick={() => {
-            toggleSound();
-            playSound('toggle');
-          }}
-          className={`flex h-9 w-9 items-center justify-center rounded-full border border-line transition-all duration-300 hover:border-accent/50 hover:text-accent ${
-            soundEnabled ? 'text-accent' : 'text-ink-3 opacity-60'
-          }`}
-          title={soundEnabled ? 'Mute interface audio' : 'Enable interface audio'}
-        >
-          {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => scrollTo('#contact')}
-          className="hidden items-center gap-2 rounded-full bg-accent px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-black transition-all duration-300 hover:shadow-[0_0_24px_rgba(34,212,114,0.5)] sm:flex"
-        >
-          <Mail className="h-3.5 w-3.5" />
-          Say hi
-        </button>
-
-        {/* mobile toggle */}
-        <button
-          onClick={() => {
-            setMobileMenuOpen(!mobileMenuOpen);
-            playSound('click');
-          }}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink lg:hidden"
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-        </button>
-      </div>
     </div>
   );
 
   return (
     <FloatingNavbar appearAfter={90}>
-      <div className="w-full max-w-3xl">
-        {pill}
-
-        {/* mobile dropdown */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-              className="mt-2 overflow-hidden rounded-2xl border border-line bg-canvas/90 p-2 backdrop-blur-xl lg:hidden"
-            >
-              {[
-                { label: 'About', icon: Compass, href: '#hero' },
-                { label: 'Projects', icon: Code2, href: '#work' },
-                { label: 'Now', icon: Compass, href: '#now' },
-                { label: 'Stack', icon: Layers, href: '#stack' },
-                { label: 'Thoughts', icon: PenLine, href: '#thoughts' },
-                { label: 'Guestbook', icon: Heart, href: '#guestbook' },
-                { label: 'Contact', icon: Mail, href: '#contact' },
-              ].map((item, idx) => (
-                <motion.button
-                  key={item.href}
-                  type="button"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.03 * idx }}
-                  onClick={() => scrollTo(item.href)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 font-mono text-xs font-semibold uppercase tracking-[0.14em] transition-colors ${
-                    activeSection === item.href.slice(1)
-                      ? 'bg-accent/10 text-accent'
-                      : 'text-ink-2 hover:bg-surface-2 hover:text-ink'
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </motion.button>
-              ))}
-              <div className="mt-1 flex items-center justify-between rounded-xl bg-surface px-3.5 py-3">
-                <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-ink-3">
-                  <span className="h-2 w-2 rounded-full bg-accent" /> accent
-                </span>
-                <div className="flex gap-2">
-                  {themeOptions.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => setTheme(t.id)}
-                      className={`h-6 w-6 rounded-full ${t.color} ${theme === t.id ? 'ring-2 ring-white scale-110' : 'opacity-60'}`}
-                      title={t.name}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="mt-1 flex items-center justify-between rounded-xl bg-surface px-3.5 py-3">
-                <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-ink-3">
-                  <Wrench className="h-3.5 w-3.5" />
-                  interface audio
-                </span>
-                <button
-                  onClick={() => {
-                    toggleSound();
-                    playSound('toggle');
-                  }}
-                  className={`flex h-7 w-12 items-center rounded-full border px-0.5 transition-colors ${
-                    soundEnabled
-                      ? 'justify-end border-accent/50 bg-accent/20'
-                      : 'justify-start border-line bg-surface-2'
-                  }`}
-                  aria-label="Toggle sound"
-                >
-                  <span
-                    className={`h-5 w-5 rounded-full ${
-                      soundEnabled ? 'bg-accent' : 'bg-ink-3'
-                    }`}
-                  />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <div className="w-full max-w-3xl">{pill}</div>
     </FloatingNavbar>
   );
 };

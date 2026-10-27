@@ -15,7 +15,6 @@ export interface Profile {
   typewriter_roles?: string[];
   now_focus?: { title: string; desc: string }[];
   quick_facts?: string[];
-  admin_passcode?: string;
   github_url?: string;
   twitter_url?: string;
   linkedin_url?: string;

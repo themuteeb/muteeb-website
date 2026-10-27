@@ -113,8 +113,8 @@ const HeroTerminal = ({ profile }: { profile: Profile | null }) => {
   const [charCount, setCharCount] = useState(0);
 
   useEffect(() => {
-    setCharCount(0);
     let current = 0;
+    const resetTimer = window.setTimeout(() => setCharCount(0), 0);
     const timer = setInterval(() => {
       current += 2;
       if (current >= totalChars) {
@@ -123,7 +123,10 @@ const HeroTerminal = ({ profile }: { profile: Profile | null }) => {
       }
       setCharCount(current);
     }, 28);
-    return () => clearInterval(timer);
+    return () => {
+      window.clearTimeout(resetTimer);
+      clearInterval(timer);
+    };
   }, [totalChars]);
 
   const renderCode = () => {
@@ -151,7 +154,7 @@ const HeroTerminal = ({ profile }: { profile: Profile | null }) => {
       {/* glow behind terminal */}
       <div className="absolute -inset-6 rounded-[2rem] bg-accent/[0.06] blur-3xl" />
 
-      <div className="group relative overflow-hidden rounded-2xl border border-line bg-surface/90 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] backdrop-blur-sm">
+      <div className="liquid-glass group relative overflow-hidden rounded-2xl">
         {/* terminal chrome */}
         <div className="flex items-center justify-between border-b border-line bg-surface-2/70 px-4 py-3">
           <div className="flex items-center gap-2">

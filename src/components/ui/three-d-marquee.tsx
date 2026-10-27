@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import type { CSSProperties, ReactNode } from 'react';
+import { useReducedMotion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
 interface ThreeDMarqueeProps {
@@ -46,22 +46,14 @@ export function ThreeDMarquee({
 
   return (
     <div
-      className={cn('relative overflow-hidden py-8 [perspective:1400px]', className)}
+      className={cn('marquee-scroll-container relative overflow-hidden py-8 [perspective:1400px]', className)}
       style={{
+        '--marquee-duration': `${Math.max(12, (duration * items.length) / 5)}s`,
         maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)',
         WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)',
-      }}
+      } as CSSProperties}
     >
-      <motion.div
-        className="flex w-max items-stretch"
-        initial={{ x: '0%' }}
-        animate={{ x: ['0%', '-50%'] }}
-        transition={{
-          duration: Math.max(12, (duration * items.length) / 5),
-          repeat: Infinity,
-          ease: 'linear',
-        }}
-      >
+      <div className="marquee-scroll-track flex w-max items-stretch">
         {[0, 1].map((copy) => (
           <div
             key={copy}
@@ -72,7 +64,7 @@ export function ThreeDMarquee({
             {cards(copy)}
           </div>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 }
