@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { Profile } from '../types';
-import { ArrowDown, Github, Instagram, MapPin, Sparkles } from 'lucide-react';
+import { Github, Instagram, MapPin, Sparkles } from 'lucide-react';
 import { FlipWords } from './ui/flip-words';
 import { EncryptedText } from './ui/encrypted-text';
 import { TextGenerateEffect } from './ui/text-generate-effect';
@@ -195,12 +195,6 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
       ? profile.typewriter_roles.map((r) => r.toLowerCase())
       : defaultRoles;
 
-  const scrollToWork = () => {
-    playSound('click');
-    const elem = document.querySelector('#work');
-    if (elem) elem.scrollIntoView({ behavior: 'smooth' });
-  };
-
   return (
     <section
       id="hero"
@@ -274,14 +268,6 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
               transition={{ duration: 0.5, delay: 0.75 }}
               className="mt-9 flex flex-wrap items-center gap-4"
             >
-              <button
-                onClick={scrollToWork}
-                className="group flex items-center gap-2.5 rounded-full bg-accent px-7 py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
-              >
-                <span>see my work</span>
-                <ArrowDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
-              </button>
-
               <button
                 onClick={() => {
                   playSound('submit');

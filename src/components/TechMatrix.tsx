@@ -17,18 +17,18 @@ export const TechMatrix: React.FC<TechMatrixProps> = ({ skills }) => {
   const { playSound } = useTheme();
 
   return (
-    <section id="stack" className="relative border-b border-line bg-canvas py-24 sm:py-28">
+    <section id="stack" className="relative border-b border-line bg-canvas py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-12">
-          <div className="mb-3 font-mono text-xs font-semibold uppercase tracking-[0.25em] text-accent">
+        <div className="mb-8">
+          <div className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-accent">
             {'// tools & languages'}
           </div>
-          <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          <h2 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
             Things <span className="text-accent">I use</span>
           </h2>
           <TextGenerateEffect
             words="The daily drivers — plus a few things I keep around just because I like them."
-            className="mt-4 max-w-lg text-sm leading-relaxed text-ink-3"
+            className="mt-2.5 max-w-lg text-sm leading-relaxed text-ink-3"
             stagger={0.04}
           />
         </div>
@@ -38,7 +38,7 @@ export const TechMatrix: React.FC<TechMatrixProps> = ({ skills }) => {
             no tools added yet.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {skills.map((skill, idx) => (
               <motion.div
                 key={skill.id || skill.name}
@@ -47,9 +47,9 @@ export const TechMatrix: React.FC<TechMatrixProps> = ({ skills }) => {
                 viewport={{ once: true, margin: '-40px' }}
                 transition={{ duration: 0.45, delay: (idx % 3) * 0.08 }}
                 onMouseEnter={() => playSound('hover')}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-line bg-surface p-6 transition-all duration-300 hover:-translate-y-1 hover:border-line-2"
+                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl liquid-glass p-5 transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="relative mb-5 flex items-center justify-between">
+                <div className="relative mb-4 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Code2 className="h-4 w-4 text-accent" />
                     <span className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-ink-3">
@@ -61,7 +61,7 @@ export const TechMatrix: React.FC<TechMatrixProps> = ({ skills }) => {
                   </span>
                 </div>
 
-                <div className="relative mb-5 font-mono text-lg font-bold uppercase tracking-wide text-ink transition-colors group-hover:text-accent">
+                <div className="relative mb-4 font-mono text-lg font-bold uppercase tracking-wide text-ink transition-colors group-hover:text-accent">
                   {skill.name}
                 </div>
 

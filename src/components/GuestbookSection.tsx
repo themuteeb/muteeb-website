@@ -6,6 +6,7 @@ import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { ThreeDMarquee } from './ui/three-d-marquee';
+import { PlaceholdersAndVanishInput } from './ui/placeholders-and-vanish-input';
 
 interface GuestbookProps {
   entries: GuestbookEntry[];
@@ -60,7 +61,10 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !message.trim()) return;
+    if (!name.trim() || !message.trim()) {
+      showToaster('warning', 'INCOMPLETE ENTRY', 'Please add your name and a public message.');
+      return;
+    }
 
     const now = Date.now();
     if (now - lastPostTime < 60000) {
@@ -130,20 +134,17 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
 
               <form
                 onSubmit={handleSubmit}
-                className="group relative space-y-4 overflow-hidden rounded-2xl border border-line bg-surface p-6"
+                className="group relative space-y-4 overflow-hidden rounded-2xl liquid-glass p-6"
               >
                 <div className="relative">
                   <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
                     your name *
                   </label>
-                  <input
-                    type="text"
-                    required
+                  <PlaceholdersAndVanishInput
+                    ariaLabel="Your name"
                     maxLength={40}
-                    placeholder="e.g. Alex Mercer"
-                    value={name}
+                    placeholders={['Your name…', 'What should I call you?', 'Add your name…']}
                     onChange={(e) => setName(e.target.value)}
-                    className={inputClass}
                   />
                 </div>
 
@@ -190,14 +191,15 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                   <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
                     public message *
                   </label>
-                  <textarea
-                    required
-                    rows={3}
+                  <PlaceholdersAndVanishInput
+                    ariaLabel="Public message"
                     maxLength={300}
-                    placeholder="Drop a note, thought, or greeting…"
-                    value={message}
+                    placeholders={[
+                      'Drop a note, thought, or greeting…',
+                      'Leave a little hello…',
+                      'Write a public message…',
+                    ]}
                     onChange={(e) => setMessage(e.target.value)}
-                    className={`${inputClass} resize-none`}
                   />
                 </div>
 
@@ -242,7 +244,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                   items={publicEntries.map((entry) => (
                     <article
                       key={entry.id}
-                      className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-5 transition-colors duration-300 hover:border-line-2"
+                      className="group relative overflow-hidden rounded-2xl liquid-glass p-5 transition-colors duration-300"
                     >
                       <div className="relative mb-2.5 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2.5">
