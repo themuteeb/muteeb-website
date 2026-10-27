@@ -6,7 +6,6 @@ import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { ThreeDMarquee } from './ui/three-d-marquee';
-import { PlaceholdersAndVanishInput } from './ui/placeholders-and-vanish-input';
 
 interface GuestbookProps {
   entries: GuestbookEntry[];
@@ -17,6 +16,9 @@ interface GuestbookProps {
     badge: string;
   }) => Promise<void>;
 }
+
+const inputClass =
+  'w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 font-mono text-xs text-ink outline-none transition-all duration-300 placeholder:text-ink-3/60 focus:border-accent/60';
 
 const AVATAR_STYLES: Record<string, string> = {
   cyan: 'border-cyan-400/40 bg-cyan-400/10 text-cyan-300',
@@ -129,11 +131,14 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                   <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
                     your name *
                   </label>
-                  <PlaceholdersAndVanishInput
-                    ariaLabel="Your name"
+                  <input
+                    type="text"
+                    required
                     maxLength={40}
-                    placeholders={['Your name…', 'What should I call you?', 'Add your name…']}
+                    placeholder="Your name"
+                    value={name}
                     onChange={(e) => setName(e.target.value)}
+                    className={inputClass}
                   />
                 </div>
 
@@ -166,15 +171,14 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                   <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
                     public message *
                   </label>
-                  <PlaceholdersAndVanishInput
-                    ariaLabel="Public message"
+                  <textarea
+                    required
+                    rows={3}
                     maxLength={300}
-                    placeholders={[
-                      'Drop a note, thought, or greeting…',
-                      'Leave a little hello…',
-                      'Write a public message…',
-                    ]}
+                    placeholder="Write a public message…"
+                    value={message}
                     onChange={(e) => setMessage(e.target.value)}
+                    className={`${inputClass} resize-none`}
                   />
                 </div>
 

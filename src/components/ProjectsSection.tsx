@@ -3,7 +3,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Project } from '../types';
 import { ExternalLink, Star } from 'lucide-react';
 import { TextGenerateEffect } from './ui/text-generate-effect';
-import { ThreeDMarquee } from './ui/three-d-marquee';
+import { AppleCardsCarousel } from './ui/apple-cards-carousel';
 import { ExpandableCard } from './ui/expandable-card';
 
 interface ProjectsProps {
@@ -80,13 +80,17 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
               </span>
               <span>new projects appear here automatically</span>
             </div>
-            <ThreeDMarquee
-              duration={32}
-              items={filteredProjects.map((project) => (
+            <AppleCardsCarousel
+              label="Projects"
+              items={filteredProjects.map((project) => {
+                const projectTags = project.tags?.length
+                  ? project.tags
+                  : ['REACT', 'TYPESCRIPT', 'TAILWIND'];
+                return (
                 <ExpandableCard
                   key={project.id}
                   actionLabel="view project details"
-                  className="group overflow-hidden rounded-2xl liquid-glass transition-colors duration-300"
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl liquid-glass transition-colors duration-300"
                   expandedContent={
                     <div className="space-y-4">
                       <div>
@@ -129,42 +133,50 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                     )}
                   </div>
 
-                  <div className="p-5">
-                    <h3 className="mb-1.5 text-lg font-bold tracking-tight text-ink transition-colors group-hover:text-accent">
+                  <div className="flex flex-1 flex-col p-5">
+                    <h3 className="mb-1.5 line-clamp-1 min-h-6 text-lg font-bold tracking-tight text-ink transition-colors group-hover:text-accent">
                       {project.title}
                     </h3>
-                    <p className="mb-4 line-clamp-2 font-mono text-xs leading-relaxed text-ink-3">
+                    <p className="mb-3 line-clamp-2 min-h-9 font-mono text-xs leading-relaxed text-ink-3">
                       {project.subtitle || project.description}
                     </p>
 
-                    {project.metrics && Object.keys(project.metrics).length > 0 && (
-                      <div className="mb-4 flex gap-4 rounded-xl border border-line bg-canvas p-2.5 font-mono text-[11px]">
-                        {Object.entries(project.metrics)
-                          .slice(0, 2)
-                          .map(([key, value]) => (
-                            <div key={key} className="flex flex-col">
-                              <span className="text-[9px] font-semibold uppercase text-ink-3">
-                                {key}
-                              </span>
-                              <span className={`font-bold ${textAccentClass}`}>{value}</span>
-                            </div>
-                          ))}
-                      </div>
-                    )}
+                    <div className="mb-3 min-h-14">
+                      {project.metrics && Object.keys(project.metrics).length > 0 && (
+                        <div className="flex min-h-14 gap-4 rounded-xl border border-line bg-canvas p-2.5 font-mono text-[11px]">
+                          {Object.entries(project.metrics)
+                            .slice(0, 2)
+                            .map(([key, value]) => (
+                              <div key={key} className="flex flex-col">
+                                <span className="text-[9px] font-semibold uppercase text-ink-3">
+                                  {key}
+                                </span>
+                                <span className={`font-bold ${textAccentClass}`}>{value}</span>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
 
-                    <div className="mb-4 flex flex-wrap gap-1.5">
-                      {(project.tags || ['REACT', 'TYPESCRIPT', 'TAILWIND']).map((tag) => (
+                    <div className="mb-3 flex h-7 items-start gap-1.5 overflow-hidden">
+                      {projectTags.slice(0, 3).map((tag) => (
                         <span
                           key={tag}
-                          className="rounded-full border border-line bg-canvas px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-ink-2"
+                          title={tag}
+                          className="max-w-[5.5rem] truncate rounded-full border border-line bg-canvas px-2 py-0.5 font-mono text-[10px] font-semibold uppercase text-ink-2"
                         >
                           {tag}
                         </span>
                       ))}
+                      {projectTags.length > 3 && (
+                        <span className="shrink-0 rounded-full border border-line bg-canvas px-2 py-0.5 font-mono text-[10px] text-ink-3">
+                          +{projectTags.length - 3}
+                        </span>
+                      )}
                     </div>
 
-                    {project.live_url && (
-                      <div className="flex justify-end pt-3 font-mono text-xs">
+                    <div className="mt-auto flex min-h-9 justify-end pt-1 font-mono text-xs">
+                      {project.live_url && (
                         <a
                           href={project.live_url}
                           target="_blank"
@@ -175,11 +187,12 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                         >
                           <ExternalLink className="h-4 w-4" />
                         </a>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </ExpandableCard>
-              ))}
+                );
+              })}
             />
           </>
         )}
