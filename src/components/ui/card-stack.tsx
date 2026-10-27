@@ -43,6 +43,17 @@ export function CardStack<T extends CardStackItem>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsKey]);
 
+  useEffect(() => {
+    if (items.length < 2) return;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
+      setOrder((current) => current.length > 1
+        ? [...current.slice(1), current[0]]
+        : current);
+    }, 5000);
+    return () => window.clearInterval(interval);
+  }, [items.length]);
+
   const sendToBack = (id: string | number) => {
     setOrder((prev) => {
       if (!prev.includes(id)) return prev;
