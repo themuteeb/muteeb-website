@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
+import { AnimatedModal } from './ui/animated-modal';
 import { Profile } from '../types';
 import {
   BookOpen,
@@ -50,6 +51,13 @@ export const NowSection: React.FC<NowSectionProps> = ({ profile }) => {
     text,
   }));
 
+  const [activeFocus, setActiveFocus] = useState<{
+    title: string;
+    icon: React.ElementType;
+    desc: string;
+  } | null>(null);
+  const ActiveFocusIcon = activeFocus?.icon;
+
   if (nowFocus.length === 0 && quickFacts.length === 0) return null;
 
   return (
@@ -74,31 +82,71 @@ export const NowSection: React.FC<NowSectionProps> = ({ profile }) => {
               {nowFocus.map((item, idx) => {
                 const Icon = item.icon;
                 return (
-                  <motion.div
+                  <motion.button
                     key={idx}
+                    type="button"
                     initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-40px' }}
                     transition={{ duration: 0.5, delay: (idx % 2) * 0.1 }}
-                    className="group relative overflow-hidden rounded-2xl liquid-glass p-5 transition-all duration-300 hover:-translate-y-1"
+                    onClick={() => {
+                      playSound('click');
+                      setActiveFocus(item);
+                    }}
+                    aria-haspopup="dialog"
+                    aria-label={`Open current focus: ${item.title}`}
+                    className="group relative w-full overflow-hidden rounded-2xl liquid-glass p-5 text-left transition-all duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
                   >
                     <div className="relative flex items-center gap-3.5">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-accent/25 bg-accent/10 text-accent transition-all duration-300">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-accent/10 text-accent transition-all duration-300">
                         <Icon className="h-5 w-5" />
                       </div>
                       <h3 className="font-mono text-base font-bold uppercase tracking-[0.14em] text-ink">
                         {item.title}
                       </h3>
                     </div>
-                    <p className="relative mt-3 font-sans text-sm leading-relaxed text-ink-3">
+                    <p className="relative mt-3 line-clamp-2 font-sans text-sm leading-relaxed text-ink-3">
                       {item.desc}
                     </p>
-                  </motion.div>
+                    <span className="relative mt-4 inline-flex font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-accent">
+                      explore focus <span aria-hidden="true" className="ml-1">↗</span>
+                    </span>
+                  </motion.button>
                 );
               })}
             </div>
           </div>
         )}
+
+        <AnimatedModal
+          open={activeFocus !== null}
+          onClose={() => setActiveFocus(null)}
+          labelledBy="current-focus-modal-title"
+        >
+          {activeFocus && (
+            <div className="pr-8">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-accent">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                current focus
+              </div>
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-accent/25 bg-accent/10 text-accent">
+                {ActiveFocusIcon && <ActiveFocusIcon className="h-7 w-7" />}
+              </div>
+              <h2
+                id="current-focus-modal-title"
+                className="text-2xl font-extrabold uppercase tracking-tight text-ink sm:text-3xl"
+              >
+                {activeFocus.title}
+              </h2>
+              <p className="mt-4 whitespace-pre-line font-sans text-base leading-relaxed text-ink-2">
+                {activeFocus.desc}
+              </p>
+              <div className="mt-7 border-t border-white/10 pt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-3">
+                what I&apos;m spending time on right now
+              </div>
+            </div>
+          )}
+        </AnimatedModal>
 
         {quickFacts.length > 0 && (
           <div className={nowFocus.length > 0 ? 'border-t border-line pt-10' : ''}>
