@@ -54,7 +54,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    'profile' | 'typewriter' | 'now_facts' | 'projects' | 'skills' | 'thoughts' | 'messages' | 'guestbook' | 'backup'
+    'profile' | 'typewriter' | 'quick_facts' | 'projects' | 'skills' | 'thoughts' | 'messages' | 'guestbook' | 'backup'
   >('profile');
 
   const [failedAttempts, setFailedAttempts] = useState<number>(() => {
@@ -123,14 +123,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   ];
   const [roles, setRoles] = useState<string[]>(defaultRoles);
   const [newRoleInput, setNewRoleInput] = useState('');
-
-  const defaultNow = profile?.now_focus || [
-    { title: 'LEARNING', desc: 'Getting deep into the tricky parts of JavaScript.' },
-    { title: 'BUILDING', desc: 'Small digital tools that fix highly specific annoyances I have.' },
-    { title: 'READING', desc: 'Mostly technical documentation and web design blogs.' },
-    { title: 'THINKING', desc: 'About why certain websites feel instantly comfortable to use.' }
-  ];
-  const [nowFocus, setNowFocus] = useState(defaultNow);
 
   const defaultFacts = profile?.quick_facts || [
     'I run on tea, not coffee',
@@ -205,8 +197,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
   };
 
-  const handleSaveProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveProfileSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
 
     try {
       setProfSaving(true);
@@ -222,7 +214,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         instagram_handle: sanitizeInput(profInstagram, 40),
         logo_url: sanitizeInput(profLogoUrl, 500),
         typewriter_roles: roles.map(r => sanitizeInput(r, 60)),
-        now_focus: nowFocus.map(item => ({ title: sanitizeInput(item.title, 40), desc: sanitizeInput(item.desc, 300) })),
         quick_facts: quickFacts.map(f => sanitizeInput(f, 100)),
       };
 
@@ -370,8 +361,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-lg">
-      <div className="liquid-glass max-w-6xl w-full max-h-[92vh] overflow-y-auto rounded-3xl p-6 sm:p-8 font-mono text-zinc-200 relative">
-        <div className="flex items-center justify-between border-b border-line pb-4 mb-6">
+      <div className="liquid-glass max-w-6xl w-full max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 font-mono text-zinc-200 relative">
+        <div className="flex items-center justify-between border-b border-line pb-3 mb-4">
           <div className="flex items-center gap-2">
             <Shield className={`w-5 h-5 ${textAccentClass}`} />
             <h2 className="text-xl font-black text-white uppercase tracking-wider">
@@ -441,12 +432,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             )}
           </div>
         ) : (
-          <div className="space-y-6">
-            <div className="flex flex-wrap gap-2 border-b border-line pb-3">
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-1.5 border-b border-line pb-2">
               {[
                 { id: 'profile', name: 'PROFILE & BRANDING' },
                 { id: 'typewriter', name: 'TICKER ROLES' },
-                { id: 'now_facts', name: '"NOW" & FACTS' },
+                { id: 'quick_facts', name: 'QUICK FACTS' },
                 { id: 'projects', name: `PROJECTS (${projects.length})` },
                 { id: 'skills', name: `THINGS I USE (${skills.length})` },
                 { id: 'thoughts', name: `WRITINGS (${thoughts.length})` },
@@ -457,7 +448,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 <button
                   key={t.id}
                   onClick={() => { setActiveTab(t.id as typeof activeTab); playSound('click'); }}
-                  className={`px-3 py-2 font-bold text-xs uppercase border rounded-full transition-all ${
+                  className={`px-2.5 py-1.5 font-bold text-[10px] uppercase border rounded-full transition-all ${
                     activeTab === t.id
                       ? `${bgAccentClass} ${borderAccentClass}`
                       : 'border-line bg-black text-zinc-400 hover:text-white'
@@ -565,43 +556,34 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               </div>
             )}
 
-            {activeTab === 'now_facts' && (
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  <h3 className="text-xs font-bold text-white uppercase">// "NOW" CARDS MANAGER</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {nowFocus.map((item, idx) => (
-                      <div key={idx} className="p-4 bg-black border border-line space-y-2">
-                        <input type="text" maxLength={40} value={item.title} onChange={(e) => { const updated = [...nowFocus]; updated[idx].title = e.target.value; setNowFocus(updated); }} className="w-full px-2 py-1 bg-canvas border border-line font-bold text-white text-xs uppercase" />
-                        <textarea rows={2} maxLength={300} value={item.desc} onChange={(e) => { const updated = [...nowFocus]; updated[idx].desc = e.target.value; setNowFocus(updated); }} className="w-full px-2 py-1 bg-canvas border border-line text-zinc-300 text-xs" />
-                      </div>
-                    ))}
-                  </div>
+            {activeTab === 'quick_facts' && (
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-xs font-bold text-white uppercase">// QUICK FACTS</h3>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+                    {quickFacts.length} saved
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <input type="text" maxLength={100} placeholder="Add a quick fact" value={newFactInput} onChange={(e) => setNewFactInput(e.target.value)} className="flex-1 px-3 py-2 bg-black border border-line text-white text-xs" />
+                  <button type="button" onClick={handleAddFact} className={`px-4 py-2 ${bgAccentClass} font-bold text-xs uppercase flex items-center gap-1`}>
+                    <Plus className="w-4 h-4" /> ADD
+                  </button>
                 </div>
 
-                <div className="space-y-4 pt-4 border-t border-line">
-                  <h3 className="text-xs font-bold text-white uppercase">// QUICK FACTS TRIVIA MANAGER</h3>
-                  <div className="flex gap-2">
-                    <input type="text" maxLength={100} placeholder="Add new quick fact" value={newFactInput} onChange={(e) => setNewFactInput(e.target.value)} className="flex-1 px-3 py-2 bg-black border border-line text-white text-xs" />
-                    <button type="button" onClick={handleAddFact} className={`px-4 py-2 ${bgAccentClass} font-bold text-xs uppercase flex items-center gap-1`}>
-                      <Plus className="w-4 h-4" /> ADD FACT
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {quickFacts.map((fact, idx) => (
-                      <div key={idx} className="p-3 bg-black border border-line flex items-center justify-between text-xs font-bold">
-                        <span className="text-zinc-200">{fact}</span>
-                        <button onClick={() => handleRemoveFact(idx)} className="p-1 bg-rose-950 text-rose-300 hover:bg-rose-900">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {quickFacts.map((fact, idx) => (
+                    <div key={`${fact}-${idx}`} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-black/50 p-3 text-xs font-bold">
+                      <span className="text-zinc-200">{fact}</span>
+                      <button type="button" onClick={() => handleRemoveFact(idx)} aria-label={`Remove fact: ${fact}`} className="shrink-0 rounded-lg p-1.5 text-rose-300 transition-colors hover:bg-rose-950">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
 
-                <button onClick={handleSaveProfileSubmit} className={`px-6 py-3 ${bgAccentClass} font-black text-xs uppercase flex items-center gap-2`}>
-                  <Save className="w-4 h-4" /> SAVE NOW & QUICK FACTS TO DATABASE
+                <button type="button" onClick={() => void handleSaveProfileSubmit()} disabled={profSaving} className={`px-5 py-2.5 ${bgAccentClass} font-black text-xs uppercase flex items-center gap-2 disabled:opacity-60`}>
+                  <Save className="h-4 w-4" /> {profSaving ? 'SAVING…' : 'SAVE QUICK FACTS'}
                 </button>
               </div>
             )}
