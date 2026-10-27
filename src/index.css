@@ -121,6 +121,22 @@
   -webkit-backdrop-filter: blur(16px) saturate(140%);
 }
 
+/* Navbar dropdown panel: desktop keeps its original blur; on phones it is more blurred. */
+.navbar-menu-panel {
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+
+@media (max-width: 639px) {
+  .navbar-menu-panel {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.03)),
+      rgba(12, 20, 26, 0.42);
+    backdrop-filter: blur(32px) saturate(180%) brightness(1.08);
+    -webkit-backdrop-filter: blur(32px) saturate(180%) brightness(1.08);
+  }
+}
+
 @keyframes marquee-scroll {
   to { transform: translateX(-50%); }
 }

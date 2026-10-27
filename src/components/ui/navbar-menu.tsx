@@ -89,12 +89,8 @@ export const NavbarMenu = ({
               damping: 30,
             }}
             role="menu"
-            style={{
-              backdropFilter: 'blur(18px) saturate(150%)',
-              WebkitBackdropFilter: 'blur(18px) saturate(150%)',
-            }}
             className={cn(
-              'liquid-glass absolute left-auto right-0 top-[calc(100%+10px)] z-50 w-[calc(100vw-2rem)] max-w-72 translate-x-0 rounded-2xl p-2 sm:left-1/2 sm:right-auto sm:w-72 sm:-translate-x-1/2',
+              'liquid-glass navbar-menu-panel absolute left-auto right-0 top-[calc(100%+10px)] z-50 w-[calc(100vw-2rem)] max-w-72 translate-x-0 rounded-2xl p-2 sm:left-1/2 sm:right-auto sm:w-72 sm:-translate-x-1/2',
               panelClassName
             )}
           >
