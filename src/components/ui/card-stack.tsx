@@ -67,7 +67,7 @@ export function CardStack({
         transition={{ layout: { type: 'spring', stiffness: 260, damping: 30 } }}
         className={cn('relative w-60 sm:w-72 md:w-96', className)}
       >
-        {cards.map((card, index) => (
+        {cards.slice(0, 3).map((card, index) => (
           <motion.div
             key={card.id}
             aria-hidden={index !== 0}
