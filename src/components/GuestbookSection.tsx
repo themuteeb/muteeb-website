@@ -159,24 +159,24 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                 be the first to sign the guestbook.
               </div>
             ) : (
-              <div className="mx-auto max-w-2xl">
+              <div className="mx-auto max-w-xl">
                 <p className="mb-2 text-center font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">
-                  drag or tap the top card to browse approved messages
+                  auto-advances every 5 seconds · drag or tap to browse
                 </p>
                 <CardStack
                   items={publicEntries}
-                  offset={12}
-                  scaleFactor={0.045}
-                  className="h-[300px] sm:h-[280px]"
+                  offset={8}
+                  scaleFactor={0.035}
+                  className="h-[240px] sm:h-[220px]"
                   renderCard={(entry) => (
-                    <article className="group relative h-full overflow-hidden rounded-2xl liquid-glass p-5 transition-colors duration-300">
+                    <article className="group relative h-full overflow-hidden rounded-2xl border border-line-2 bg-surface/95 p-4 shadow-lg transition-colors duration-300">
                       <div className="relative mb-2.5 flex items-center justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-2.5">
                           <div
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${AVATAR_STYLES[entry.avatar_color] || 'border-line bg-zinc-800 text-zinc-400'}`}
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${AVATAR_STYLES[entry.avatar_color] || 'border-line bg-zinc-800 text-zinc-400'}`}
                             aria-hidden
                           >
-                            <User className="h-5 w-5" strokeWidth={1.8} />
+                            <User className="h-4 w-4" strokeWidth={1.8} />
                           </div>
                           <span className="truncate font-mono text-sm font-bold leading-tight text-ink">
                             {entry.name}
@@ -187,10 +187,10 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                         </span>
                       </div>
 
-                      <p className="relative line-clamp-5 pl-[46px] font-sans text-sm leading-relaxed text-ink-2">
+                      <p className="relative line-clamp-4 pl-[42px] font-sans text-sm leading-relaxed text-ink-2">
                         {entry.message}
                       </p>
-                      <div className="relative mt-3 border-t border-line pt-2 text-right font-mono text-[10px] text-ink-3">
+                      <div className="relative mt-2 border-t border-line pt-2 text-right font-mono text-[10px] text-ink-3">
                         {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'date unavailable'}
                       </div>
                     </article>
