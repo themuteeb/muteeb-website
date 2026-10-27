@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { GuestbookEntry } from '../types';
-import { BadgeCheck, PenLine, ShieldAlert, User } from 'lucide-react';
+import { BadgeCheck, PenLine, User } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
+import {
+  GUESTBOOK_COOLDOWN_MS,
+  GUESTBOOK_COOLDOWN_STORAGE_KEY,
+  GUESTBOOK_COOLDOWN_MESSAGE,
+  GuestbookRateLimitError,
+} from '../lib/guestbookRateLimit';
 import { Toaster, ToasterType } from './Toaster';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { CardStack } from './ui/card-stack';
@@ -37,8 +43,14 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
   const [selectedBadge, setSelectedBadge] = useState('VISITOR');
   const [submitStatus, setSubmitStatus] = useState<StatefulButtonStatus>('idle');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [rateLimited, setRateLimited] = useState(false);
-  const [lastPostTime, setLastPostTime] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState(() => {
+    try {
+      const savedUntil = Number(window.localStorage.getItem(GUESTBOOK_COOLDOWN_STORAGE_KEY));
+      return Number.isFinite(savedUntil) && savedUntil > Date.now() ? savedUntil : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [toaster, setToaster] = useState<{
     show: boolean;
     type: ToasterType;
@@ -58,38 +70,48 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
 
   const openForm = () => {
     setSubmitStatus('idle');
-    setRateLimited(false);
     setIsFormOpen(true);
     playSound('click');
   };
 
+  const startCooldown = (until: number) => {
+    setCooldownUntil(until);
+    try {
+      window.localStorage.setItem(GUESTBOOK_COOLDOWN_STORAGE_KEY, String(until));
+    } catch {
+      // Server-side IP rate limiting remains active if browser storage is unavailable.
+    }
+  };
+
+  const showCooldownNotice = () => {
+    showToaster('warning', 'MESSAGE ALREADY PENDING', GUESTBOOK_COOLDOWN_MESSAGE);
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const now = Date.now();
+    if (now < cooldownUntil) {
+      showCooldownNotice();
+      return;
+    }
     if (!name.trim() || !message.trim()) {
       showToaster('warning', 'INCOMPLETE ENTRY', 'Please add your name and a public message.');
       return;
     }
 
-    const now = Date.now();
-    if (now - lastPostTime < 60000) {
-      setRateLimited(true);
-      showToaster('warning', 'RATE LIMITED', 'Please wait 60 seconds between posts.');
-      return;
-    }
-
     try {
       setSubmitStatus('loading');
-      setRateLimited(false);
       playSound('submit');
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
       await onAddEntry({
         name: sanitizeInput(name, 40),
-        message: sanitizeInput(message, 300),
+        message: sanitizeInput(message, 20),
         avatar_color: randomColor,
         badge: sanitizeInput(selectedBadge, 20),
       });
 
-      setLastPostTime(Date.now());
+      startCooldown(Date.now() + GUESTBOOK_COOLDOWN_MS);
       setName('');
       setMessage('');
       setSubmitStatus('success');
@@ -101,7 +123,12 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
     } catch (error) {
       console.error('Error posting guestbook entry:', error);
       setSubmitStatus('error');
-      showToaster('error', 'SUBMISSION FAILED', 'Something went wrong. Please try again.');
+      if (error instanceof GuestbookRateLimitError) {
+        startCooldown(Date.now() + error.retryAfterMs);
+        showCooldownNotice();
+      } else {
+        showToaster('error', 'SUBMISSION FAILED', 'Something went wrong. Please try again.');
+      }
       window.setTimeout(() => setSubmitStatus('idle'), 1600);
     }
   };
@@ -252,21 +279,17 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
               <textarea
                 id="guestbook-message"
                 required
-                rows={4}
-                maxLength={300}
+                rows={3}
+                maxLength={20}
                 placeholder="Write a public message…"
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 className={`${inputClass} resize-none`}
               />
-            </div>
-
-            {rateLimited && (
-              <div className="flex items-center gap-2 rounded-xl border border-amber-500/50 bg-amber-950/40 p-3 font-mono text-[11px] font-bold text-amber-300">
-                <ShieldAlert className="h-4 w-4 shrink-0" />
-                rate limit enforced: please wait 60 seconds between posts.
+              <div className="mt-1 text-right font-mono text-[10px] text-ink-3">
+                {message.length}/20 characters
               </div>
-            )}
+            </div>
 
             <StatefulButton
               type="submit"
