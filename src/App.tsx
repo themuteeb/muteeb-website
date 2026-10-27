@@ -244,6 +244,69 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Poll only while the authenticated admin panel is open. This keeps the inbox
+  // and moderation queue fresh without exposing owner-only data publicly or
+  // forcing a full document reload.
+  useEffect(() => {
+    if (!isAdminOpen || !adminPasscode) return;
+
+    let cancelled = false;
+    let requestInFlight = false;
+
+    const refreshAdminActivity = async () => {
+      if (requestInFlight || document.visibilityState === 'hidden') return;
+      requestInFlight = true;
+
+      try {
+        const headers = { 'X-Admin-Auth': adminPasscode };
+        const [guestbookResponse, messagesResponse] = await Promise.all([
+          fetch('/api/guestbook', { headers }),
+          fetch('/api/messages', { headers }),
+        ]);
+
+        if (cancelled) return;
+
+        if (guestbookResponse.status === 401 || messagesResponse.status === 401) {
+          setAdminPasscode(null);
+          setMessages([]);
+          setGuestbook((current) => current.filter((entry) => entry.approved));
+          setProfile((current) => current ? { ...current, email: '' } : current);
+          return;
+        }
+
+        if (guestbookResponse.ok) {
+          const entries = await guestbookResponse.json() as GuestbookEntry[];
+          if (!cancelled && Array.isArray(entries)) setGuestbook(entries);
+        }
+
+        if (messagesResponse.ok) {
+          const inbox = await messagesResponse.json() as ContactMessage[];
+          if (!cancelled && Array.isArray(inbox)) setMessages(inbox);
+        }
+      } catch (error) {
+        if (!cancelled) console.error('Error refreshing admin activity:', error);
+      } finally {
+        requestInFlight = false;
+      }
+    };
+
+    const initialRefresh = window.setTimeout(() => void refreshAdminActivity(), 0);
+    const interval = window.setInterval(() => void refreshAdminActivity(), 8_000);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void refreshAdminActivity();
+    };
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    window.addEventListener('focus', refreshWhenVisible);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(initialRefresh);
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      window.removeEventListener('focus', refreshWhenVisible);
+    };
+  }, [isAdminOpen, adminPasscode, setAdminPasscode]);
+
   const adminRequest = async (url: string, options: RequestInit = {}) => {
     if (!adminPasscode) throw new Error('Admin session expired. Please enter the passcode again.');
 
@@ -300,11 +363,15 @@ export default function App() {
   };
 
   const handleSaveThought = async (thought: Partial<Thought>) => {
-    await adminRequest('/api/thoughts', {
+    const response = await adminRequest('/api/thoughts', {
       method: thought.id ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(thought),
     });
+    const savedThought = await response.json() as Thought;
+    setThoughts((current) => thought.id
+      ? current.map((item) => item.id === savedThought.id ? savedThought : item)
+      : [savedThought, ...current]);
     await fetchAllData();
   };
 

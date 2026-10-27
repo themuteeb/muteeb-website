@@ -1,27 +1,27 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ */
-/*  muteeb.in — dark minimal design system                              */
-/*  canvas: hsl(0 0% 4%) · accent: #22d472 · Sora + JetBrains Mono      */
+/*  muteeb.in — light glass design system                               */
+/*  cool white canvas · deep teal accent · Sora + JetBrains Mono        */
 /* ------------------------------------------------------------------ */
 
 @theme {
   /* canvas + surface layers */
-  --color-canvas: hsl(0 0% 4%);
-  --color-surface: hsl(0 0% 6.5%);
-  --color-surface-2: hsl(0 0% 9%);
-  --color-line: hsl(0 0% 14%);
-  --color-line-2: hsl(0 0% 22%);
+  --color-canvas: hsl(210 40% 98%);
+  --color-surface: hsl(0 0% 100%);
+  --color-surface-2: hsl(210 30% 96%);
+  --color-line: hsl(214 24% 89%);
+  --color-line-2: hsl(214 18% 78%);
 
   /* ink scale */
-  --color-ink: hsl(0 0% 96%);
-  --color-ink-2: hsl(0 0% 74%);
-  --color-ink-3: hsl(0 0% 55%);
+  --color-ink: hsl(222 47% 11%);
+  --color-ink-2: hsl(215 25% 27%);
+  --color-ink-3: hsl(215 16% 45%);
 
-  /* code-green accent */
-  --color-accent: #22d472;
-  --color-accent-bright: #7cf5ac;
-  --color-accent-deep: #0f9d58;
+  /* Accessible accent colors for a light canvas */
+  --color-accent: #0e7490;
+  --color-accent-bright: #0891b2;
+  --color-accent-deep: #155e75;
 
   /* typography */
   --font-sans: "Sora", ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -49,17 +49,17 @@
   @keyframes pulse-dot {
     0%,
     100% {
-      box-shadow: 0 0 0 0 rgba(34, 212, 114, 0.55);
+      opacity: 0.5;
     }
     50% {
-      box-shadow: 0 0 0 6px rgba(34, 212, 114, 0);
+      opacity: 1;
     }
   }
 }
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
     scroll-behavior: smooth;
   }
 
@@ -73,7 +73,7 @@
 
   ::selection {
     background-color: var(--color-accent);
-    color: #05130b;
+    color: #ffffff;
   }
 
   ::-webkit-scrollbar {
@@ -81,36 +81,16 @@
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: hsl(0 0% 4%);
+    background: var(--color-canvas);
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(0 0% 18%);
+    background: hsl(215 16% 76%);
     border-radius: 8px;
-    border: 2px solid hsl(0 0% 4%);
+    border: 2px solid var(--color-canvas);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(155 60% 40%);
+    background: var(--color-accent);
   }
-}
-
-/* ------------------------------------------------------------------ */
-/*  reusable glow helpers                                               */
-/* ------------------------------------------------------------------ */
-
-@utility glow-accent {
-  box-shadow:
-    0 0 20px rgba(34, 212, 114, 0.25),
-    0 0 60px rgba(34, 212, 114, 0.12);
-}
-
-@utility glow-accent-strong {
-  box-shadow:
-    0 0 24px rgba(34, 212, 114, 0.45),
-    0 0 90px rgba(34, 212, 114, 0.22);
-}
-
-@utility text-glow-accent {
-  text-shadow: 0 0 18px rgba(34, 212, 114, 0.55);
 }
 
 @utility card-surface {
@@ -119,39 +99,114 @@
   border-radius: 1.25rem;
 }
 
-/* Translucent chrome with a soft specular edge and a theme-aware accent tint. */
+/* Bright frosted glass tuned for the light theme. */
 @utility liquid-glass {
-  border: 1px solid rgba(235, 255, 246, 0.19);
+  border: 1px solid rgba(255, 255, 255, 0.86);
   background:
-    radial-gradient(130% 150% at 0% 0%, color-mix(in srgb, var(--color-accent) 13%, transparent), transparent 62%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035) 42%, rgba(255, 255, 255, 0.015)),
-    rgba(9, 13, 11, 0.78);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.76) 54%, rgba(248, 250, 252, 0.78)),
+    rgba(255, 255, 255, 0.82);
   box-shadow:
-    0 24px 72px -34px rgba(0, 0, 0, 0.95),
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.055);
-  backdrop-filter: blur(24px) saturate(155%);
-  -webkit-backdrop-filter: blur(24px) saturate(155%);
-  transition: border-color 300ms ease, box-shadow 300ms ease, background-color 300ms ease;
+    0 18px 48px -28px rgba(15, 23, 42, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    inset 0 -1px 0 rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  transition: border-color 240ms ease, box-shadow 240ms ease, background-color 240ms ease;
 
   &:hover {
-    border-color: rgba(235, 255, 246, 0.31);
+    border-color: rgba(255, 255, 255, 0.98);
     box-shadow:
-      0 28px 78px -32px rgba(0, 0, 0, 0.95),
-      0 0 26px color-mix(in srgb, var(--color-accent) 15%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.07);
+      0 20px 52px -28px rgba(15, 23, 42, 0.38),
+      inset 0 1px 0 rgba(255, 255, 255, 0.98),
+      inset 0 -1px 0 rgba(148, 163, 184, 0.15);
   }
 }
 
 @utility liquid-glass-inset {
-  border: 1px solid rgba(235, 255, 246, 0.11);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
-    rgba(255, 255, 255, 0.025);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(241, 245, 249, 0.78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px) saturate(135%);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+}
+
+@layer utilities {
+  /* Retone legacy dark-only classes so light mode stays readable in admin and code panels. */
+  :root .bg-black {
+    background-color: var(--color-surface) !important;
+  }
+  :root [class~="bg-black/90"] {
+    background-color: rgba(15, 23, 42, 0.22) !important;
+  }
+  :root .bg-zinc-700,
+  :root .bg-zinc-800 {
+    background-color: var(--color-surface-2) !important;
+  }
+  :root .bg-rose-950 {
+    background-color: #fff1f2 !important;
+  }
+  :root .text-white {
+    color: var(--color-ink) !important;
+  }
+  :root .bg-accent.text-white {
+    color: #fff !important;
+  }
+  :root .text-zinc-200,
+  :root .text-zinc-300 {
+    color: #334155 !important;
+  }
+  :root .text-zinc-400,
+  :root .text-zinc-500 {
+    color: #64748b !important;
+  }
+  :root .text-rose-200,
+  :root .text-rose-300,
+  :root .text-rose-400 {
+    color: #be123c !important;
+  }
+  :root .text-cyan-300 {
+    color: #0e7490 !important;
+  }
+  :root .text-lime-300 {
+    color: #4d7c0f !important;
+  }
+  :root .text-purple-300 {
+    color: #6d28d9 !important;
+  }
+  :root .text-amber-300,
+  :root .text-amber-400 {
+    color: #92400e !important;
+  }
+  :root .text-emerald-400 {
+    color: #047857 !important;
+  }
+  :root [class~="hover:bg-rose-900"]:hover {
+    background-color: #ffe4e6 !important;
+  }
+  :root [class~="bg-amber-950/30"],
+  :root [class~="bg-amber-950/40"] {
+    background-color: rgba(245, 158, 11, 0.08) !important;
+  }
+  :root [class~="hover:bg-accent"].text-white:hover {
+    color: #fff !important;
+  }
+
+  .hero-wave-line {
+    animation: hero-wave-drift 9s ease-in-out var(--wave-delay, 0s) infinite alternate;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+
+@keyframes hero-wave-drift {
+  from { transform: translateY(-6px); }
+  to { transform: translateY(7px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-wave-line {
+    animation: none;
+  }
 }
 
 @keyframes marquee-scroll {

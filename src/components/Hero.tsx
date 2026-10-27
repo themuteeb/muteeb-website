@@ -6,7 +6,7 @@ import { ArrowDown, Github, Instagram, MapPin, Sparkles } from 'lucide-react';
 import { FlipWords } from './ui/flip-words';
 import { EncryptedText } from './ui/encrypted-text';
 import { TextGenerateEffect } from './ui/text-generate-effect';
-import { GridBackground } from './ui/grid-background';
+import { WavyBackground } from './ui/wavy-background';
 
 // helper to treat "nil" / "null" strings as missing
 const clean = (v: string | undefined | null, fallback: string) => {
@@ -151,9 +151,6 @@ const HeroTerminal = ({ profile }: { profile: Profile | null }) => {
       transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
       className="relative w-full"
     >
-      {/* glow behind terminal */}
-      <div className="absolute -inset-6 rounded-[2rem] bg-accent/[0.06] blur-3xl" />
-
       <div className="liquid-glass group relative overflow-hidden rounded-2xl">
         {/* terminal chrome */}
         <div className="flex items-center justify-between border-b border-line bg-surface-2/70 px-4 py-3">
@@ -209,7 +206,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
       id="hero"
       className="relative flex min-h-screen flex-col justify-start overflow-hidden border-b border-line bg-canvas pb-12 pt-12 sm:pt-14"
     >
-      <GridBackground cellSize={44} maskFrom="top" />
+      <WavyBackground className="pointer-events-none absolute inset-0 z-0 opacity-55" />
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-start gap-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
@@ -279,7 +276,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
             >
               <button
                 onClick={scrollToWork}
-                className="group flex items-center gap-2.5 rounded-full bg-accent px-7 py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-black transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_32px_rgba(34,212,114,0.5)] active:translate-y-0"
+                className="group flex items-center gap-2.5 rounded-full bg-accent px-7 py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-white transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
               >
                 <span>see my work</span>
                 <ArrowDown className="h-4 w-4 transition-transform duration-300 group-hover:translate-y-0.5" />
@@ -290,7 +287,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
                   playSound('submit');
                   onOpenContact();
                 }}
-                className="flex items-center gap-2.5 rounded-full border border-line bg-surface px-7 py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-ink-2 transition-all duration-300 hover:border-accent/50 hover:text-accent hover:shadow-[0_0_24px_rgba(34,212,114,0.18)]"
+                className="flex items-center gap-2.5 rounded-full border border-line bg-surface px-7 py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-ink-2 transition-all duration-300 hover:border-accent/50 hover:text-accent"
               >
                 <Sparkles className="h-4 w-4" />
                 <span>say hi</span>

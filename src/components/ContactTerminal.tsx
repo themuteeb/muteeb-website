@@ -19,7 +19,7 @@ interface ContactTerminalProps {
 }
 
 const inputClass =
-  'w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 font-mono text-xs text-ink outline-none transition-all duration-300 placeholder:text-ink-3/60 focus:border-accent/60 focus:shadow-[0_0_20px_rgba(34,212,114,0.14)]';
+  'w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 font-mono text-xs text-ink outline-none transition-all duration-300 placeholder:text-ink-3/60 focus:border-accent/60 ';
 
 export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendMessage }) => {
   const { playSound } = useTheme();
@@ -139,7 +139,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
       />
 
       <section id="contact" className="relative overflow-hidden border-b border-line bg-canvas py-24 sm:py-28">
-        <GridBackground cellSize={40} maskFrom="center" glow />
+        <GridBackground cellSize={40} maskFrom="center" />
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
@@ -151,7 +151,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                 </div>
                 <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-6xl">
                   Let&apos;s connect &<br />
-                  <span className="text-glow-accent text-accent">say hello</span>
+                  <span className="text-accent">say hello</span>
                 </h2>
               </div>
 
@@ -173,7 +173,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                     </span>
                     <button
                       onClick={handleCopyEmail}
-                      className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[10px] font-bold uppercase text-black transition-all duration-300 hover:shadow-[0_0_18px_rgba(34,212,114,0.5)]"
+                      className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[10px] font-bold uppercase text-white transition-all duration-300"
                     >
                       <Copy className="h-3 w-3" />
                       copy
@@ -296,7 +296,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                   <button
                     type="submit"
                     disabled={status === 'sending'}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-4 font-mono text-xs font-bold uppercase tracking-[0.14em] text-black transition-all duration-300 hover:shadow-[0_0_32px_rgba(34,212,114,0.5)] disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-4 font-mono text-xs font-bold uppercase tracking-[0.14em] text-white transition-all duration-300 disabled:opacity-60"
                   >
                     <Send className="h-4 w-4" />
                     {status === 'sending' ? 'transmitting…' : 'send direct message'}
