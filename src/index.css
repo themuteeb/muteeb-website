@@ -121,10 +121,19 @@
   -webkit-backdrop-filter: blur(16px) saturate(140%);
 }
 
-/* Mobile nav dropdown: solid background so the page does not show through. */
+/* Navbar dropdown panel: desktop keeps its original blur; on phones it is more blurred. */
+.navbar-menu-panel {
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+
 @media (max-width: 639px) {
-  .navbar-menu-solid {
-    background: #0b1115;
+  .navbar-menu-panel {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03) 42%, rgba(255, 255, 255, 0.01)),
+      rgba(8, 14, 18, 0.5);
+    backdrop-filter: blur(36px) saturate(160%);
+    -webkit-backdrop-filter: blur(36px) saturate(160%);
   }
 }
 
