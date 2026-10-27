@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 export type FormStatusType = 'success' | 'error' | 'warning';
 
@@ -9,9 +9,10 @@ export interface FormStatusMessage {
   message?: string;
 }
 
+/** Errors and warnings are red; success is green. */
 const styles: Record<FormStatusType, { box: string; icon: React.ElementType; role: 'status' | 'alert' }> = {
   success: {
-    box: 'border-accent/50 bg-accent/10 text-accent',
+    box: 'border-emerald-500/60 bg-emerald-950/50 text-emerald-300',
     icon: CheckCircle2,
     role: 'status',
   },
@@ -21,8 +22,8 @@ const styles: Record<FormStatusType, { box: string; icon: React.ElementType; rol
     role: 'alert',
   },
   warning: {
-    box: 'border-amber-500/50 bg-amber-950/40 text-amber-300',
-    icon: AlertTriangle,
+    box: 'border-red-500/60 bg-red-950/50 text-red-400',
+    icon: XCircle,
     role: 'alert',
   },
 };
@@ -35,7 +36,7 @@ export const FormStatus: React.FC<{ status: FormStatusMessage | null }> = ({ sta
   return (
     <div
       role={s.role}
-      aria-live={status.type === 'error' ? 'assertive' : 'polite'}
+      aria-live={status.type === 'success' ? 'polite' : 'assertive'}
       className={`flex items-start gap-2.5 rounded-xl border px-3.5 py-3 ${s.box}`}
     >
       <Icon className="mt-0.5 h-4 w-4 shrink-0" />
