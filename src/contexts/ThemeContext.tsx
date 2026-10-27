@@ -16,12 +16,12 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /** High-contrast accent presets tuned for light surfaces. */
-const THEME_COLORS: Record<ThemePreset, { accent: string; bright: string; deep: string }> = {
-  neon:   { accent: '#0e7490', bright: '#0891b2', deep: '#155e75' },
-  lime:   { accent: '#4d7c0f', bright: '#65a30d', deep: '#365314' },
-  coral:  { accent: '#be123c', bright: '#e11d48', deep: '#9f1239' },
-  violet: { accent: '#6d28d9', bright: '#7c3aed', deep: '#5b21b6' },
-  mono:   { accent: '#334155', bright: '#475569', deep: '#1e293b' },
+const THEME_COLORS: Record<ThemePreset, { accent: string; bright: string; deep: string; foreground: string }> = {
+  neon:   { accent: '#0e7490', bright: '#0891b2', deep: '#155e75', foreground: '#ffffff' },
+  white:  { accent: '#f4f4f5', bright: '#ffffff', deep: '#d4d4d8', foreground: '#09090b' },
+  pink:   { accent: '#db2777', bright: '#ec4899', deep: '#be185d', foreground: '#ffffff' },
+  violet: { accent: '#6d28d9', bright: '#7c3aed', deep: '#5b21b6', foreground: '#ffffff' },
+  mono:   { accent: '#334155', bright: '#475569', deep: '#1e293b', foreground: '#ffffff' },
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -98,11 +98,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--color-accent', c.accent);
     root.style.setProperty('--color-accent-bright', c.bright);
     root.style.setProperty('--color-accent-deep', c.deep);
+    root.style.setProperty('--color-accent-foreground', c.foreground);
   }, [theme]);
 
   const themeClasses = {
     accentClass: 'text-accent',
-    bgAccentClass: 'bg-accent text-white',
+    bgAccentClass: 'bg-accent text-accent-foreground',
     borderAccentClass: 'border-accent',
     textAccentClass: 'text-accent',
   };

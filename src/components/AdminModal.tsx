@@ -448,7 +448,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="px-3 py-1 bg-surface-2 border border-line text-white hover:bg-accent hover:text-white font-bold uppercase text-xs"
+            className="px-3 py-1 bg-surface-2 border border-line text-white hover:bg-accent hover:text-accent-foreground font-bold uppercase text-xs"
           >
             [CLOSE X]
           </button>

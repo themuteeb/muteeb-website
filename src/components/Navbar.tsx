@@ -25,8 +25,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
   const themeOptions: { id: ThemePreset; name: string; color: string }[] = [
     { id: 'neon', name: 'CYAN', color: 'bg-cyan-600' },
-    { id: 'lime', name: 'LIME', color: 'bg-lime-700' },
-    { id: 'coral', name: 'CORAL', color: 'bg-rose-600' },
+    { id: 'white', name: 'WHITE', color: 'bg-white' },
+    { id: 'pink', name: 'PINK', color: 'bg-pink-600' },
     { id: 'violet', name: 'VIOLET', color: 'bg-purple-700' },
   ];
   const [activeSection, setActiveSection] = useState('hero');
@@ -161,7 +161,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                   aria-label={`Switch accent to ${option.name}`}
                   className={`h-4 w-4 rounded-full transition-transform sm:h-5 sm:w-5 ${option.color} ${
                     theme === option.id
-                      ? 'scale-110 ring-2 ring-white ring-offset-1 ring-offset-white'
+                      ? 'scale-110 ring-2 ring-accent ring-offset-1 ring-offset-canvas'
                       : 'opacity-65 hover:scale-105 hover:opacity-100'
                   }`}
                 />
@@ -185,7 +185,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
             <button
               type="button"
               onClick={() => scrollTo('#contact')}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-white transition-colors hover:bg-accent-deep sm:h-9 sm:w-auto sm:gap-2 sm:px-4 sm:font-mono sm:text-[11px] sm:font-bold sm:uppercase sm:tracking-[0.14em]"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground transition-colors hover:bg-accent-deep sm:h-9 sm:w-auto sm:gap-2 sm:px-4 sm:font-mono sm:text-[11px] sm:font-bold sm:uppercase sm:tracking-[0.14em]"
               title="Say hi"
               aria-label="Say hi"
             >

@@ -43,7 +43,7 @@ const ProjectCardPreview: React.FC<ProjectCardPreviewProps> = ({
           {project.category}
         </span>
         {project.featured && (
-          <span className="absolute right-3 top-3 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white">
+          <span className="absolute right-3 top-3 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-accent-foreground">
             featured
           </span>
         )}
