@@ -7,7 +7,7 @@ import { Toaster, ToasterType } from './Toaster';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { ThreeDMarquee } from './ui/three-d-marquee';
 import { AnimatedModal } from './ui/animated-modal';
-import { StatefulButton, StatefulButtonStatus } from './ui/stateful-button';
+import { StatefulButton, type StatefulButtonStatus } from './ui/stateful-button';
 
 interface GuestbookProps {
   entries: GuestbookEntry[];
@@ -100,8 +100,9 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
       }, 1100);
     } catch (error) {
       console.error('Error posting guestbook entry:', error);
-      setSubmitStatus('idle');
+      setSubmitStatus('error');
       showToaster('error', 'SUBMISSION FAILED', 'Something went wrong. Please try again.');
+      window.setTimeout(() => setSubmitStatus('idle'), 1600);
     }
   };
 

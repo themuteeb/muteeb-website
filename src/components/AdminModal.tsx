@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Profile, Project, Thought, ContactMessage, GuestbookEntry, Skill } from '../types';
-import { Shield, Lock, Save, Plus, Trash2, Download, ShieldAlert, Upload } from 'lucide-react';
+import { Shield, Lock, Plus, Trash2, Download, ShieldAlert, Upload } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { uploadImage } from '../lib/imageUpload';
+import { StatefulButton, type StatefulButtonStatus } from './ui/stateful-button';
 
 interface AdminModalProps {
   profile: Profile | null;
@@ -52,6 +53,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const { isAdmin, setAdminPasscode } = useAuth();
 
   const [password, setPassword] = useState('');
+  const [loginStatus, setLoginStatus] = useState<StatefulButtonStatus>('idle');
   const [authError, setAuthError] = useState(false);
   const [activeTab, setActiveTab] = useState<
     'profile' | 'typewriter' | 'quick_facts' | 'projects' | 'skills' | 'thoughts' | 'messages' | 'guestbook' | 'backup'
@@ -112,7 +114,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [profEmail, setProfEmail] = useState(profile?.email || 'hello@muteeb.in');
   const [profInstagram, setProfInstagram] = useState(profile?.instagram_handle || '@mr_muteeb_');
   const [profLogoUrl, setProfLogoUrl] = useState(profile?.logo_url || '/images/logo.png');
-  const [profSaving, setProfSaving] = useState(false);
+  const [profileSaveStatus, setProfileSaveStatus] = useState<StatefulButtonStatus>('idle');
+  const [projectSaveStatus, setProjectSaveStatus] = useState<StatefulButtonStatus>('idle');
+  const [thoughtSaveStatus, setThoughtSaveStatus] = useState<StatefulButtonStatus>('idle');
+  const [skillSaveStatus, setSkillSaveStatus] = useState<StatefulButtonStatus>('idle');
 
   const defaultRoles = profile?.typewriter_roles || [
     'STUDENT & NIGHT CODER',
@@ -141,12 +146,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loginStatus === 'loading') return;
     if (isLockedOut || Date.now() < lockoutUntil) {
       alert(`SECURITY LOCKOUT ENFORCED: 5 FAILED ATTEMPTS. ACCESS BLOCKED FOR ${timeRemainingText}`);
       return;
     }
 
     const entered = password.trim();
+    setLoginStatus('loading');
 
     let isValid = false;
     try {
@@ -164,15 +171,19 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
 
     if (isValid) {
-      setAdminPasscode(entered);
       setPassword('');
       setAuthError(false);
       setFailedAttempts(0);
       localStorage.removeItem('__sec_failed_attempts');
       localStorage.removeItem('__sec_lockout_until');
       playSound('submit');
-      // Re-fetch admin-gated data (messages inbox, pending guestbook, etc.)
-      void onAdminVerified?.(entered);
+      setLoginStatus('success');
+      window.setTimeout(() => {
+        setLoginStatus('idle');
+        setAdminPasscode(entered);
+        // Re-fetch admin-gated data (messages inbox, pending guestbook, etc.)
+        void onAdminVerified?.(entered);
+      }, 700);
     } else {
       const newFailed = failedAttempts + 1;
       setFailedAttempts(newFailed);
@@ -184,7 +195,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         localStorage.setItem('__sec_lockout_until', String(lockoutTime));
       }
       setAuthError(true);
+      setLoginStatus('error');
       playSound('toggle');
+      window.setTimeout(() => setLoginStatus('idle'), 1600);
     }
   };
 
@@ -199,9 +212,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleSaveProfileSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
+    if (profileSaveStatus === 'loading') return;
 
     try {
-      setProfSaving(true);
+      setProfileSaveStatus('loading');
       playSound('submit');
 
       const updatePayload: Partial<Profile> = {
@@ -218,12 +232,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       };
 
       await onUpdateProfile(updatePayload);
-      alert('SETTINGS SAVED SUCCESSFULLY!');
+      setProfileSaveStatus('success');
+      window.setTimeout(() => setProfileSaveStatus('idle'), 1400);
     } catch (err) {
       console.error(err);
+      setProfileSaveStatus('error');
       alert(err instanceof Error ? `SAVE FAILED: ${err.message}` : 'SAVE FAILED. PLEASE TRY AGAIN.');
-    } finally {
-      setProfSaving(false);
+      window.setTimeout(() => setProfileSaveStatus('idle'), 1600);
     }
   };
 
@@ -273,8 +288,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingProj || !editingProj.title) return;
+    if (!editingProj || !editingProj.title || projectSaveStatus === 'loading') return;
     try {
+      setProjectSaveStatus('loading');
       playSound('submit');
       await onSaveProject({
         ...editingProj,
@@ -283,15 +299,22 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         description: sanitizeInput(editingProj.description || '', 1000),
         image_url: sanitizeInput(editingProj.image_url || '', 500),
       });
-      setEditingProj(null);
+      setProjectSaveStatus('success');
+      window.setTimeout(() => {
+        setEditingProj(null);
+        setProjectSaveStatus('idle');
+      }, 900);
     } catch (err) {
       console.error(err);
+      setProjectSaveStatus('error');
+      alert(err instanceof Error ? `PROJECT SAVE FAILED: ${err.message}` : 'PROJECT SAVE FAILED. PLEASE TRY AGAIN.');
+      window.setTimeout(() => setProjectSaveStatus('idle'), 1600);
     }
   };
 
   const handleThoughtSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingThought || !editingThought.title) return;
+    if (!editingThought || !editingThought.title || thoughtSaveStatus === 'loading') return;
     const title = sanitizeInput(editingThought.title, 100);
     const summary = sanitizeInput(editingThought.summary || '', 300);
     const content = sanitizeInput(editingThought.content || '', 5000);
@@ -301,6 +324,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
 
     try {
+      setThoughtSaveStatus('loading');
       playSound('submit');
       // Send only columns the API permits. Existing rows also contain
       // likes_count and published_at, which are intentionally not writable.
@@ -316,26 +340,40 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         read_time: sanitizeInput(editingThought.read_time || '3 MIN READ', 30),
         ...(typeof editingThought.featured === 'boolean' ? { featured: editingThought.featured } : {}),
       });
-      setEditingThought(null);
+      setThoughtSaveStatus('success');
+      window.setTimeout(() => {
+        setEditingThought(null);
+        setThoughtSaveStatus('idle');
+      }, 900);
     } catch (err) {
       console.error(err);
+      setThoughtSaveStatus('error');
       alert(err instanceof Error ? `WRITING SAVE FAILED: ${err.message}` : 'WRITING SAVE FAILED. PLEASE TRY AGAIN.');
+      window.setTimeout(() => setThoughtSaveStatus('idle'), 1600);
     }
   };
 
   const handleSkillSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingSkill || !editingSkill.name) return;
+    if (!editingSkill || !editingSkill.name || skillSaveStatus === 'loading') return;
     try {
+      setSkillSaveStatus('loading');
       playSound('submit');
       await onSaveSkill({
         ...editingSkill,
         name: sanitizeInput(editingSkill.name || '', 50),
         category: sanitizeInput(editingSkill.category || 'LANGUAGES & TOOLS', 40),
       });
-      setEditingSkill(null);
+      setSkillSaveStatus('success');
+      window.setTimeout(() => {
+        setEditingSkill(null);
+        setSkillSaveStatus('idle');
+      }, 900);
     } catch (err) {
       console.error(err);
+      setSkillSaveStatus('error');
+      alert(err instanceof Error ? `TOOL SAVE FAILED: ${err.message}` : 'TOOL SAVE FAILED. PLEASE TRY AGAIN.');
+      window.setTimeout(() => setSkillSaveStatus('idle'), 1600);
     }
   };
 
@@ -408,6 +446,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 <div className="space-y-2">
                   <input
                     type="password"
+                    required
                     autoComplete="current-password"
                     placeholder="ENTER ADMIN PASSCODE"
                     value={password}
@@ -422,12 +461,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   </div>
                 )}
 
-                <button
+                <StatefulButton
                   type="submit"
-                  className={`w-full py-3 ${bgAccentClass} font-black text-xs uppercase`}
-                >
-                  LOGIN
-                </button>
+                  status={loginStatus}
+                  idleContent="login"
+                  loadingContent="verifying…"
+                  successContent="access granted"
+                  errorContent="access denied"
+                  className="py-3"
+                />
               </form>
             )}
           </div>
@@ -518,10 +560,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   </p>
                 </div>
 
-                <button type="submit" disabled={profSaving} className={`px-6 py-3 ${bgAccentClass} font-black text-xs uppercase flex items-center gap-2`}>
-                  <Save className="w-4 h-4" />
-                  {profSaving ? 'SAVING...' : 'SAVE ALL BRANDING SETTINGS'}
-                </button>
+                <StatefulButton
+                  type="submit"
+                  status={profileSaveStatus}
+                  idleContent="save all branding settings"
+                  loadingContent="saving…"
+                  successContent="settings saved"
+                  errorContent="save failed"
+                  className="w-full sm:w-auto px-6"
+                />
               </form>
             )}
 
@@ -550,9 +597,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   ))}
                 </div>
 
-                <button onClick={handleSaveProfileSubmit} className={`px-6 py-3 ${bgAccentClass} font-black text-xs uppercase flex items-center gap-2`}>
-                  <Save className="w-4 h-4" /> SAVE TICKER ROLES TO DATABASE
-                </button>
+                <StatefulButton
+                  type="button"
+                  onClick={() => void handleSaveProfileSubmit()}
+                  status={profileSaveStatus}
+                  idleContent="save ticker roles"
+                  loadingContent="saving…"
+                  successContent="roles saved"
+                  errorContent="save failed"
+                  className="w-auto px-5"
+                />
               </div>
             )}
 
@@ -582,9 +636,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   ))}
                 </div>
 
-                <button type="button" onClick={() => void handleSaveProfileSubmit()} disabled={profSaving} className={`px-5 py-2.5 ${bgAccentClass} font-black text-xs uppercase flex items-center gap-2 disabled:opacity-60`}>
-                  <Save className="h-4 w-4" /> {profSaving ? 'SAVING…' : 'SAVE QUICK FACTS'}
-                </button>
+                <StatefulButton
+                  type="button"
+                  onClick={() => void handleSaveProfileSubmit()}
+                  status={profileSaveStatus}
+                  idleContent="save quick facts"
+                  loadingContent="saving…"
+                  successContent="facts saved"
+                  errorContent="save failed"
+                  className="w-auto px-5"
+                />
               </div>
             )}
 
@@ -623,7 +684,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
                     <div className="flex justify-end gap-2">
                       <button type="button" onClick={() => setEditingProj(null)} className="px-3 py-1.5 border border-line text-zinc-300 text-xs font-bold uppercase">CANCEL</button>
-                      <button type="submit" className={`px-4 py-1.5 ${bgAccentClass} font-black text-xs uppercase`}>SAVE PROJECT</button>
+                      <StatefulButton
+                        type="submit"
+                        status={projectSaveStatus}
+                        idleContent="save project"
+                        loadingContent="saving…"
+                        successContent="project saved"
+                        errorContent="save failed"
+                        className="w-auto px-4 py-1.5"
+                      />
                     </div>
                   </form>
                 )}
@@ -669,7 +738,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     </div>
                     <div className="flex justify-end gap-2">
                       <button type="button" onClick={() => setEditingSkill(null)} className="px-3 py-1.5 border border-line text-zinc-300 text-xs font-bold uppercase">CANCEL</button>
-                      <button type="submit" className={`px-4 py-1.5 ${bgAccentClass} font-black text-xs uppercase`}>SAVE TOOL</button>
+                      <StatefulButton
+                        type="submit"
+                        status={skillSaveStatus}
+                        idleContent="save tool"
+                        loadingContent="saving…"
+                        successContent="tool saved"
+                        errorContent="save failed"
+                        className="w-auto px-4 py-1.5"
+                      />
                     </div>
                   </form>
                 )}
@@ -707,7 +784,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     <textarea required placeholder="Full Article Content" rows={6} maxLength={5000} value={editingThought.content || ''} onChange={(e) => setEditingThought({ ...editingThought, content: e.target.value })} className="w-full px-3 py-2 bg-canvas border border-line text-white text-xs" />
                     <div className="flex justify-end gap-2">
                       <button type="button" onClick={() => setEditingThought(null)} className="px-3 py-1.5 border border-line text-zinc-300 text-xs font-bold uppercase">CANCEL</button>
-                      <button type="submit" className={`px-4 py-1.5 ${bgAccentClass} font-black text-xs uppercase`}>SAVE ARTICLE</button>
+                      <StatefulButton
+                        type="submit"
+                        status={thoughtSaveStatus}
+                        idleContent="save article"
+                        loadingContent="saving…"
+                        successContent="article saved"
+                        errorContent="save failed"
+                        className="w-auto px-4 py-1.5"
+                      />
                     </div>
                   </form>
                 )}

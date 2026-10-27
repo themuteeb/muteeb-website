@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
-import { Mail, Send, Terminal } from 'lucide-react';
+import { Mail, Terminal } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
 import { GridBackground } from './ui/grid-background';
 import { PlaceholdersAndVanishInput } from './ui/placeholders-and-vanish-input';
 import { TextGenerateEffect } from './ui/text-generate-effect';
+import { StatefulButton, type StatefulButtonStatus } from './ui/stateful-button';
 
 interface ContactTerminalProps {
   email?: string;
@@ -27,7 +28,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
   const [name, setName] = useState('');
   const [senderEmail, setSenderEmail] = useState('');
   const [body, setBody] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending'>('idle');
+  const [status, setStatus] = useState<StatefulButtonStatus>('idle');
   const [lastSentTime, setLastSentTime] = useState(0);
 
   const [toaster, setToaster] = useState<{
@@ -54,7 +55,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
     }
 
     try {
-      setStatus('sending');
+      setStatus('loading');
       playSound('submit');
 
       const cleanName = sanitizeInput(name, 60);
@@ -94,12 +95,14 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
       setName('');
       setSenderEmail('');
       setBody('');
-      setStatus('idle');
+      setStatus('success');
       showToaster('success', 'MESSAGE TRANSMITTED', 'Thanks for reaching out! I will respond soon.');
+      window.setTimeout(() => setStatus('idle'), 1400);
     } catch (err) {
       console.error('Contact submit error:', err);
-      setStatus('idle');
-      showToaster('error', 'TRANSMISSION FAILED', 'Please try again or copy the direct email.');
+      setStatus('error');
+      showToaster('error', 'TRANSMISSION FAILED', 'Please try again in a moment.');
+      window.setTimeout(() => setStatus('idle'), 1400);
     }
   };
 
@@ -248,14 +251,15 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                     />
                   </div>
 
-                  <button
+                  <StatefulButton
                     type="submit"
-                    disabled={status === 'sending'}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-4 font-mono text-xs font-bold uppercase tracking-[0.14em] text-white transition-all duration-300 disabled:opacity-60"
-                  >
-                    <Send className="h-4 w-4" />
-                    {status === 'sending' ? 'transmitting…' : 'send direct message'}
-                  </button>
+                    status={status}
+                    idleContent="send direct message"
+                    loadingContent="transmitting…"
+                    successContent="message sent"
+                    errorContent="failed — try again"
+                    className="py-4"
+                  />
                 </form>
               </motion.div>
             </div>
