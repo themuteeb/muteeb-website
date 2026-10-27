@@ -164,37 +164,23 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                   auto-advances every 5 seconds · drag or tap to browse
                 </p>
                 <CardStack
-                  items={publicEntries}
-                  offset={8}
-                  scaleFactor={0.035}
-                  className="h-[240px] sm:h-[220px]"
-                  renderCard={(entry) => (
-                    <article className="group relative h-full overflow-hidden rounded-2xl border border-line-2 bg-surface/95 p-4 shadow-lg transition-colors duration-300">
-                      <div className="relative mb-2.5 flex items-center justify-between gap-2">
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          <div
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${AVATAR_STYLES[entry.avatar_color] || 'border-line bg-zinc-800 text-zinc-400'}`}
-                            aria-hidden
-                          >
-                            <User className="h-4 w-4" strokeWidth={1.8} />
-                          </div>
-                          <span className="truncate font-mono text-sm font-bold leading-tight text-ink">
-                            {entry.name}
-                          </span>
-                        </div>
-                        <span className="shrink-0 rounded-full border border-line bg-canvas px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase text-ink-2">
-                          {entry.badge}
-                        </span>
+                  items={publicEntries.map((entry) => ({
+                    id: entry.id,
+                    content: entry.message,
+                    name: entry.name,
+                    designation: `${entry.badge} · ${entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'approved'}`,
+                    avatar: (
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${AVATAR_STYLES[entry.avatar_color] || 'border-line bg-zinc-800 text-zinc-400'}`}
+                        aria-hidden
+                      >
+                        <User className="h-4 w-4" strokeWidth={1.8} />
                       </div>
-
-                      <p className="relative line-clamp-4 pl-[42px] font-sans text-sm leading-relaxed text-ink-2">
-                        {entry.message}
-                      </p>
-                      <div className="relative mt-2 border-t border-line pt-2 text-right font-mono text-[10px] text-ink-3">
-                        {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'date unavailable'}
-                      </div>
-                    </article>
-                  )}
+                    ),
+                  }))}
+                  offset={10}
+                  scaleFactor={0.06}
+                  className="w-60 sm:w-72 md:w-96"
                 />
               </div>
             )}

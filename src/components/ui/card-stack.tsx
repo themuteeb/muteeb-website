@@ -1,45 +1,35 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { animate, motion, useDragControls, useMotionValue } from 'framer-motion';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface CardStackItem {
   id: string | number;
+  content: ReactNode;
+  name: string;
+  designation: string;
+  avatar?: ReactNode;
 }
 
-/**
- * Aceternity UI — CardStack
- * A swipeable stack of cards: drag (or tap) the front card to send it to
- * the back of the stack.
- * https://ui.aceternity.com/components/card-stack
- */
-export function CardStack<T extends CardStackItem>({
+/** Compact, opaque, auto-advancing Aceternity-style card stack. */
+export function CardStack({
   items,
   offset = 10,
-  scaleFactor = 0.05,
+  scaleFactor = 0.06,
   className,
-  cardClassName,
-  renderCard,
 }: {
-  items: T[];
-  /** vertical peek distance between stacked cards, in px */
+  items: CardStackItem[];
   offset?: number;
-  /** how much each card shrinks per stack level */
   scaleFactor?: number;
   className?: string;
-  cardClassName?: string;
-  renderCard: (item: T, isTop: boolean) => React.ReactNode;
 }) {
-  const [order, setOrder] = useState<Array<string | number>>(() =>
-    items.map((i) => i.id)
-  );
-
-  const itemsKey = useMemo(() => items.map((i) => i.id).join('|'), [items]);
+  const [cards, setCards] = useState(items);
+  const itemsKey = useMemo(() => items.map((item) => item.id).join('|'), [items]);
 
   useEffect(() => {
-    const resetOrder = window.setTimeout(() => setOrder(items.map((item) => item.id)), 0);
-    return () => window.clearTimeout(resetOrder);
-    // IDs are summarized in itemsKey so replacing items with the same IDs does not reset the stack.
+    const reset = window.setTimeout(() => setCards(items), 0);
+    return () => window.clearTimeout(reset);
+    // Reset the stack when approved-entry IDs change, without restarting on every parent render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemsKey]);
 
@@ -47,161 +37,76 @@ export function CardStack<T extends CardStackItem>({
     if (items.length < 2) return;
     const interval = window.setInterval(() => {
       if (document.visibilityState === 'hidden') return;
-      setOrder((current) => current.length > 1
-        ? [...current.slice(1), current[0]]
-        : current);
+      setCards((current) => {
+        if (current.length < 2) return current;
+        const next = [...current];
+        next.unshift(next.pop()!);
+        return next;
+      });
     }, 5000);
     return () => window.clearInterval(interval);
   }, [items.length]);
 
-  const sendToBack = (id: string | number) => {
-    setOrder((prev) => {
-      if (!prev.includes(id)) return prev;
-      return [...prev.filter((i) => i !== id), id];
+  const showNext = () => {
+    setCards((current) => {
+      if (current.length < 2) return current;
+      const next = [...current];
+      next.unshift(next.pop()!);
+      return next;
     });
   };
 
+  if (cards.length === 0) return null;
+
+  const activeIndex = items.findIndex((item) => item.id === cards[0]?.id);
+
   return (
-    <div>
-      <div className={cn('relative', className)}>
-      {order.slice(0, 3).map((id, index) => {
-        const item = items.find((i) => i.id === id);
-        if (!item) return null;
-        return (
-          <StackCard
-            key={id}
-            index={index}
-            offset={offset}
-            scaleFactor={scaleFactor}
-            onSendToBack={() => sendToBack(id)}
-            className={cardClassName}
+    <div className="flex flex-col items-center">
+      <div className={cn('relative h-60 w-60 sm:w-72 md:w-96', className)}>
+        {cards.map((card, index) => (
+          <motion.div
+            key={card.id}
+            aria-hidden={index !== 0}
+            className="absolute top-0 flex h-60 w-full flex-col justify-between rounded-3xl border border-line-2 bg-surface p-4 shadow-xl shadow-black/20"
+            style={{ transformOrigin: 'top center' }}
+            animate={{
+              top: index * -offset,
+              scale: 1 - index * scaleFactor,
+              zIndex: cards.length - index,
+            }}
+            transition={{ type: 'spring', stiffness: 260, damping: 26 }}
           >
-            {renderCard(item, index === 0)}
-          </StackCard>
-        );
-      })}
+            <div className="line-clamp-5 overflow-hidden text-sm leading-relaxed text-ink-2">
+              {card.content}
+            </div>
+            <div className="flex min-w-0 items-center gap-2.5 border-t border-line pt-3">
+              {card.avatar}
+              <div className="min-w-0">
+                <p className="truncate font-mono text-xs font-bold text-ink">{card.name}</p>
+                <p className="truncate font-mono text-[10px] uppercase tracking-wider text-ink-3">
+                  {card.designation}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
       </div>
-      {items.length > 1 && (
-        <button
-          type="button"
-          onClick={() => {
-            const frontCardId = order[0];
-            if (frontCardId !== undefined) sendToBack(frontCardId);
-          }}
-          aria-label="Show the next approved guestbook message"
-          className="mx-auto mt-3 flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink-2 transition-colors hover:border-accent/50 hover:text-accent"
-        >
-          next approved message <ChevronRight className="h-3.5 w-3.5" />
-        </button>
+
+      {cards.length > 1 && (
+        <div className="mt-3 flex items-center gap-3">
+          <span aria-live="polite" className="font-mono text-[10px] uppercase tracking-wider text-ink-3">
+            {activeIndex >= 0 ? activeIndex + 1 : 1} / {items.length}
+          </span>
+          <button
+            type="button"
+            onClick={showNext}
+            aria-label="Show the next approved guestbook message"
+            className="flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink-2 transition-colors hover:border-accent/50 hover:text-accent"
+          >
+            next message <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
       )}
     </div>
-  );
-}
-
-function StackCard({
-  index,
-  offset,
-  scaleFactor,
-  onSendToBack,
-  className,
-  children,
-}: {
-  index: number;
-  offset: number;
-  scaleFactor: number;
-  onSendToBack: () => void;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotate = useMotionValue(0);
-  const scale = useMotionValue(1);
-  const dragControls = useDragControls();
-  const isTop = index === 0;
-
-  const pointerStart = useRef<{ x: number; y: number; t: number } | null>(
-    null
-  );
-
-  useEffect(() => {
-    const spring = { type: 'spring' as const, stiffness: 260, damping: 26 };
-    if (isTop) {
-      animate(x, 0, spring);
-      animate(y, 0, spring);
-      animate(rotate, 0, spring);
-      animate(scale, 1, spring);
-    } else {
-      animate(x, index * offset * 0.45, spring);
-      animate(y, -index * offset * 0.95, spring);
-      animate(rotate, (index % 2 === 0 ? -1 : 1) * Math.min(index, 3) * 0.5, spring);
-      animate(scale, 1 - index * scaleFactor, spring);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTop, index, offset, scaleFactor]);
-
-  const handleDragEnd = (_: unknown, info: { offset: { x: number; y: number } }) => {
-    const { x: ox, y: oy } = info.offset;
-    if (Math.abs(ox) > 70 || Math.abs(oy) > 70) {
-      const exitX = ox >= 0 ? 460 : -460;
-      const exitY = oy * 2.4;
-      const exitR = ox >= 0 ? 18 : -18;
-      animate(x, exitX, { duration: 0.28, ease: 'easeOut' });
-      animate(y, exitY, { duration: 0.28, ease: 'easeOut' });
-      animate(rotate, exitR, { duration: 0.28, ease: 'easeOut' });
-      // reorder after the fly-out; the index effect springs the card
-      // back into its new slot at the back of the stack
-      setTimeout(() => onSendToBack(), 260);
-    } else {
-      animate(x, 0, { type: 'spring', stiffness: 320, damping: 26 });
-      animate(y, 0, { type: 'spring', stiffness: 320, damping: 26 });
-      animate(rotate, 0, { type: 'spring', stiffness: 320, damping: 26 });
-    }
-  };
-
-  return (
-    <motion.div
-      style={{ x, y, rotate, scale, zIndex: 100 - index }}
-      aria-hidden={!isTop}
-      drag={isTop}
-      dragListener={false}
-      dragControls={dragControls}
-      dragElastic={0.65}
-      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-      onDragEnd={handleDragEnd}
-      whileTap={{ cursor: 'grabbing' }}
-      onPointerDown={(e) => {
-        // only start a card drag when the gesture begins on the card body,
-        // never on interactive children (buttons / links) — their clicks
-        // must go through untouched
-        const target = e.target as HTMLElement;
-        if (isTop && !target.closest('button, a, input, textarea, select')) {
-          dragControls.start(e);
-        }
-        pointerStart.current = { x: e.clientX, y: e.clientY, t: Date.now() };
-      }}
-      onPointerUp={(e) => {
-        const start = pointerStart.current;
-        pointerStart.current = null;
-        if (!start) return;
-        const moved = Math.hypot(e.clientX - start.x, e.clientY - start.y);
-        const onInteractiveChild = !!(e.target as HTMLElement).closest(
-          'button, a, input, textarea, select'
-        );
-        if (!onInteractiveChild && moved < 6 && Date.now() - start.t < 400) {
-          // treat as a tap on the card body — cycle this card to the back
-          animate(x, 0, { duration: 0.18 });
-          animate(y, -40, { duration: 0.18, ease: 'easeIn' });
-          setTimeout(() => onSendToBack(), 170);
-        }
-      }}
-      className={cn(
-        'absolute inset-0 cursor-grab select-none',
-        isTop ? 'shadow-2xl' : 'shadow-lg',
-        className
-      )}
-    >
-      {children}
-    </motion.div>
   );
 }
