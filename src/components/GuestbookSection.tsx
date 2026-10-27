@@ -142,8 +142,8 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
             </button>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-3">
+          <div className="space-y-6">
+            <div className="flex flex-col items-start gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <span className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-accent" />
                 live visitor feed ({publicEntries.length})
