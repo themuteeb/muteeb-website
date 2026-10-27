@@ -789,7 +789,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         <div className="flex items-center justify-between">
                           <div>
                             <span className="font-bold text-white">{g.name}</span>
-                            <span className="text-zinc-500 ml-2">{g.handle}</span>
                             <span className="ml-2 px-1.5 py-0.5 bg-surface-2 text-[9px] font-bold text-zinc-400">{g.badge}</span>
                           </div>
                         </div>

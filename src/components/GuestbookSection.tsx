@@ -12,7 +12,6 @@ interface GuestbookProps {
   entries: GuestbookEntry[];
   onAddEntry: (entry: {
     name: string;
-    handle: string;
     message: string;
     avatar_color: string;
     badge: string;
@@ -27,14 +26,10 @@ const AVATAR_STYLES: Record<string, string> = {
   amber: 'border-amber-400/40 bg-amber-400/10 text-amber-300',
 };
 
-const inputClass =
-  'w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 font-mono text-xs text-ink outline-none transition-all duration-300 placeholder:text-ink-3/60 focus:border-accent/60 ';
-
 export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry }) => {
   const { playSound } = useTheme();
 
   const [name, setName] = useState('');
-  const [handle, setHandle] = useState('');
   const [message, setMessage] = useState('');
   const [selectedBadge, setSelectedBadge] = useState('VISITOR');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,11 +75,6 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
       await onAddEntry({
         name: sanitizeInput(name, 40),
-        handle: handle
-          ? handle.startsWith('@')
-            ? sanitizeInput(handle, 30)
-            : `@${sanitizeInput(handle, 30)}`
-          : '@guest',
         message: sanitizeInput(message, 300),
         avatar_color: randomColor,
         badge: sanitizeInput(selectedBadge, 20),
@@ -92,7 +82,6 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
 
       setLastPostTime(Date.now());
       setName('');
-      setHandle('');
       setMessage('');
 
       showToaster('success', 'MESSAGE SUBMITTED', 'Your message is awaiting admin approval.');
@@ -145,20 +134,6 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                     maxLength={40}
                     placeholders={['Your name…', 'What should I call you?', 'Add your name…']}
                     onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-
-                <div className="relative">
-                  <label className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-3">
-                    handle / website (optional)
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={30}
-                    placeholder="@alexmercer"
-                    value={handle}
-                    onChange={(e) => setHandle(e.target.value)}
-                    className={inputClass}
                   />
                 </div>
 
@@ -257,9 +232,6 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                           <div className="min-w-0">
                             <span className="block truncate font-mono text-sm font-bold leading-tight text-ink">
                               {entry.name}
-                            </span>
-                            <span className="font-mono text-[10px] text-ink-3">
-                              {entry.handle}
                             </span>
                           </div>
                         </div>

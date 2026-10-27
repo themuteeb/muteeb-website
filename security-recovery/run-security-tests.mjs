@@ -664,13 +664,17 @@ await test('24. guestbook: moderation + public-input whitelists + length caps', 
   assertEqual(r.statusCode, 200, 'public GET ok');
   assertEqual(r.jsonBody.length, 1, 'public sees approved only');
   assertEqual(r.jsonBody[0].id, 1, 'the approved entry');
+  assertEqual(r.jsonBody[0].handle, undefined, 'legacy handles are not exposed on existing public entries');
 
   r = await call(guestbookHandler, { method: 'GET', headers: ADMIN });
   assertEqual(r.jsonBody.length, 2, 'admin sees all incl. pending');
+  assertEqual(r.jsonBody[1].handle, undefined, 'legacy handles are not exposed to admin either');
 
   r = await call(guestbookHandler, { method: 'POST', body: { name: 'New fan', handle: 'fan', message: 'great site!', avatar_color: 'rose', badge: 'FRIEND' } });
   assertEqual(r.statusCode, 201, 'public post ok');
   assertEqual(r.jsonBody.approved, false, 'always starts in moderation');
+  assertEqual(r.jsonBody.handle, undefined, 'new guestbook response omits legacy handle');
+  assertEqual(db.tables.guestbook.find((entry) => entry.name === 'New fan').handle, '@guest', 'new submissions do not store user-provided handles');
   assertEqual(r.jsonBody.avatar_color, 'rose', 'whitelisted color kept');
 
   r = await call(guestbookHandler, { method: 'POST', body: { name: 'X', message: 'y', badge: 'ROOT', avatar_color: 'url(javascript:evil)' } });
