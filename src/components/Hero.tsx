@@ -6,7 +6,7 @@ import { ArrowDown, Github, Instagram, MapPin, Sparkles } from 'lucide-react';
 import { FlipWords } from './ui/flip-words';
 import { EncryptedText } from './ui/encrypted-text';
 import { TextGenerateEffect } from './ui/text-generate-effect';
-import { WavyBackground } from './ui/wavy-background';
+import { GridBackground } from './ui/grid-background';
 
 // helper to treat "nil" / "null" strings as missing
 const clean = (v: string | undefined | null, fallback: string) => {
@@ -206,7 +206,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
       id="hero"
       className="relative flex min-h-screen flex-col justify-start overflow-hidden border-b border-line bg-canvas pb-12 pt-12 sm:pt-14"
     >
-      <WavyBackground className="pointer-events-none absolute inset-0 z-0 opacity-55" />
+      <GridBackground cellSize={44} maskFrom="top" />
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-start gap-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
