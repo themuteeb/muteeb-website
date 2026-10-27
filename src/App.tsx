@@ -356,10 +356,23 @@ export default function App() {
   };
 
   const handleSaveProject = async (project: Partial<Project>) => {
+    const { id, ...projectFields } = project;
+    // Project GET rows include immutable metadata such as created_at. Never
+    // send fetched row metadata back through the writable project API.
+    const editableFields: Exclude<keyof Project, 'id' | 'created_at'>[] = [
+      'title', 'slug', 'subtitle', 'description', 'category', 'tags',
+      'image_url', 'live_url', 'github_url', 'metrics', 'featured', 'display_order',
+    ];
+    const payload = Object.fromEntries(
+      editableFields
+        .filter((key) => projectFields[key] !== undefined)
+        .map((key) => [key, projectFields[key]]),
+    );
+
     await adminRequest('/api/projects', {
-      method: project.id ? 'PUT' : 'POST',
+      method: id ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(project),
+      body: JSON.stringify(id ? { id, ...payload } : payload),
     });
     await fetchAllData();
   };
