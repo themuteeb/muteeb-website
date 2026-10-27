@@ -548,6 +548,17 @@ await test('18. projects: admin CRUD with validation (title, http(s) URLs, lengt
 
   r = await call(projectsHandler, { method: 'POST', headers: ADMIN, body: { title: 'New Project', live_url: 'https://example.dev', tags: ['a', 'b'] } });
   assertEqual(r.statusCode, 201, 'valid create ok');
+
+  r = await call(projectsHandler, { method: 'POST', headers: ADMIN, body: { title: 'Blank Links', live_url: '', github_url: '' } });
+  assertEqual(r.statusCode, 201, 'optional blank project links are accepted');
+  const blankLinks = db.tables.projects.find((p) => p.title === 'Blank Links');
+  assertEqual(blankLinks.live_url, '', 'blank live URL remains empty');
+
+  r = await call(projectsHandler, { method: 'POST', headers: ADMIN, body: { title: 'Copied Bare Link', live_url: 'www.example.dev/project' } });
+  assertEqual(r.statusCode, 201, 'copied bare domain accepted');
+  const bareLink = db.tables.projects.find((p) => p.title === 'Copied Bare Link');
+  assertEqual(bareLink.live_url, 'https://www.example.dev/project', 'https is added to bare domains');
+
   const created = db.tables.projects.find((p) => p.title === 'New Project');
   assert(created, 'row exists');
   assertEqual(created.featured, false, 'default featured');
