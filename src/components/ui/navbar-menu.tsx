@@ -61,7 +61,7 @@ export const NavbarMenu = ({
         aria-expanded={open}
         aria-haspopup="menu"
         className={cn(
-          'group flex items-center gap-1.5 rounded-full px-3.5 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors',
+          'group flex items-center gap-1 rounded-full px-2 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors sm:gap-1.5 sm:px-3.5 sm:py-2 sm:text-[11px] sm:tracking-[0.14em]',
           open
             ? 'bg-accent/10 text-accent'
             : 'text-ink-2 hover:bg-surface-2 hover:text-ink'

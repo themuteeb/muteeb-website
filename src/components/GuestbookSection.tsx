@@ -27,7 +27,7 @@ const AVATAR_STYLES: Record<string, string> = {
 };
 
 const inputClass =
-  'w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 font-mono text-xs text-ink outline-none transition-all duration-300 placeholder:text-ink-3/60 focus:border-accent/60 focus:shadow-[0_0_20px_rgba(34,212,114,0.14)]';
+  'w-full rounded-xl border border-line bg-canvas px-3.5 py-2.5 font-mono text-xs text-ink outline-none transition-all duration-300 placeholder:text-ink-3/60 focus:border-accent/60 ';
 
 export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry }) => {
   const { playSound } = useTheme();
@@ -120,7 +120,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
               </div>
               <h2 className="mb-4 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
                 Sign the{' '}
-                <span className="text-glow-accent text-accent">guestbook</span>
+                <span className="text-accent">guestbook</span>
               </h2>
               <TextGenerateEffect
                 words="Leave a note, a thought, or just proof you were here. Every entry gets a quick moderation pass before it goes live."
@@ -176,7 +176,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                         }}
                         className={`rounded-full border px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-all duration-300 ${
                           selectedBadge === b
-                            ? 'border-accent/60 bg-accent/15 text-accent shadow-[0_0_14px_rgba(34,212,114,0.25)]'
+                            ? 'border-accent/60 bg-accent/15 text-accent'
                             : 'border-line bg-canvas text-ink-3 hover:border-line-2 hover:text-ink'
                         }`}
                       >
@@ -211,7 +211,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="relative flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-black transition-all duration-300 hover:shadow-[0_0_28px_rgba(34,212,114,0.45)] disabled:opacity-60"
+                  className="relative flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-white transition-all duration-300 disabled:opacity-60"
                 >
                   <Send className="h-4 w-4" />
                   {isSubmitting ? 'transmitting…' : 'post message to feed'}

@@ -10,19 +10,18 @@ interface ThemeContextType {
   accentClass: string;
   bgAccentClass: string;
   borderAccentClass: string;
-  glowAccentClass: string;
   textAccentClass: string;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-/** 4 accent presets — restored from original site (mono kept for type compat but hidden from UI) */
+/** High-contrast accent presets tuned for light surfaces. */
 const THEME_COLORS: Record<ThemePreset, { accent: string; bright: string; deep: string }> = {
-  neon:   { accent: '#22d3ee', bright: '#67e8f9', deep: '#0891b2' }, // cyan-400
-  lime:   { accent: '#a3e635', bright: '#bef264', deep: '#65a30d' }, // lime-400
-  coral:  { accent: '#f43f5e', bright: '#fda4af', deep: '#be123c' }, // rose-500
-  violet: { accent: '#c084fc', bright: '#d8b4fe', deep: '#7e22ce' }, // purple-400
-  mono:   { accent: '#ffffff', bright: '#e5e5e5', deep: '#a1a1aa' },
+  neon:   { accent: '#0e7490', bright: '#0891b2', deep: '#155e75' },
+  lime:   { accent: '#4d7c0f', bright: '#65a30d', deep: '#365314' },
+  coral:  { accent: '#be123c', bright: '#e11d48', deep: '#9f1239' },
+  violet: { accent: '#6d28d9', bright: '#7c3aed', deep: '#5b21b6' },
+  mono:   { accent: '#334155', bright: '#475569', deep: '#1e293b' },
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -99,59 +98,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--color-accent', c.accent);
     root.style.setProperty('--color-accent-bright', c.bright);
     root.style.setProperty('--color-accent-deep', c.deep);
-    // also expose for glow helpers that use rgba
-    // store hex for potential rgba generation via CSS variables
   }, [theme]);
 
-  // Style helper mapping for high contrast accents — keeps legacy `text-accent` usage working via CSS vars,
-  // but also provides Tailwind class fallback for components that use dynamic classes.
-  const getThemeClasses = () => {
-    switch (theme) {
-      case 'lime':
-        return {
-          accentClass: 'text-lime-400',
-          bgAccentClass: 'bg-lime-400 text-black',
-          borderAccentClass: 'border-lime-400',
-          glowAccentClass: 'shadow-[0_0_20px_rgba(163,230,53,0.4)]',
-          textAccentClass: 'text-lime-400',
-        };
-      case 'coral':
-        return {
-          accentClass: 'text-rose-500',
-          bgAccentClass: 'bg-rose-500 text-white',
-          borderAccentClass: 'border-rose-500',
-          glowAccentClass: 'shadow-[0_0_20px_rgba(244,63,94,0.4)]',
-          textAccentClass: 'text-rose-500',
-        };
-      case 'violet':
-        return {
-          accentClass: 'text-purple-400',
-          bgAccentClass: 'bg-purple-500 text-white',
-          borderAccentClass: 'border-purple-400',
-          glowAccentClass: 'shadow-[0_0_20px_rgba(192,132,252,0.4)]',
-          textAccentClass: 'text-purple-400',
-        };
-      case 'mono':
-        return {
-          accentClass: 'text-white',
-          bgAccentClass: 'bg-white text-black',
-          borderAccentClass: 'border-white',
-          glowAccentClass: 'shadow-[0_0_20px_rgba(255,255,255,0.3)]',
-          textAccentClass: 'text-white',
-        };
-      case 'neon':
-      default:
-        return {
-          accentClass: 'text-cyan-400',
-          bgAccentClass: 'bg-cyan-400 text-black',
-          borderAccentClass: 'border-cyan-400',
-          glowAccentClass: 'shadow-[0_0_20px_rgba(34,211,238,0.4)]',
-          textAccentClass: 'text-cyan-400',
-        };
-    }
+  const themeClasses = {
+    accentClass: 'text-accent',
+    bgAccentClass: 'bg-accent text-white',
+    borderAccentClass: 'border-accent',
+    textAccentClass: 'text-accent',
   };
-
-  const themeClasses = getThemeClasses();
 
   return (
     <ThemeContext.Provider

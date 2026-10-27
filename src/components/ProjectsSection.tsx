@@ -37,7 +37,7 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
             </div>
             <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
               Things I&apos;ve{' '}
-              <span className="text-glow-accent text-accent">built</span>
+              <span className="text-accent">built</span>
             </h2>
             <TextGenerateEffect
               words="Projects, experiments and the occasional over-engineered weekend idea."
@@ -57,7 +57,7 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                 }}
                 className={`rounded-full border px-4 py-2 font-semibold uppercase tracking-wider transition-all duration-300 ${
                   activeCategory === cat
-                    ? 'border-accent/60 bg-accent/15 text-accent shadow-[0_0_18px_rgba(34,212,114,0.2)]'
+                    ? 'border-accent/60 bg-accent/15 text-accent'
                     : 'border-line bg-surface text-ink-3 hover:border-line-2 hover:text-ink'
                 }`}
               >
@@ -123,7 +123,7 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                       {project.category}
                     </span>
                     {project.featured && (
-                      <span className="absolute right-3 top-3 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-black shadow-[0_0_16px_rgba(34,212,114,0.45)]">
+                      <span className="absolute right-3 top-3 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white">
                         featured
                       </span>
                     )}

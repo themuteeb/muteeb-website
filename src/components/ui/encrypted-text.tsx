@@ -53,7 +53,7 @@ export function EncryptedText({
           return (
             <span
               key={`${index}-${character}`}
-              className="text-accent text-glow-accent"
+              className="text-accent"
             >
               {GLYPHS[glyphIndex]}
             </span>

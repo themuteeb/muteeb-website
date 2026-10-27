@@ -2,20 +2,18 @@ import { cn } from '../../lib/utils';
 
 /**
  * Aceternity UI — GridBackground
- * A subtle blueprint grid with a radial fade and an optional accent glow.
+ * A subtle blueprint grid with a radial fade.
  * https://ui.aceternity.com/components/grid-background
  */
 export const GridBackground = ({
   className,
   cellSize = 44,
-  lineColor = 'rgba(255, 255, 255, 0.05)',
-  glow = true,
+  lineColor = 'rgba(15, 23, 42, 0.05)',
   maskFrom = 'top',
 }: {
   className?: string;
   cellSize?: number;
   lineColor?: string;
-  glow?: boolean;
   maskFrom?: 'top' | 'center' | 'none';
 }) => {
   const mask =
@@ -42,9 +40,6 @@ export const GridBackground = ({
           WebkitMaskImage: mask,
         }}
       />
-      {glow && (
-        <div className="absolute -top-48 left-1/2 h-[480px] w-[720px] -translate-x-1/2 rounded-full bg-accent/[0.07] blur-[130px]" />
-      )}
     </div>
   );
 };

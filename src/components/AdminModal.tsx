@@ -301,17 +301,34 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const handleThoughtSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingThought || !editingThought.title) return;
+    const title = sanitizeInput(editingThought.title, 100);
+    const summary = sanitizeInput(editingThought.summary || '', 300);
+    const content = sanitizeInput(editingThought.content || '', 5000);
+    if (!title || !summary || !content) {
+      alert('TITLE, SUMMARY, AND ARTICLE CONTENT ARE REQUIRED.');
+      return;
+    }
+
     try {
       playSound('submit');
+      // Send only columns the API permits. Existing rows also contain
+      // likes_count and published_at, which are intentionally not writable.
       await onSaveThought({
-        ...editingThought,
-        title: sanitizeInput(editingThought.title || '', 100),
-        summary: sanitizeInput(editingThought.summary || '', 300),
-        content: sanitizeInput(editingThought.content || '', 5000),
+        ...(editingThought.id ? { id: editingThought.id } : {}),
+        ...(editingThought.slug ? { slug: sanitizeInput(editingThought.slug, 200) } : {}),
+        title,
+        summary,
+        content,
+        tags: Array.isArray(editingThought.tags)
+          ? editingThought.tags.map((tag) => sanitizeInput(tag, 100))
+          : ['PERSONAL'],
+        read_time: sanitizeInput(editingThought.read_time || '3 MIN READ', 30),
+        ...(typeof editingThought.featured === 'boolean' ? { featured: editingThought.featured } : {}),
       });
       setEditingThought(null);
     } catch (err) {
       console.error(err);
+      alert(err instanceof Error ? `WRITING SAVE FAILED: ${err.message}` : 'WRITING SAVE FAILED. PLEASE TRY AGAIN.');
     }
   };
 
@@ -360,10 +377,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             <h2 className="text-xl font-black text-white uppercase tracking-wider">
               ADMIN
             </h2>
+            {isAdmin && (
+              <span className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                LIVE · AUTO SYNC
+              </span>
+            )}
           </div>
           <button
             onClick={onClose}
-            className="px-3 py-1 bg-surface-2 border border-line text-white hover:bg-accent hover:text-black font-bold uppercase text-xs"
+            className="px-3 py-1 bg-surface-2 border border-line text-white hover:bg-accent hover:text-white font-bold uppercase text-xs"
           >
             [CLOSE X]
           </button>
@@ -698,8 +721,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 {editingThought && (
                   <form onSubmit={handleThoughtSubmit} className="p-4 bg-black border border-line space-y-3">
                     <input type="text" maxLength={100} placeholder="Article Title" required value={editingThought.title || ''} onChange={(e) => setEditingThought({ ...editingThought, title: e.target.value })} className="w-full px-3 py-2 bg-canvas border border-line text-white text-xs font-bold" />
-                    <textarea placeholder="Short summary" rows={2} maxLength={300} value={editingThought.summary || ''} onChange={(e) => setEditingThought({ ...editingThought, summary: e.target.value })} className="w-full px-3 py-2 bg-canvas border border-line text-white text-xs" />
-                    <textarea placeholder="Full Article Content" rows={6} maxLength={5000} value={editingThought.content || ''} onChange={(e) => setEditingThought({ ...editingThought, content: e.target.value })} className="w-full px-3 py-2 bg-canvas border border-line text-white text-xs" />
+                    <textarea required placeholder="Short summary" rows={2} maxLength={300} value={editingThought.summary || ''} onChange={(e) => setEditingThought({ ...editingThought, summary: e.target.value })} className="w-full px-3 py-2 bg-canvas border border-line text-white text-xs" />
+                    <textarea required placeholder="Full Article Content" rows={6} maxLength={5000} value={editingThought.content || ''} onChange={(e) => setEditingThought({ ...editingThought, content: e.target.value })} className="w-full px-3 py-2 bg-canvas border border-line text-white text-xs" />
                     <div className="flex justify-end gap-2">
                       <button type="button" onClick={() => setEditingThought(null)} className="px-3 py-1.5 border border-line text-zinc-300 text-xs font-bold uppercase">CANCEL</button>
                       <button type="submit" className={`px-4 py-1.5 ${bgAccentClass} font-black text-xs uppercase`}>SAVE ARTICLE</button>

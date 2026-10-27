@@ -43,7 +43,7 @@ export const ThoughtsSection: React.FC<ThoughtsProps> = ({ thoughts, onLikeThoug
             </div>
             <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
               Thoughts &{' '}
-              <span className="text-glow-accent text-accent">articles</span>
+              <span className="text-accent">articles</span>
             </h2>
             <TextGenerateEffect
               words="Things I noticed, learned the hard way, or just felt like writing down."

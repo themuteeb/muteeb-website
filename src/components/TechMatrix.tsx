@@ -24,7 +24,7 @@ export const TechMatrix: React.FC<TechMatrixProps> = ({ skills }) => {
             {'// tools & languages'}
           </div>
           <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
-            Things <span className="text-glow-accent text-accent">I use</span>
+            Things <span className="text-accent">I use</span>
           </h2>
           <TextGenerateEffect
             words="The daily drivers — plus a few things I keep around just because I like them."
@@ -72,7 +72,7 @@ export const TechMatrix: React.FC<TechMatrixProps> = ({ skills }) => {
                       whileInView={{ width: `${skill.level}%` }}
                       viewport={{ once: true, margin: '-40px' }}
                       transition={{ duration: 1, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                      className="h-full rounded-full bg-gradient-to-r from-accent-deep via-accent to-accent-bright shadow-[0_0_12px_rgba(34,212,114,0.55)]"
+                      className="h-full rounded-full bg-gradient-to-r from-accent-deep via-accent to-accent-bright"
                     />
                   </div>
                 </div>
