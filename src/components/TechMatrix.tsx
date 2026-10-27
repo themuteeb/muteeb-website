@@ -1,6 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { useTheme } from '../contexts/ThemeContext';
 import { Skill } from '../types';
 import { Code2 } from 'lucide-react';
 import { TextGenerateEffect } from './ui/text-generate-effect';
@@ -9,25 +7,25 @@ interface TechMatrixProps {
   skills: Skill[];
 }
 
-interface TechMatrixProps {
-  skills: Skill[];
-}
-
 export const TechMatrix: React.FC<TechMatrixProps> = ({ skills }) => {
-  const { playSound } = useTheme();
+  const skillGroups = skills.reduce<Record<string, Skill[]>>((groups, skill) => {
+    const category = skill.category?.trim() || 'Tools';
+    (groups[category] ||= []).push(skill);
+    return groups;
+  }, {});
 
   return (
     <section id="stack" className="relative border-b border-line bg-canvas py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <div className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-[0.25em] text-accent">
-            {'// tools & languages'}
+            {'// complete toolkit'}
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-            Things <span className="text-accent">I use</span>
+            Tools <span className="text-accent">I use</span>
           </h2>
           <TextGenerateEffect
-            words="The daily drivers — plus a few things I keep around just because I like them."
+            words="Languages, frameworks, and everyday tools gathered together in one place."
             className="mt-2.5 max-w-lg text-sm leading-relaxed text-ink-3"
             stagger={0.04}
           />
@@ -38,46 +36,46 @@ export const TechMatrix: React.FC<TechMatrixProps> = ({ skills }) => {
             no tools added yet.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {skills.map((skill, idx) => (
-              <motion.div
-                key={skill.id || skill.name}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 0.45, delay: (idx % 3) * 0.08 }}
-                onMouseEnter={() => playSound('hover')}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-2xl liquid-glass p-5 transition-all duration-300 hover:-translate-y-1"
-              >
-                <div className="relative mb-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Code2 className="h-4 w-4 text-accent" />
-                    <span className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-ink-3">
-                      tool
-                    </span>
-                  </div>
-                  <span className="font-mono text-sm font-bold text-accent">
-                    {skill.level}%
-                  </span>
-                </div>
+          <div className="liquid-glass overflow-hidden rounded-2xl p-5 sm:p-7">
+            <div className="mb-6 flex items-center gap-3 border-b border-white/10 pb-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-accent/10 text-accent">
+                <Code2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-ink">
+                  all tools in one place
+                </p>
+                <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-ink-3">
+                  {skills.length} {skills.length === 1 ? 'tool' : 'tools'} across {Object.keys(skillGroups).length} {Object.keys(skillGroups).length === 1 ? 'category' : 'categories'}
+                </p>
+              </div>
+            </div>
 
-                <div className="relative mb-4 font-mono text-lg font-bold uppercase tracking-wide text-ink transition-colors group-hover:text-accent">
-                  {skill.name}
-                </div>
-
-                <div className="relative">
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${skill.level}%` }}
-                      viewport={{ once: true, margin: '-40px' }}
-                      transition={{ duration: 1, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                      className="h-full rounded-full bg-gradient-to-r from-accent-deep via-accent to-accent-bright"
-                    />
+            <div className="space-y-6">
+              {Object.entries(skillGroups).map(([category, categorySkills]) => (
+                <div key={category}>
+                  <h3 className="mb-3 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-3">
+                    {category}
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {categorySkills.map((skill) => (
+                      <div
+                        key={skill.id || skill.name}
+                        className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
+                        title={`${skill.name}: ${skill.level}%`}
+                      >
+                        <span className="font-mono text-xs font-semibold text-ink-2">
+                          {skill.name}
+                        </span>
+                        <span className="rounded-full bg-accent/15 px-1.5 py-0.5 font-mono text-[9px] font-bold text-accent">
+                          {skill.level}%
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>

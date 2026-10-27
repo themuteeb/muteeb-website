@@ -53,7 +53,6 @@ export interface Thought {
 export interface GuestbookEntry {
   id: number;
   name: string;
-  handle: string;
   message: string;
   avatar_color: string;
   badge: string;

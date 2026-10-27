@@ -24,6 +24,13 @@ type PublicCache = {
 };
 
 type LegacyProfile = Profile & { admin_passcode?: string };
+type LegacyGuestbookEntry = GuestbookEntry & { handle?: string };
+
+const sanitizeGuestbookEntry = (entry: LegacyGuestbookEntry): GuestbookEntry => {
+  const safeEntry = { ...entry };
+  delete safeEntry.handle;
+  return safeEntry;
+};
 
 const sanitizeProfileForCache = (profile: LegacyProfile | null | undefined): Profile | null => {
   if (!profile) return null;
@@ -63,7 +70,11 @@ const loadCache = (): PublicCache | null => {
       thoughts: Array.isArray(saved.thoughts) ? saved.thoughts : [],
       skills: Array.isArray(saved.skills) ? saved.skills : [],
       // Never persist pending moderation data in the public browser cache.
-      guestbook: Array.isArray(saved.guestbook) ? saved.guestbook.filter((entry) => entry.approved) : [],
+      guestbook: Array.isArray(saved.guestbook)
+        ? (saved.guestbook as LegacyGuestbookEntry[])
+            .filter((entry) => entry.approved)
+            .map(sanitizeGuestbookEntry)
+        : [],
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(safeCache));
     return safeCache;
@@ -80,7 +91,7 @@ const saveCache = (data: PublicCache) => {
       projects: data.projects,
       thoughts: data.thoughts,
       skills: data.skills,
-      guestbook: data.guestbook?.filter((entry) => entry.approved),
+      guestbook: data.guestbook?.map(sanitizeGuestbookEntry).filter((entry) => entry.approved),
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(safeCache));
   } catch {
@@ -414,7 +425,7 @@ export default function App() {
     await fetchAllData();
   };
 
-  const handleAddGuestbook = async (entry: { name: string; handle: string; message: string; avatar_color: string; badge: string }) => {
+  const handleAddGuestbook = async (entry: { name: string; message: string; avatar_color: string; badge: string }) => {
     const res = await fetch('/api/guestbook', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

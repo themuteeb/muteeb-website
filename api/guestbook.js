@@ -4,6 +4,20 @@ import {
   ALLOWED_AVATAR_COLORS, ALLOWED_BADGES, sendServerError,
 } from './_security.js';
 
+// The database keeps a legacy handle column, but guestbook handles are no longer
+// collected or exposed. Project only the public guestbook fields on every response.
+function withoutHandle(entry) {
+  return {
+    id: entry.id,
+    name: entry.name,
+    message: entry.message,
+    avatar_color: entry.avatar_color,
+    badge: entry.badge,
+    approved: entry.approved,
+    created_at: entry.created_at,
+  };
+}
+
 export default async function handler(req, res) {
   const corsOk = setupCors(req, res);
   if (req.method === 'OPTIONS') {
@@ -23,7 +37,7 @@ export default async function handler(req, res) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return res.status(200).json(data || []);
+      return res.status(200).json((data || []).map(withoutHandle));
     }
 
     if (req.method === 'POST') {
@@ -40,7 +54,8 @@ export default async function handler(req, res) {
       if (message === null) {
         return res.status(400).json({ error: 'message is required (max 300 chars)' });
       }
-      const handle = cleanText(body.handle, 30) || '@guest';
+      // Keep the legacy database column populated without accepting user handles.
+      const handle = '@guest';
 
       // Visual fields are a closed set — anything else falls back to a safe
       // default so the page never renders attacker-chosen classes/labels.
@@ -61,7 +76,7 @@ export default async function handler(req, res) {
         .single();
 
       if (error) throw error;
-      return res.status(201).json(data);
+      return res.status(201).json(withoutHandle(data));
     }
 
     if (req.method === 'PUT') {
@@ -91,7 +106,7 @@ export default async function handler(req, res) {
         if (error.code === 'PGRST116') return res.status(404).json({ error: 'Not found' });
         throw error;
       }
-      return res.status(200).json(data);
+      return res.status(200).json(withoutHandle(data));
     }
 
     if (req.method === 'DELETE') {
