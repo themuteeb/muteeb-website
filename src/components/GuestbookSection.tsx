@@ -70,6 +70,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
 
   const openForm = () => {
     setSubmitStatus('idle');
+    setToaster((prev) => ({ ...prev, show: false }));
     setIsFormOpen(true);
     playSound('click');
   };
@@ -106,7 +107,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
       await onAddEntry({
         name: sanitizeInput(name, 40),
-        message: sanitizeInput(message, 20),
+        message: sanitizeInput(message, 30),
         avatar_color: randomColor,
         badge: sanitizeInput(selectedBadge, 20),
       });
@@ -116,10 +117,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
       setMessage('');
       setSubmitStatus('success');
       showToaster('success', 'MESSAGE SUBMITTED', 'Your message is awaiting admin approval.');
-      window.setTimeout(() => {
-        setSubmitStatus('idle');
-        setIsFormOpen(false);
-      }, 1100);
+      window.setTimeout(() => setSubmitStatus('idle'), 1100);
     } catch (error) {
       console.error('Error posting guestbook entry:', error);
       setSubmitStatus('error');
@@ -135,14 +133,6 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
 
   return (
     <>
-      <Toaster
-        show={toaster.show}
-        type={toaster.type}
-        title={toaster.title}
-        message={toaster.message}
-        onClose={closeToaster}
-      />
-
       <section id="guestbook" className="border-b border-line bg-canvas py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -213,7 +203,10 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
 
         <AnimatedModal
           open={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
+          onClose={() => {
+            setIsFormOpen(false);
+            closeToaster();
+          }}
           labelledBy="guestbook-form-title"
         >
           <div className="pr-8">
@@ -280,16 +273,27 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                 id="guestbook-message"
                 required
                 rows={3}
-                maxLength={20}
+                maxLength={30}
                 placeholder="Write a public message…"
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 className={`${inputClass} resize-none`}
               />
               <div className="mt-1 text-right font-mono text-[10px] text-ink-3">
-                {message.length}/20 characters
+                {message.length}/30 characters
               </div>
             </div>
+
+            {toaster.show && (
+              <Toaster
+                show={toaster.show}
+                type={toaster.type}
+                title={toaster.title}
+                message={toaster.message}
+                onClose={closeToaster}
+                inline
+              />
+            )}
 
             <StatefulButton
               type="submit"

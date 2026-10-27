@@ -9,6 +9,7 @@ interface ToasterProps {
   title: string;
   message?: string;
   duration?: number;
+  inline?: boolean;
   onClose: () => void;
 }
 
@@ -18,6 +19,7 @@ export const Toaster: React.FC<ToasterProps> = ({
   title,
   message,
   duration = 4000,
+  inline = false,
   onClose,
 }) => {
   useEffect(() => {
@@ -36,9 +38,16 @@ export const Toaster: React.FC<ToasterProps> = ({
 
   const c = config[type];
   const Icon = c.icon;
+  const containerClass = inline
+    ? 'animate-slideInRight pointer-events-auto w-full'
+    : 'animate-slideInRight pointer-events-auto fixed right-3 top-20 z-[100] w-[calc(100vw-1.5rem)] max-w-[280px] sm:right-6 sm:top-24 sm:w-96 sm:max-w-sm';
 
   return (
-    <div className="animate-slideInRight pointer-events-auto fixed right-3 top-20 z-[100] w-[calc(100vw-1.5rem)] max-w-[280px] sm:right-6 sm:top-24 sm:w-96 sm:max-w-sm">
+    <div
+      className={containerClass}
+      role={type === 'success' ? 'status' : 'alert'}
+      aria-live={type === 'success' ? 'polite' : 'assertive'}
+    >
       <div
         className="liquid-glass relative overflow-hidden rounded-2xl border border-accent/70 p-4"
       >
