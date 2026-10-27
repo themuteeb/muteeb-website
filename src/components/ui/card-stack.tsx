@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { animate, motion, useDragControls, useMotionValue } from 'framer-motion';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface CardStackItem {
@@ -50,8 +51,9 @@ export function CardStack<T extends CardStackItem>({
   };
 
   return (
-    <div className={cn('relative', className)}>
-      {order.map((id, index) => {
+    <div>
+      <div className={cn('relative', className)}>
+      {order.slice(0, 3).map((id, index) => {
         const item = items.find((i) => i.id === id);
         if (!item) return null;
         return (
@@ -67,6 +69,20 @@ export function CardStack<T extends CardStackItem>({
           </StackCard>
         );
       })}
+      </div>
+      {items.length > 1 && (
+        <button
+          type="button"
+          onClick={() => {
+            const frontCardId = order[0];
+            if (frontCardId !== undefined) sendToBack(frontCardId);
+          }}
+          aria-label="Show the next approved guestbook message"
+          className="mx-auto mt-3 flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink-2 transition-colors hover:border-accent/50 hover:text-accent"
+        >
+          next approved message <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }
@@ -135,6 +151,7 @@ function StackCard({
   return (
     <motion.div
       style={{ x, y, rotate, scale, zIndex: 100 - index }}
+      aria-hidden={!isTop}
       drag={isTop}
       dragListener={false}
       dragControls={dragControls}

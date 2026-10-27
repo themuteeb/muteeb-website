@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemePreset } from '../types';
 import {
-  Compass,
   Heart,
   Layers,
   Mail,
@@ -18,7 +17,7 @@ interface NavbarProps {
   activeSection: string;
 }
 
-const SECTION_IDS = ['hero', 'work', 'now', 'stack', 'thoughts', 'guestbook', 'contact'];
+const SECTION_IDS = ['hero', 'work', 'stack', 'thoughts', 'guestbook', 'contact'];
 
 export const Navbar: React.FC<NavbarProps> = () => {
   const { theme, setTheme, soundEnabled, toggleSound, playSound } = useTheme();
@@ -55,13 +54,6 @@ export const Navbar: React.FC<NavbarProps> = () => {
   };
 
   const exploreItems: NavbarMenuItem[] = [
-    {
-      label: 'Now',
-      desc: 'What I’m currently focused on',
-      icon: Compass,
-      href: '#now',
-      active: activeSection === 'now',
-    },
     {
       label: 'Stack',
       desc: 'Tools & languages I use',

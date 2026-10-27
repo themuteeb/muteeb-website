@@ -5,7 +5,7 @@ import { BadgeCheck, PenLine, ShieldAlert, User } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
 import { TextGenerateEffect } from './ui/text-generate-effect';
-import { ThreeDMarquee } from './ui/three-d-marquee';
+import { CardStack } from './ui/card-stack';
 import { AnimatedModal } from './ui/animated-modal';
 import { StatefulButton, type StatefulButtonStatus } from './ui/stateful-button';
 
@@ -159,39 +159,44 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                 be the first to sign the guestbook.
               </div>
             ) : (
-              <ThreeDMarquee
-                duration={34}
-                items={publicEntries.map((entry) => (
-                  <article
-                    key={entry.id}
-                    className="group relative overflow-hidden rounded-2xl liquid-glass p-5 transition-colors duration-300"
-                  >
-                    <div className="relative mb-2.5 flex items-center justify-between gap-2">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${AVATAR_STYLES[entry.avatar_color] || 'border-line bg-zinc-800 text-zinc-400'}`}
-                          aria-hidden
-                        >
-                          <User className="h-5 w-5" strokeWidth={1.8} />
+              <div className="mx-auto max-w-2xl">
+                <p className="mb-2 text-center font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">
+                  drag or tap the top card to browse approved messages
+                </p>
+                <CardStack
+                  items={publicEntries}
+                  offset={12}
+                  scaleFactor={0.045}
+                  className="h-[300px] sm:h-[280px]"
+                  renderCard={(entry) => (
+                    <article className="group relative h-full overflow-hidden rounded-2xl liquid-glass p-5 transition-colors duration-300">
+                      <div className="relative mb-2.5 flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <div
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${AVATAR_STYLES[entry.avatar_color] || 'border-line bg-zinc-800 text-zinc-400'}`}
+                            aria-hidden
+                          >
+                            <User className="h-5 w-5" strokeWidth={1.8} />
+                          </div>
+                          <span className="truncate font-mono text-sm font-bold leading-tight text-ink">
+                            {entry.name}
+                          </span>
                         </div>
-                        <span className="truncate font-mono text-sm font-bold leading-tight text-ink">
-                          {entry.name}
+                        <span className="shrink-0 rounded-full border border-line bg-canvas px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase text-ink-2">
+                          {entry.badge}
                         </span>
                       </div>
-                      <span className="shrink-0 rounded-full border border-line bg-canvas px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase text-ink-2">
-                        {entry.badge}
-                      </span>
-                    </div>
 
-                    <p className="relative pl-[46px] font-sans text-sm leading-relaxed text-ink-2">
-                      {entry.message}
-                    </p>
-                    <div className="relative mt-3 border-t border-line pt-2 text-right font-mono text-[10px] text-ink-3">
-                      {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'date unavailable'}
-                    </div>
-                  </article>
-                ))}
-              />
+                      <p className="relative line-clamp-5 pl-[46px] font-sans text-sm leading-relaxed text-ink-2">
+                        {entry.message}
+                      </p>
+                      <div className="relative mt-3 border-t border-line pt-2 text-right font-mono text-[10px] text-ink-3">
+                        {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'date unavailable'}
+                      </div>
+                    </article>
+                  )}
+                />
+              </div>
             )}
           </div>
         </div>
