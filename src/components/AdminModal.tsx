@@ -50,7 +50,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onClose,
 }) => {
   const { bgAccentClass, borderAccentClass, textAccentClass, playSound } = useTheme();
-  const { isAdmin, setAdminPasscode } = useAuth();
+  const { isAdmin, adminPasscode, setAdminPasscode } = useAuth();
 
   const [password, setPassword] = useState('');
   const [loginStatus, setLoginStatus] = useState<StatefulButtonStatus>('idle');
@@ -275,13 +275,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     if (!file) return;
     try {
       setUploadingImage(true);
-      const url = await uploadImage(file, folder);
+      const url = await uploadImage(file, folder, adminPasscode);
       setter(url);
       playSound('submit');
     } catch (err) {
-      console.error(err);
-      alert('IMAGE UPLOAD FAILED. TRY AGAIN.');
+      const message = err instanceof Error ? err.message : 'Unknown upload error';
+      console.error('Image upload failed:', message);
+      alert(`IMAGE UPLOAD FAILED: ${message}`);
     } finally {
+      e.target.value = '';
       setUploadingImage(false);
     }
   };
