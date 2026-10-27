@@ -130,10 +130,10 @@
 @media (max-width: 639px) {
   .navbar-menu-panel {
     background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03) 42%, rgba(255, 255, 255, 0.01)),
-      rgba(8, 14, 18, 0.5);
-    backdrop-filter: blur(36px) saturate(160%);
-    -webkit-backdrop-filter: blur(36px) saturate(160%);
+      linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06) 45%, rgba(255, 255, 255, 0.03)),
+      rgba(12, 20, 26, 0.42);
+    backdrop-filter: blur(32px) saturate(180%) brightness(1.08);
+    -webkit-backdrop-filter: blur(32px) saturate(180%) brightness(1.08);
   }
 }
 
