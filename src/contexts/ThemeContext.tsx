@@ -14,6 +14,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const THEME_STORAGE_KEY = 'muteeb-accent-theme';
 
 /** High-contrast accent presets tuned for light surfaces. */
 const THEME_COLORS: Record<ThemePreset, { accent: string; bright: string; deep: string; foreground: string }> = {
@@ -25,7 +26,19 @@ const THEME_COLORS: Record<ThemePreset, { accent: string; bright: string; deep: 
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<ThemePreset>('neon');
+  const [theme, setThemeState] = useState<ThemePreset>(() => {
+    if (typeof window === 'undefined') return 'neon';
+    try {
+      const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+      if (savedTheme === 'lime') return 'white';
+      if (savedTheme === 'coral') return 'pink';
+      return savedTheme && Object.prototype.hasOwnProperty.call(THEME_COLORS, savedTheme)
+        ? savedTheme as ThemePreset
+        : 'neon';
+    } catch {
+      return 'neon';
+    }
+  });
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
 
   // Audio synthesizer using Web Audio API for high-tech micro clicks
@@ -99,6 +112,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--color-accent-bright', c.bright);
     root.style.setProperty('--color-accent-deep', c.deep);
     root.style.setProperty('--color-accent-foreground', c.foreground);
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // The current tab still gets the selected accent when storage is unavailable.
+    }
   }, [theme]);
 
   const themeClasses = {
