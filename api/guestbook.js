@@ -80,9 +80,9 @@ export default async function handler(req, res) {
       if (name === RATE_LIMIT_TOMBSTONE_NAME) {
         return res.status(400).json({ error: 'name is reserved' });
       }
-      const message = cleanText(body.message, 20);
+      const message = cleanText(body.message, 30);
       if (message === null) {
-        return res.status(400).json({ error: 'message is required (max 20 chars)' });
+        return res.status(400).json({ error: 'message is required (max 30 chars)' });
       }
 
       const rateLimitHandle = getRateLimitHandle(req, body);

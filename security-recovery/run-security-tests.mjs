@@ -742,11 +742,11 @@ await test('24. guestbook: moderation + public-input whitelists + length caps', 
   r = await call(guestbookHandler, {
     method: 'POST',
     headers: { 'x-forwarded-for': '203.0.113.12' },
-    body: { name: 'X', message: 'x'.repeat(20) },
+    body: { name: 'X', message: 'x'.repeat(30) },
   });
-  assertEqual(r.statusCode, 201, '20-character message is accepted');
-  r = await call(guestbookHandler, { method: 'POST', body: { name: 'X', message: 'x'.repeat(21) } });
-  assertEqual(r.statusCode, 400, 'messages over 20 characters are rejected');
+  assertEqual(r.statusCode, 201, '30-character message is accepted');
+  r = await call(guestbookHandler, { method: 'POST', body: { name: 'X', message: 'x'.repeat(31) } });
+  assertEqual(r.statusCode, 400, 'messages over 30 characters are rejected');
   r = await call(guestbookHandler, { method: 'POST', body: { message: 'no name' } });
   assertEqual(r.statusCode, 400, 'missing name rejected');
 
