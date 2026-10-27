@@ -681,20 +681,72 @@ await test('24. guestbook: moderation + public-input whitelists + length caps', 
   assertEqual(r.jsonBody.length, 2, 'admin sees all incl. pending');
   assertEqual(r.jsonBody[1].handle, undefined, 'legacy handles are not exposed to admin either');
 
-  r = await call(guestbookHandler, { method: 'POST', body: { name: 'New fan', handle: 'fan', message: 'great site!', avatar_color: 'rose', badge: 'FRIEND' } });
+  r = await call(guestbookHandler, {
+    method: 'POST',
+    headers: { 'x-forwarded-for': '203.0.113.10' },
+    body: { name: 'New fan', handle: 'fan', message: 'great site!', avatar_color: 'rose', badge: 'FRIEND' },
+  });
   assertEqual(r.statusCode, 201, 'public post ok');
   assertEqual(r.jsonBody.approved, false, 'always starts in moderation');
   assertEqual(r.jsonBody.handle, undefined, 'new guestbook response omits legacy handle');
-  assertEqual(db.tables.guestbook.find((entry) => entry.name === 'New fan').handle, '@guest', 'new submissions do not store user-provided handles');
+  assert(db.tables.guestbook.find((entry) => entry.name === 'New fan').handle.startsWith('rl:'), 'IP digest is stored instead of user-provided handles');
   assertEqual(r.jsonBody.avatar_color, 'rose', 'whitelisted color kept');
 
-  r = await call(guestbookHandler, { method: 'POST', body: { name: 'X', message: 'y', badge: 'ROOT', avatar_color: 'url(javascript:evil)' } });
+  r = await call(guestbookHandler, {
+    method: 'POST',
+    headers: { 'x-forwarded-for': '203.0.113.10' },
+    body: { name: 'Second post', message: 'another note' },
+  });
+  assertEqual(r.statusCode, 429, 'same IP cannot submit again during the cooldown');
+  assertEqual(r.jsonBody.error, 'Your message is already awaiting for approval, try again later.', 'rate limit message');
+  assert(r.jsonBody.retryAfterMs > 0 && r.jsonBody.retryAfterMs <= 6 * 60 * 60 * 1000, 'retry delay is bounded by the six-hour window');
+
+  const submittedId = db.tables.guestbook.find((entry) => entry.name === 'New fan').id;
+  r = await call(guestbookHandler, { method: 'DELETE', headers: ADMIN, body: { id: submittedId } });
+  assertEqual(r.statusCode, 200, 'admin can remove the submitted content');
+  assertEqual(db.tables.guestbook.find((entry) => entry.id === submittedId).name, '__GUESTBOOK_RATE_LIMIT__', 'cooldown tombstone survives content deletion');
+  r = await call(guestbookHandler, {
+    method: 'POST',
+    headers: { 'x-forwarded-for': '203.0.113.10' },
+    body: { name: 'Still blocked', message: 'please wait' },
+  });
+  assertEqual(r.statusCode, 429, 'deleting a guestbook entry does not reset its cooldown');
+  r = await call(guestbookHandler, { method: 'GET', headers: ADMIN });
+  assert(!r.jsonBody.some((entry) => entry.name === '__GUESTBOOK_RATE_LIMIT__'), 'cooldown tombstones stay hidden from the admin feed');
+  db.tables.guestbook.find((entry) => entry.id === submittedId).created_at = new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString();
+  r = await call(guestbookHandler, {
+    method: 'POST',
+    headers: { 'x-forwarded-for': '203.0.113.10' },
+    body: { name: 'After cooldown', message: 'six hours passed' },
+  });
+  assertEqual(r.statusCode, 201, 'same IP can submit again after six hours');
+  assert(!db.tables.guestbook.some((entry) => entry.id === submittedId), 'expired cooldown tombstone is cleaned up');
+
+  const browserId = 'browser-test-id-123456';
+  r = await call(guestbookHandler, { method: 'POST', body: { browserId, name: 'Browser visitor', message: 'browser note' } });
+  assertEqual(r.statusCode, 201, 'browser identity works when no proxy IP is present');
+  r = await call(guestbookHandler, { method: 'POST', body: { browserId, name: 'Browser repeat', message: 'another note' } });
+  assertEqual(r.statusCode, 429, 'browser identity is also rate limited');
+  r = await call(guestbookHandler, { method: 'POST', body: { name: 'No identity', message: 'hello' } });
+  assertEqual(r.statusCode, 503, 'submissions fail closed if no IP or browser identity is available');
+
+  r = await call(guestbookHandler, {
+    method: 'POST',
+    headers: { 'x-forwarded-for': '203.0.113.11' },
+    body: { name: 'X', message: 'y', badge: 'ROOT', avatar_color: 'url(javascript:evil)' },
+  });
   assertEqual(r.statusCode, 201, 'post accepted');
   assertEqual(r.jsonBody.badge, 'VISITOR', 'non-whitelisted badge falls back to default');
   assertEqual(r.jsonBody.avatar_color, 'cyan', 'non-whitelisted color falls back to default');
 
-  r = await call(guestbookHandler, { method: 'POST', body: { name: 'X', message: 'x'.repeat(301) } });
-  assertEqual(r.statusCode, 400, 'over-length message rejected');
+  r = await call(guestbookHandler, {
+    method: 'POST',
+    headers: { 'x-forwarded-for': '203.0.113.12' },
+    body: { name: 'X', message: 'x'.repeat(20) },
+  });
+  assertEqual(r.statusCode, 201, '20-character message is accepted');
+  r = await call(guestbookHandler, { method: 'POST', body: { name: 'X', message: 'x'.repeat(21) } });
+  assertEqual(r.statusCode, 400, 'messages over 20 characters are rejected');
   r = await call(guestbookHandler, { method: 'POST', body: { message: 'no name' } });
   assertEqual(r.statusCode, 400, 'missing name rejected');
 

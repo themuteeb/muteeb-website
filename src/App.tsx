@@ -11,6 +11,7 @@ import { ContactTerminal } from './components/ContactTerminal';
 import { AdminModal } from './components/AdminModal';
 import { Footer } from './components/Footer';
 import { Profile, Project, Thought, Skill, GuestbookEntry, ContactMessage } from './types';
+import { getGuestbookClientId, GuestbookRateLimitError } from './lib/guestbookRateLimit';
 
 const CACHE_KEY = '__muteeb_cache';
 const LEGACY_PASSCODE_KEY = '__admin_custom_passcode';
@@ -442,10 +443,14 @@ export default function App() {
     const res = await fetch('/api/guestbook', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entry),
+      body: JSON.stringify({ ...entry, browserId: getGuestbookClientId() }),
     });
     if (!res.ok) {
-      throw new Error('Guestbook submission failed. Please try again.');
+      const result = await res.json().catch(() => ({})) as { error?: string; retryAfterMs?: number };
+      if (res.status === 429) {
+        throw new GuestbookRateLimitError(result.retryAfterMs, result.error);
+      }
+      throw new Error(result.error || 'Guestbook submission failed. Please try again.');
     }
     await res.json();
     // New entries stay off the public feed until owner approval.

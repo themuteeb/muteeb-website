@@ -29,24 +29,9 @@ export const Toaster: React.FC<ToasterProps> = ({
   if (!show) return null;
 
   const config = {
-    success: {
-      icon: CheckCircle2,
-      borderColor: 'border-emerald-500/70',
-      iconColor: 'text-emerald-400',
-      progressBar: 'bg-emerald-500',
-    },
-    error: {
-      icon: XCircle,
-      borderColor: 'border-rose-500/70',
-      iconColor: 'text-rose-400',
-      progressBar: 'bg-rose-500',
-    },
-    warning: {
-      icon: AlertTriangle,
-      borderColor: 'border-amber-500/70',
-      iconColor: 'text-amber-400',
-      progressBar: 'bg-amber-500',
-    },
+    success: { icon: CheckCircle2 },
+    error: { icon: XCircle },
+    warning: { icon: AlertTriangle },
   };
 
   const c = config[type];
@@ -55,10 +40,10 @@ export const Toaster: React.FC<ToasterProps> = ({
   return (
     <div className="animate-slideInRight pointer-events-auto fixed right-3 top-20 z-[100] w-[calc(100vw-1.5rem)] max-w-[280px] sm:right-6 sm:top-24 sm:w-96 sm:max-w-sm">
       <div
-        className={`liquid-glass relative overflow-hidden rounded-2xl p-4 ${c.borderColor}`}
+        className="liquid-glass relative overflow-hidden rounded-2xl border border-accent/70 p-4"
       >
         <div className="flex items-start gap-3">
-          <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${c.iconColor}`} />
+          <Icon className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
           <div className="min-w-0 flex-1">
             <div className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
               {title}
@@ -78,7 +63,7 @@ export const Toaster: React.FC<ToasterProps> = ({
           </button>
         </div>
         <div
-          className={`animate-progressBar absolute bottom-0 left-0 h-0.5 ${c.progressBar}`}
+          className="animate-progressBar absolute bottom-0 left-0 h-0.5 bg-accent"
           style={{ animationDuration: `${duration}ms` }}
         />
       </div>
