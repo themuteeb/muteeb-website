@@ -160,9 +160,6 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
               </div>
             ) : (
               <div className="mx-auto max-w-xl">
-                <p className="mb-2 text-center font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3">
-                  auto-advances every 5 seconds · drag or tap to browse
-                </p>
                 <CardStack
                   items={publicEntries.map((entry) => ({
                     id: entry.id,
