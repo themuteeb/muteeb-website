@@ -16,12 +16,12 @@ export const Footer: React.FC<FooterProps> = ({ profile }) => {
   };
 
   return (
-    <footer className="relative overflow-hidden bg-canvas py-14 font-mono">
+    <footer className="relative overflow-hidden bg-canvas py-8 font-mono sm:py-10">
       {/* accent top edge */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
 
-      <div className="relative mx-auto max-w-7xl space-y-10 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between gap-6 border-b border-line pb-8">
+      <div className="relative mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-5">
           <div>
             <div className="font-mono text-sm font-bold tracking-tight text-ink">
               muteeb<span className="text-accent">.in</span>
@@ -33,7 +33,7 @@ export const Footer: React.FC<FooterProps> = ({ profile }) => {
 
           <button
             onClick={scrollToTop}
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-line bg-surface text-ink-2 transition-all duration-300 hover:border-accent/60 hover:text-accent "
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface text-ink-2 transition-all duration-300 hover:border-accent/60 hover:text-accent"
             title="Return to top"
           >
             <ArrowUp className="h-5 w-5" />
@@ -50,7 +50,7 @@ export const Footer: React.FC<FooterProps> = ({ profile }) => {
           </p>
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-4 border-t border-line pt-8 text-[11px] font-semibold text-ink-3 sm:flex-row">
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-line pt-5 text-[10px] font-semibold text-ink-3 sm:flex-row">
           <div className="uppercase tracking-wider">
             © {new Date().getFullYear()} {profile?.full_name || 'Baba Muteeb'} — all rights
             reserved

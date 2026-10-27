@@ -20,11 +20,15 @@ export function PlaceholdersAndVanishInput({
   onChange,
   onSubmit,
   className,
+  maxLength,
+  ariaLabel,
 }: {
   placeholders: string[];
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit?: (value: string) => void;
   className?: string;
+  maxLength?: number;
+  ariaLabel?: string;
 }) {
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
 
@@ -163,40 +167,35 @@ export function PlaceholdersAndVanishInput({
     animateFrame(start);
   };
 
+  const vanishAndSubmit = () => {
+    const val = inputRef.current?.value || '';
+    if (!val.trim() || animating) return;
+
+    setAnimating(true);
+    draw();
+    const maxX = newDataRef.current.reduce(
+      (prev, current) => (current.x > prev ? current.x : prev),
+      0
+    );
+    animate(maxX);
+    onSubmit?.(val);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !animating) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
       vanishAndSubmit();
     }
   };
 
-  const vanishAndSubmit = () => {
-    setAnimating(true);
-    draw();
-
-    const val = inputRef.current?.value || '';
-    if (val && inputRef.current) {
-      const maxX = newDataRef.current.reduce(
-        (prev, current) => (current.x > prev ? current.x : prev),
-        0
-      );
-      animate(maxX);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    vanishAndSubmit();
-    onSubmit?.(e);
-  };
-
   return (
-    <form
+    <div
+      role="group"
       className={cn(
         'w-full relative max-w-xl mx-auto bg-canvas border border-line h-12 rounded-full overflow-hidden shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),_0px_1px_0px_0px_rgba(25,28,33,0.02),_0px_0px_0px_1px_rgba(25,28,33,0.08)] transition duration-200',
         value && 'bg-surface-2',
         className
       )}
-      onSubmit={handleSubmit}
     >
       <canvas
         className={cn(
@@ -216,6 +215,8 @@ export function PlaceholdersAndVanishInput({
         ref={inputRef}
         value={value}
         type="text"
+        maxLength={maxLength}
+        aria-label={ariaLabel || placeholders[currentPlaceholder] || 'Text input'}
         className={cn(
           'w-full relative text-sm sm:text-base z-50 border-none text-ink bg-transparent h-full rounded-full focus:outline-none focus:ring-0 pl-4 sm:pl-10 pr-20',
           animating && 'text-transparent'
@@ -223,9 +224,10 @@ export function PlaceholdersAndVanishInput({
       />
 
       <button
-        disabled={!value}
-        type="submit"
-        aria-label="Submit"
+        disabled={!value || animating}
+        type="button"
+        onClick={vanishAndSubmit}
+        aria-label="Vanish input text"
         className="absolute right-2 top-1/2 z-50 -translate-y-1/2 h-8 w-8 rounded-full disabled:bg-surface-2 bg-accent text-canvas transition duration-200 flex items-center justify-center disabled:opacity-40"
       >
         <motion.svg
@@ -289,6 +291,6 @@ export function PlaceholdersAndVanishInput({
           )}
         </AnimatePresence>
       </div>
-    </form>
+    </div>
   );
 }

@@ -86,7 +86,7 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
                 <ExpandableCard
                   key={project.id}
                   actionLabel="view project details"
-                  className="group overflow-hidden rounded-2xl border border-line bg-surface transition-colors duration-300 hover:border-line-2"
+                  className="group overflow-hidden rounded-2xl liquid-glass transition-colors duration-300"
                   expandedContent={
                     <div className="space-y-4">
                       <div>

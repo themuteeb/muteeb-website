@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
-import { Copy, Instagram, Send, Terminal } from 'lucide-react';
+import { Mail, Send, Terminal } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
 import { Toaster, ToasterType } from './Toaster';
 import { GridBackground } from './ui/grid-background';
@@ -27,7 +27,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
   const [name, setName] = useState('');
   const [senderEmail, setSenderEmail] = useState('');
   const [body, setBody] = useState('');
-  const [quickValue, setQuickValue] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending'>('idle');
   const [lastSentTime, setLastSentTime] = useState(0);
 
@@ -104,12 +103,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
     }
   };
 
-  const handleCopyEmail = () => {
-    playSound('click');
-    navigator.clipboard.writeText(email || 'hello@muteeb.in');
-    showToaster('success', 'EMAIL COPIED', `${email || 'hello@muteeb.in'} copied to clipboard.`);
-  };
-
   const handleQuickVanishSubmit = (value: string) => {
     const clean = sanitizeInput(value, 1000).trim();
 
@@ -120,7 +113,6 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
 
     playSound('submit');
     setBody((prev) => (prev.trim() ? `${prev.trim()}\n\n${clean}` : clean));
-    setQuickValue('');
     showToaster(
       'success',
       'PING STAGED',
@@ -150,51 +142,16 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                   {'// direct line'}
                 </div>
                 <h2 className="text-4xl font-extrabold tracking-tight text-ink sm:text-6xl">
-                  Let&apos;s connect &<br />
-                  <span className="text-accent">say hello</span>
+                  Let&apos;s <span className="text-accent">connect</span>
                 </h2>
               </div>
 
               <TextGenerateEffect
-                words="Always happy to connect, collaborate on creative ideas, or talk about software architecture and design systems. Drop a direct note or copy my email."
+                words="Have a project in mind or a quick note? Send it my way."
                 className="max-w-md font-sans text-[15px] leading-relaxed text-ink-3"
                 stagger={0.04}
               />
 
-              {/* email card */}
-              <div className="group relative overflow-hidden rounded-2xl border border-line bg-surface p-6">
-                <div className="relative space-y-4 font-mono text-xs">
-                  <div className="font-bold uppercase tracking-[0.2em] text-ink-3">
-                    {'// contact'}
-                  </div>
-                  <div className="flex items-center justify-between gap-2 rounded-xl border border-line bg-canvas p-3.5">
-                    <span className="truncate font-bold tracking-wider text-ink">
-                      {email || 'hello@muteeb.in'}
-                    </span>
-                    <button
-                      onClick={handleCopyEmail}
-                      className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[10px] font-bold uppercase text-white transition-all duration-300"
-                    >
-                      <Copy className="h-3 w-3" />
-                      copy
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-line pt-3">
-                    <span className="font-bold uppercase tracking-[0.2em] text-ink-3">
-                      instagram
-                    </span>
-                    <a
-                      href="https://instagram.com/mr_muteeb_"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 font-bold uppercase text-accent transition-opacity hover:opacity-70"
-                    >
-                      <Instagram className="h-3.5 w-3.5" /> @mr_muteeb_
-                    </a>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* form column — terminal */}
@@ -232,8 +189,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                       'Quick idea for muteeb.in…',
                       'Ping me about…',
                     ]}
-                    onChange={(e) => setQuickValue(e.target.value)}
-                    onSubmit={() => handleQuickVanishSubmit(quickValue)}
+                    onSubmit={handleQuickVanishSubmit}
                   />
                   <p className="font-sans text-[11.5px] leading-relaxed text-ink-3">
                     Type anything and hit submit — it explodes, then lands in the message field ready to send.
@@ -242,8 +198,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
 
                 <form onSubmit={handleSubmit} className="relative space-y-4 p-5 sm:p-7">
                   <div className="font-mono text-[11px] text-ink-3">
-                    <span className="text-accent">$</span> ./send-message --to{' '}
-                    <span className="text-[#f5c97b]">{email || 'hello@muteeb.in'}</span>
+                    <span className="text-accent">$</span> ./send-message
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -304,6 +259,17 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                 </form>
               </motion.div>
             </div>
+          </div>
+
+          <div className="mt-8 flex justify-start border-t border-line pt-5 sm:justify-end">
+            <a
+              href={`mailto:${email || 'hello@muteeb.in'}`}
+              onClick={() => playSound('click')}
+              className="inline-flex items-center gap-2 font-mono text-xs font-semibold text-ink-2 transition-colors hover:text-accent"
+            >
+              <Mail className="h-4 w-4 text-accent" />
+              {email || 'hello@muteeb.in'}
+            </a>
           </div>
         </div>
       </section>

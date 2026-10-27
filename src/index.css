@@ -89,10 +89,10 @@
 
 /* Dark frosted glass with restrained, non-glowing depth. */
 @utility liquid-glass {
-  border: 1px solid rgba(235, 255, 246, 0.19);
+  border: 1px solid rgba(235, 255, 246, 0.23);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035) 42%, rgba(255, 255, 255, 0.015)),
-    rgba(9, 13, 11, 0.78);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.045) 42%, rgba(255, 255, 255, 0.015)),
+    rgba(8, 14, 18, 0.42);
   box-shadow:
     0 24px 72px -34px rgba(0, 0, 0, 0.88),
     inset 0 1px 0 rgba(255, 255, 255, 0.24),
