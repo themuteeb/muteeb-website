@@ -6,6 +6,7 @@ import { Shield, Lock, Plus, Trash2, Download, ShieldAlert, Upload } from 'lucid
 import { sanitizeInput } from '../lib/crypto';
 import { uploadImage } from '../lib/imageUpload';
 import { StatefulButton, type StatefulButtonStatus } from './ui/stateful-button';
+import { ImageCropModal } from './ui/ImageCropModal';
 
 interface AdminModalProps {
   profile: Profile | null;
@@ -74,6 +75,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [timeRemainingText, setTimeRemainingText] = useState('');
   const [isLockedOut, setIsLockedOut] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [projectImageToCrop, setProjectImageToCrop] = useState<{ imageUrl: string; fileName: string } | null>(null);
 
   useEffect(() => {
     const updateLockout = () => {
@@ -266,13 +268,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     playSound('click');
   };
 
-  const handleImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+  const uploadSelectedImage = async (
+    file: File,
     setter: (url: string) => void,
     folder: string = 'general'
   ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
     try {
       setUploadingImage(true);
       const url = await uploadImage(file, folder, adminPasscode);
@@ -283,9 +283,39 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       console.error('Image upload failed:', message);
       alert(`IMAGE UPLOAD FAILED: ${message}`);
     } finally {
-      e.target.value = '';
       setUploadingImage(false);
     }
+  };
+
+  const handleImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (url: string) => void,
+    folder: string = 'general'
+  ) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) void uploadSelectedImage(file, setter, folder);
+  };
+
+  const handleProjectImageSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
+      alert('CHOOSE A PNG, JPEG, WEBP, OR GIF IMAGE.');
+      return;
+    }
+
+    setProjectImageToCrop({ imageUrl: URL.createObjectURL(file), fileName: file.name });
+  };
+
+  const handleProjectImageCrop = async (file: File) => {
+    setProjectImageToCrop(null);
+    await uploadSelectedImage(
+      file,
+      (url) => setEditingProj((current) => current ? { ...current, image_url: url } : current),
+      'projects',
+    );
   };
 
   const handleProjectSubmit = async (e: React.FormEvent) => {
@@ -400,6 +430,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-lg">
       <div className="liquid-glass max-w-6xl w-full max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 font-mono text-zinc-200 relative">
         <div className="flex items-center justify-between border-b border-line pb-3 mb-4">
@@ -678,7 +709,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         <label className="px-3 py-2 bg-zinc-800 border border-line text-zinc-300 text-xs font-bold uppercase cursor-pointer hover:bg-zinc-700 flex items-center gap-1">
                           <Upload className="w-3 h-3" />
                           {uploadingImage ? 'UPLOADING...' : 'UPLOAD'}
-                          <input type="file" accept="image/*" className="hidden" disabled={uploadingImage} onChange={(e) => handleImageUpload(e, (url) => setEditingProj({ ...editingProj, image_url: url }), 'projects')} />
+                          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" disabled={uploadingImage} onChange={handleProjectImageSelection} />
                         </label>
                         {editingProj.image_url && <img src={editingProj.image_url} className="w-12 h-12 object-cover border border-line" alt="preview" />}
                       </div>
@@ -929,5 +960,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         )}
       </div>
     </div>
+    {projectImageToCrop && (
+      <ImageCropModal
+        imageUrl={projectImageToCrop.imageUrl}
+        fileName={projectImageToCrop.fileName}
+        onCancel={() => setProjectImageToCrop(null)}
+        onConfirm={handleProjectImageCrop}
+      />
+    )}
+    </>
   );
 };

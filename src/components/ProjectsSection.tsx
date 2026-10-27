@@ -28,7 +28,7 @@ const ProjectCardPreview: React.FC<ProjectCardPreviewProps> = ({
 
   return (
     <>
-      <div className="relative h-40 overflow-hidden border-b border-line bg-surface-2 sm:h-44">
+      <div className="relative aspect-video w-full overflow-hidden border-b border-line bg-surface-2">
         <img
           src={
             project.image_url ||
