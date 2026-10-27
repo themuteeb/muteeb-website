@@ -8,7 +8,7 @@ import { cn } from '../../lib/utils';
 export const GridBackground = ({
   className,
   cellSize = 44,
-  lineColor = 'rgba(15, 23, 42, 0.05)',
+  lineColor = 'rgba(255, 255, 255, 0.05)',
   maskFrom = 'top',
 }: {
   className?: string;
