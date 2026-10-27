@@ -9,7 +9,7 @@ import {
   GUESTBOOK_COOLDOWN_MESSAGE,
   GuestbookRateLimitError,
 } from '../lib/guestbookRateLimit';
-import { Toaster, ToasterType } from './Toaster';
+import { FormStatus, type FormStatusMessage } from './FormStatus';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { CardStack } from './ui/card-stack';
 import { AnimatedModal } from './ui/animated-modal';
@@ -51,26 +51,15 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
       return 0;
     }
   });
-  const [toaster, setToaster] = useState<{
-    show: boolean;
-    type: ToasterType;
-    title: string;
-    message: string;
-  }>({ show: false, type: 'success', title: '', message: '' });
+  const [formStatus, setFormStatus] = useState<FormStatusMessage | null>(null);
 
   const badges = ['VISITOR', 'DEVELOPER', 'DESIGNER', 'FRIEND'];
   const colors = ['cyan', 'lime', 'rose', 'purple', 'amber'];
   const publicEntries = entries.filter((entry) => entry.approved === true);
 
-  const showToaster = (type: ToasterType, title: string, message: string) => {
-    setToaster({ show: true, type, title, message });
-  };
-
-  const closeToaster = () => setToaster((prev) => ({ ...prev, show: false }));
-
   const openForm = () => {
     setSubmitStatus('idle');
-    setToaster((prev) => ({ ...prev, show: false }));
+    setFormStatus(null);
     setIsFormOpen(true);
     playSound('click');
   };
@@ -85,7 +74,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
   };
 
   const showCooldownNotice = () => {
-    showToaster('warning', 'MESSAGE ALREADY PENDING', GUESTBOOK_COOLDOWN_MESSAGE);
+    setFormStatus({ type: 'warning', title: 'MESSAGE ALREADY PENDING', message: GUESTBOOK_COOLDOWN_MESSAGE });
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -97,11 +86,12 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
       return;
     }
     if (!name.trim() || !message.trim()) {
-      showToaster('warning', 'INCOMPLETE ENTRY', 'Please add your name and a public message.');
+      setFormStatus({ type: 'error', title: 'INCOMPLETE ENTRY', message: 'Please add your name and a public message.' });
       return;
     }
 
     try {
+      setFormStatus(null);
       setSubmitStatus('loading');
       playSound('submit');
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
@@ -116,7 +106,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
       setName('');
       setMessage('');
       setSubmitStatus('success');
-      showToaster('success', 'MESSAGE SUBMITTED', 'Your message is awaiting admin approval.');
+      setFormStatus({ type: 'success', title: 'MESSAGE SUBMITTED', message: 'Your message is awaiting admin approval.' });
       window.setTimeout(() => setSubmitStatus('idle'), 1100);
     } catch (error) {
       console.error('Error posting guestbook entry:', error);
@@ -125,7 +115,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
         startCooldown(Date.now() + error.retryAfterMs);
         showCooldownNotice();
       } else {
-        showToaster('error', 'SUBMISSION FAILED', 'Something went wrong. Please try again.');
+        setFormStatus({ type: 'error', title: 'SUBMISSION FAILED', message: 'Something went wrong. Please try again.' });
       }
       window.setTimeout(() => setSubmitStatus('idle'), 1600);
     }
@@ -205,7 +195,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
           open={isFormOpen}
           onClose={() => {
             setIsFormOpen(false);
-            closeToaster();
+            setFormStatus(null);
           }}
           labelledBy="guestbook-form-title"
         >
@@ -234,7 +224,10 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                 autoComplete="name"
                 placeholder="Your name"
                 value={name}
-                onChange={(event) => setName(event.target.value)}
+                onChange={(event) => {
+                  setName(event.target.value);
+                  setFormStatus(null);
+                }}
                 className={inputClass}
               />
             </div>
@@ -276,7 +269,10 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                 maxLength={30}
                 placeholder="Write a public message…"
                 value={message}
-                onChange={(event) => setMessage(event.target.value)}
+                onChange={(event) => {
+                  setMessage(event.target.value);
+                  setFormStatus(null);
+                }}
                 className={`${inputClass} resize-none`}
               />
               <div className="mt-1 text-right font-mono text-[10px] text-ink-3">
@@ -284,16 +280,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
               </div>
             </div>
 
-            {toaster.show && (
-              <Toaster
-                show={toaster.show}
-                type={toaster.type}
-                title={toaster.title}
-                message={toaster.message}
-                onClose={closeToaster}
-                inline
-              />
-            )}
+            <FormStatus status={formStatus} />
 
             <StatefulButton
               type="submit"

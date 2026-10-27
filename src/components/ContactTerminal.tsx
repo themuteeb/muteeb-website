@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { Mail, Terminal } from 'lucide-react';
 import { sanitizeInput } from '../lib/crypto';
-import { Toaster, ToasterType } from './Toaster';
+import { FormStatus, type FormStatusMessage } from './FormStatus';
 import { GridBackground } from './ui/grid-background';
 import { PlaceholdersAndVanishInput } from './ui/placeholders-and-vanish-input';
 import { TextGenerateEffect } from './ui/text-generate-effect';
@@ -31,30 +31,24 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
   const [status, setStatus] = useState<StatefulButtonStatus>('idle');
   const [lastSentTime, setLastSentTime] = useState(0);
 
-  const [toaster, setToaster] = useState<{
-    show: boolean;
-    type: ToasterType;
-    title: string;
-    message: string;
-  }>({ show: false, type: 'success', title: '', message: '' });
-
-  const showToaster = (type: ToasterType, title: string, message: string) => {
-    setToaster({ show: true, type, title, message });
-  };
-
-  const closeToaster = () => setToaster((prev) => ({ ...prev, show: false }));
+  const [formStatus, setFormStatus] = useState<FormStatusMessage | null>(null);
+  const [pingStatus, setPingStatus] = useState<FormStatusMessage | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !senderEmail.trim() || !body.trim()) return;
+    if (!name.trim() || !senderEmail.trim() || !body.trim()) {
+      setFormStatus({ type: 'error', title: 'INCOMPLETE ENTRY', message: 'Please fill in your name, email and message.' });
+      return;
+    }
 
     const now = Date.now();
     if (now - lastSentTime < 60000) {
-      showToaster('warning', 'RATE LIMITED', 'Please wait 60 seconds between messages.');
+      setFormStatus({ type: 'warning', title: 'RATE LIMITED', message: 'Please wait 60 seconds between messages.' });
       return;
     }
 
     try {
+      setFormStatus(null);
       setStatus('loading');
       playSound('submit');
 
@@ -96,12 +90,12 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
       setSenderEmail('');
       setBody('');
       setStatus('success');
-      showToaster('success', 'MESSAGE TRANSMITTED', 'Thanks for reaching out! I will respond soon.');
+      setFormStatus({ type: 'success', title: 'MESSAGE TRANSMITTED', message: 'Thanks for reaching out! I will respond soon.' });
       window.setTimeout(() => setStatus('idle'), 1400);
     } catch (err) {
       console.error('Contact submit error:', err);
       setStatus('error');
-      showToaster('error', 'TRANSMISSION FAILED', 'Please try again in a moment.');
+      setFormStatus({ type: 'error', title: 'TRANSMISSION FAILED', message: 'Something went wrong. Please try again in a moment.' });
       window.setTimeout(() => setStatus('idle'), 1400);
     }
   };
@@ -110,29 +104,21 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
     const clean = sanitizeInput(value, 1000).trim();
 
     if (!clean) {
-      showToaster('warning', 'EMPTY PING', 'Type something first — then watch it vanish.');
+      setPingStatus({ type: 'warning', title: 'EMPTY PING', message: 'Type something first — then watch it vanish.' });
       return;
     }
 
     playSound('submit');
     setBody((prev) => (prev.trim() ? `${prev.trim()}\n\n${clean}` : clean));
-    showToaster(
-      'success',
-      'PING STAGED',
-      'Dropped into the message field — add your name + email and hit send.'
-    );
+    setPingStatus({
+      type: 'success',
+      title: 'PING STAGED',
+      message: 'Dropped into the message field — add your name + email and hit send.',
+    });
   };
 
   return (
     <>
-      <Toaster
-        show={toaster.show}
-        type={toaster.type}
-        title={toaster.title}
-        message={toaster.message}
-        onClose={closeToaster}
-      />
-
       <section id="contact" className="relative overflow-hidden border-b border-line bg-canvas py-24 sm:py-28">
         <GridBackground cellSize={40} maskFrom="center" />
 
@@ -194,6 +180,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                     ]}
                     onSubmit={handleQuickVanishSubmit}
                   />
+                  <FormStatus status={pingStatus} />
                   <p className="font-sans text-[11.5px] leading-relaxed text-ink-3">
                     Type anything and hit submit — it explodes, then lands in the message field ready to send.
                   </p>
@@ -203,6 +190,8 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                   <div className="font-mono text-[11px] text-ink-3">
                     <span className="text-accent">$</span> ./send-message
                   </div>
+
+                  <FormStatus status={formStatus} />
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
@@ -215,7 +204,10 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                         maxLength={60}
                         placeholder="e.g. Alex Mercer"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          setFormStatus(null);
+                        }}
                         className={inputClass}
                       />
                     </div>
@@ -230,7 +222,10 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                         maxLength={80}
                         placeholder="alex@example.com"
                         value={senderEmail}
-                        onChange={(e) => setSenderEmail(e.target.value)}
+                        onChange={(e) => {
+                          setSenderEmail(e.target.value);
+                          setFormStatus(null);
+                        }}
                         className={inputClass}
                       />
                     </div>
@@ -246,7 +241,10 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                       maxLength={1000}
                       placeholder="Write your note or thoughts…"
                       value={body}
-                      onChange={(e) => setBody(e.target.value)}
+                      onChange={(e) => {
+                        setBody(e.target.value);
+                        setFormStatus(null);
+                      }}
                       className={`${inputClass} resize-none`}
                     />
                   </div>

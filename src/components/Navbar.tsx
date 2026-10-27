@@ -105,7 +105,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
   return (
     <FloatingNavbar appearAfter={90}>
       <div className="w-full max-w-4xl">
-        <div className="liquid-glass flex w-full items-center gap-1 rounded-full p-1.5 sm:gap-2 sm:px-2.5 sm:py-2">
+        <div className="liquid-glass navbar-bar-glass flex w-full items-center gap-1 rounded-full p-1.5 sm:gap-2 sm:px-2.5 sm:py-2">
           <a
             href="#"
             onClick={(event) => {
