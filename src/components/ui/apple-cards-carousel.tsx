@@ -9,6 +9,7 @@ interface AppleCardsCarouselProps {
   className?: string;
   itemClassName?: string;
   label?: string;
+  desktopGrid?: boolean;
 }
 
 /** A compact, responsive, snap-scrolling card carousel for dynamic content. */
@@ -17,6 +18,7 @@ export function AppleCardsCarousel({
   className,
   itemClassName,
   label = 'Cards',
+  desktopGrid = false,
 }: AppleCardsCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
@@ -36,12 +38,26 @@ export function AppleCardsCarousel({
   if (items.length === 0) return null;
 
   return (
-    <div
-      role="region"
-      aria-label={label}
-      aria-roledescription="carousel"
-      className={cn('relative', className)}
-    >
+    <>
+      {desktopGrid && (
+        <div
+          role="region"
+          aria-label={`${label} grid`}
+          className="hidden grid-cols-1 gap-4 lg:grid lg:grid-cols-2 xl:grid-cols-3"
+        >
+          {items.map((item, index) => (
+            <div key={`grid-${index}`} className={cn('flex h-full min-w-0', itemClassName)}>
+              {item}
+            </div>
+          ))}
+        </div>
+      )}
+      <div
+        role="region"
+        aria-label={label}
+        aria-roledescription="carousel"
+        className={cn('relative', desktopGrid && 'lg:hidden', className)}
+      >
       <div
         ref={trackRef}
         className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-1 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -79,6 +95,7 @@ export function AppleCardsCarousel({
           </button>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

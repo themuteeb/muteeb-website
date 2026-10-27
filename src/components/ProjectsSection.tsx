@@ -82,6 +82,7 @@ export const ProjectsSection: React.FC<ProjectsProps> = ({ projects }) => {
             </div>
             <AppleCardsCarousel
               label="Projects"
+              desktopGrid
               items={filteredProjects.map((project) => {
                 const projectTags = project.tags?.length
                   ? project.tags
