@@ -686,7 +686,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h3 className="text-xs font-bold text-zinc-400 uppercase">MANAGE PERSONAL PROJECTS</h3>
-                  <button onClick={() => setEditingProj({ title: '', category: 'PERSONAL', tags: ['HTML', 'CSS', 'JS'], featured: true })} className={`px-3 py-1.5 ${bgAccentClass} font-bold text-xs uppercase flex items-center gap-1`}>
+                  <button onClick={() => setEditingProj({ title: '', category: 'PERSONAL', tags: ['HTML', 'CSS', 'JS'], featured: true, live_url: '', github_url: '', image_url: '' })} className={`px-3 py-1.5 ${bgAccentClass} font-bold text-xs uppercase flex items-center gap-1`}>
                     <Plus className="w-4 h-4" /> ADD NEW PROJECT
                   </button>
                 </div>
@@ -701,6 +701,31 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       <input type="text" maxLength={40} placeholder="Category" value={editingProj.category || ''} onChange={(e) => setEditingProj({ ...editingProj, category: e.target.value })} className="px-3 py-2 bg-canvas border border-line text-white text-xs" />
                     </div>
                     <textarea placeholder="Project description" rows={3} maxLength={1000} value={editingProj.description || ''} onChange={(e) => setEditingProj({ ...editingProj, description: e.target.value })} className="w-full px-3 py-2 bg-canvas border border-line text-white text-xs" />
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <label className="space-y-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                        Live project URL
+                        <input
+                          type="text"
+                          maxLength={2000}
+                          placeholder="Paste link or domain (https:// is added if missing)"
+                          value={editingProj.live_url || ''}
+                          onChange={(e) => setEditingProj({ ...editingProj, live_url: e.target.value })}
+                          className="mt-1 w-full px-3 py-2 bg-canvas border border-line text-white text-xs normal-case tracking-normal"
+                        />
+                      </label>
+                      <label className="space-y-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                        Source code URL
+                        <input
+                          type="text"
+                          maxLength={2000}
+                          placeholder="Paste GitHub or other source link"
+                          value={editingProj.github_url || ''}
+                          onChange={(e) => setEditingProj({ ...editingProj, github_url: e.target.value })}
+                          className="mt-1 w-full px-3 py-2 bg-canvas border border-line text-white text-xs normal-case tracking-normal"
+                        />
+                      </label>
+                    </div>
 
                     <div>
                       <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">PROJECT IMAGE</label>

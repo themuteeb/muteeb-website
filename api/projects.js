@@ -18,6 +18,22 @@ const VALID_COLUMNS = [
   'title', 'slug', 'subtitle', 'description', 'category', 'tags',
   'image_url', 'live_url', 'github_url', 'metrics', 'featured', 'display_order',
 ];
+const URL_FIELDS = new Set(['image_url', 'live_url', 'github_url']);
+
+/** Accept copied bare domains by adding https, while rejecting non-web schemes. */
+function normalizeHttpUrl(value) {
+  let candidate = value.trim();
+  if (!candidate) return '';
+  if (candidate.startsWith('//')) {
+    candidate = `https:${candidate}`;
+  } else if (!/^https?:\/\//i.test(candidate)) {
+    const hostWithPort = /^[^/?#]+:\d+(?:[/?#]|$)/.test(candidate);
+    if (/^[a-z][a-z\d+.-]*:/i.test(candidate) && !hostWithPort) return null;
+    candidate = `https://${candidate}`;
+  }
+  if (!isSafeUrl(candidate)) return null;
+  return new URL(candidate).href;
+}
 
 /**
  * Validate a project payload against the table's columns.
@@ -63,10 +79,17 @@ function validateProject(input, { partial }) {
     const limit = COLUMN_LIMITS[key];
     if (limit === undefined) return { error: `Unknown field: ${key}` };
     const cleaned = cleanText(value, limit);
+    if (URL_FIELDS.has(key) && typeof value === 'string' && value.trim() === '') {
+      // Project links are optional; older records commonly store them as ''.
+      out[key] = '';
+      continue;
+    }
     if (cleaned === null) return { error: `Invalid value for ${key}` };
-    if ((key === 'live_url' || key === 'github_url' || key === 'image_url') &&
-        !isSafeUrl(cleaned)) {
-      return { error: `${key} must be an http(s) URL` };
+    if (URL_FIELDS.has(key)) {
+      const normalizedUrl = normalizeHttpUrl(cleaned);
+      if (!normalizedUrl) return { error: `${key} must be an http(s) URL` };
+      out[key] = normalizedUrl;
+      continue;
     }
     out[key] = cleaned;
   }
