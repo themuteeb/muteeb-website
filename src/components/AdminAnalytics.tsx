@@ -30,7 +30,8 @@ interface AnalyticsData {
   blockedIps: Array<{ ip: string; reason: string; created_at: string }>;
 }
 
-const REFRESH_MS = 30 * 1000;
+// Live view: refresh every 5 seconds while this tab is visible.
+const REFRESH_MS = 5 * 1000;
 const fmt = (iso: string | null | undefined) => {
   const date = iso ? new Date(iso) : null;
   if (!date || Number.isNaN(date.getTime())) return '—';
@@ -121,7 +122,9 @@ export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode
 
   useEffect(() => {
     const first = window.setTimeout(() => void load(), 0);
-    const timer = window.setInterval(() => void load(), REFRESH_MS);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void load();
+    }, REFRESH_MS);
     return () => {
       window.clearTimeout(first);
       window.clearInterval(timer);
