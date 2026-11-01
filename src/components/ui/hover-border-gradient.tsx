@@ -25,7 +25,8 @@ export const HoverBorderGradient = ({
   const [hovered, setHovered] = useState(false);
   const [pos, setPos] = useState({ x: 50, y: 50 });
 
-  const handleMove = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType === 'touch') return;
     const rect = ref.current?.getBoundingClientRect();
     if (!rect) return;
     setPos({
@@ -36,20 +37,21 @@ export const HoverBorderGradient = ({
 
   return (
     <div className={cn('relative inline-flex overflow-hidden p-px', containerClassName)}>
+      {/* The glow follows the pointer instantly; only its fade is animated, so it never slides in from an old spot. */}
       <motion.div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        animate={{
+        style={{
           background: `radial-gradient(circle at ${pos.x}% ${pos.y}%, var(--color-accent-bright) 0%, transparent 60%)`,
-          opacity: hovered ? 1 : 0.35,
         }}
+        animate={{ opacity: hovered ? 1 : 0.35 }}
         transition={{ duration }}
       />
       <button
         ref={ref}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onMouseMove={handleMove}
+        onPointerEnter={(e) => { if (e.pointerType !== 'touch') setHovered(true); }}
+        onPointerLeave={() => setHovered(false)}
+        onPointerMove={handleMove}
         className={cn('relative z-10 inline-flex items-center justify-center', className)}
         {...props}
       >
@@ -76,7 +78,8 @@ export const HoverBorderFrame = ({
   const [hovered, setHovered] = useState(false);
   const [pos, setPos] = useState({ x: 50, y: 50 });
 
-  const handleMove = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'touch') return;
     const rect = ref.current?.getBoundingClientRect();
     if (!rect) return;
     setPos({
@@ -88,18 +91,19 @@ export const HoverBorderFrame = ({
   return (
     <div
       ref={ref}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onMouseMove={handleMove}
+      onPointerEnter={(e) => { if (e.pointerType !== 'touch') setHovered(true); }}
+      onPointerLeave={() => setHovered(false)}
+      onPointerMove={handleMove}
       className={cn('relative inline-flex overflow-hidden rounded-full p-px', containerClassName)}
     >
+      {/* The glow follows the pointer instantly; only its fade is animated, so it never slides in from an old spot. */}
       <motion.div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        animate={{
+        style={{
           background: `radial-gradient(circle at ${pos.x}% ${pos.y}%, var(--color-accent-bright) 0%, transparent 60%)`,
-          opacity: hovered ? 1 : 0.35,
         }}
+        animate={{ opacity: hovered ? 1 : 0.35 }}
         transition={{ duration }}
       />
       <div className="relative z-10 flex w-full">{children}</div>

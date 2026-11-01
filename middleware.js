@@ -3,9 +3,12 @@
 // login (admin_ips) are never refused. If the blocklist cannot be read, requests pass
 // through (fail open), so a database problem cannot take the whole site down.
 
-const CACHE_MS = 5 * 1000;
-let blockedCache = { at: 0, ips: new Set() };
+// The blocklist is refreshed in the background so the request never waits for the database
+// (except on a brand-new instance). A block takes effect within about 300 ms of the next request.
+const BLOCK_TTL_MS = 300;
+let blockedCache = { at: 0, ips: new Set(), inFlight: null };
 let adminCache = { at: 0, ips: new Set() };
+const CACHE_MS = 5 * 1000;
 
 const RESTRICTED_PAGE = `<!doctype html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex"><meta name="theme-color" content="#0a0a0a">
@@ -29,14 +32,27 @@ async function fetchIps(table) {
   return new Set(rows.map((row) => row.ip));
 }
 
-// Blocklist: if unreadable, keep the last good list (fail open, so a database problem can't take the site down).
-async function loadBlocked() {
-  if (Date.now() - blockedCache.at < CACHE_MS) return blockedCache.ips;
-  try {
-    blockedCache = { at: Date.now(), ips: await fetchIps('blocked_ips') };
-  } catch (err) {
-    console.warn('Blocklist unavailable, serving request:', err.message);
-    blockedCache = { at: Date.now(), ips: blockedCache.ips };
+function refreshBlocked() {
+  if (!blockedCache.inFlight) {
+    blockedCache.inFlight = fetchIps('blocked_ips')
+      .then((ips) => {
+        blockedCache = { at: Date.now(), ips, inFlight: null };
+      })
+      .catch((err) => {
+        // Fail open: keep the last good list if the blocklist can't be read.
+        console.warn('Blocklist unavailable, serving request:', err.message);
+        blockedCache = { at: Date.now(), ips: blockedCache.ips, inFlight: null };
+      });
+  }
+  return blockedCache.inFlight;
+}
+
+async function loadBlocked(context) {
+  if (blockedCache.at === 0) await refreshBlocked();
+  else if (Date.now() - blockedCache.at >= BLOCK_TTL_MS) {
+    const refresh = refreshBlocked();
+    if (context && typeof context.waitUntil === 'function') context.waitUntil(refresh);
+    else await refresh;
   }
   return blockedCache.ips;
 }
@@ -61,10 +77,10 @@ function clientIp(request) {
   return forwarded ? forwarded.split(',')[0].trim().slice(0, 64) : '';
 }
 
-export default async function middleware(request) {
+export default async function middleware(request, context) {
   const ip = clientIp(request);
   if (!ip) return undefined;
-  const blocked = await loadBlocked();
+  const blocked = await loadBlocked(context);
   if (!blocked.has(ip)) return undefined;
   if (await isAdminIp(ip)) return undefined;
   return new Response(RESTRICTED_PAGE, {
