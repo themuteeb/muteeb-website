@@ -27,8 +27,7 @@ jobs:
           for attempt in 1 2 3 4 5; do
             code=$(curl -s -o /tmp/body.json -w "%{http_code}" --max-time 30 \
               "${SUPABASE_URL%/}/rest/v1/profile?select=id&limit=1" \
-              -H "apikey: $SUPABASE_ANON_KEY" \
-              -H "Authorization: Bearer $SUPABASE_ANON_KEY") || code=000
+              -H "apikey: $SUPABASE_ANON_KEY") || code=000
             echo "attempt $attempt: HTTP $code"
             if [ "$code" = "200" ]; then
               echo "Database is awake."
