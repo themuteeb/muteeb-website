@@ -962,6 +962,32 @@ await test('37. edge middleware: admin list is read only for blocked visitors', 
   }
 });
 
+await test('38. edge middleware: a new block takes effect within about 300 ms, without waiting on the database per request', async () => {
+  const realFetch = globalThis.fetch;
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.test';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
+  let blockedRows = [];
+  globalThis.fetch = async (url) => {
+    const table = String(url).split('/rest/v1/')[1].split('?')[0];
+    return new Response(JSON.stringify(table === 'blocked_ips' ? blockedRows : []), { status: 200 });
+  };
+  try {
+    const mw = (await import('../middleware.js?case=ttl')).default;
+    const pending = [];
+    const context = { waitUntil: (p) => pending.push(p) };
+    const req = new Request('https://muteeb.in/', { headers: { 'x-real-ip': '198.51.100.20' } });
+    assertEqual(await mw(req, context), undefined, 'not blocked at first');
+    blockedRows = [{ ip: '198.51.100.20' }];
+    await new Promise((r) => setTimeout(r, 350));
+    await mw(req, context); // triggers the background refresh; this request may still see the old list
+    await Promise.all(pending.splice(0));
+    const after = await mw(req, context);
+    assertEqual(after && after.status, 403, 'blocked on the next request after the refresh');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Admin analytics: each list gets its own data
 // ---------------------------------------------------------------------------

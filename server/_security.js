@@ -1,3 +1,4 @@
+import { waitUntil } from '@vercel/functions';
 // ============================================================================
 // server/_security.js — shared hardening helpers for every /api function
 // ----------------------------------------------------------------------------
@@ -273,7 +274,7 @@ export function sendServerError(res, err) {
 // Owner-managed list in table `blocked_ips`. Cached per serverless instance for 5 seconds,
 // so a block or unblock applies everywhere within about 5 seconds.
 const BLOCK_CACHE_MS = 5 * 1000;
-let blockCache = { at: 0, ips: new Set() };
+let blockCache = { at: 0, ips: new Set(), inFlight: null };
 let adminIpCache = { at: 0, ips: new Set() };
 
 /** The visitor's IP as set by Vercel's proxy (not spoofable by the client). */
@@ -294,7 +295,7 @@ export function isValidIp(value) {
 }
 
 export function invalidateBlockCache() {
-  blockCache = { at: 0, ips: new Set() };
+  blockCache = { at: 0, ips: new Set(), inFlight: null };
   adminIpCache = { at: 0, ips: new Set() };
 }
 
@@ -332,17 +333,39 @@ export async function rememberAdminIp(req) {
   }
 }
 
-async function loadBlockedIps() {
-  if (Date.now() - blockCache.at < BLOCK_CACHE_MS) return blockCache.ips;
-  try {
-    const { data, error } = await supabase.from('blocked_ips').select('ip').limit(5000);
-    if (error) throw error;
-    blockCache = { at: Date.now(), ips: new Set((data || []).map((row) => row.ip)) };
-  } catch (err) {
-    // Fail open: a database hiccup must not take the whole public site down.
-    console.warn('Blocklist unavailable, serving request:', err.message);
-    blockCache = { at: Date.now(), ips: blockCache.ips };
+// The blocklist is refreshed in the background (waitUntil), so a request never waits for the
+// database except on a brand-new instance. A block takes effect within about 300 ms of the next request.
+const BLOCK_TTL_MS = 300;
+
+function refreshBlockedIps() {
+  if (!blockCache.inFlight) {
+    blockCache.inFlight = (async () => {
+      try {
+        const { data, error } = await supabase.from('blocked_ips').select('ip').limit(5000);
+        if (error) throw error;
+        blockCache = { at: Date.now(), ips: new Set((data || []).map((row) => row.ip)), inFlight: null };
+      } catch (err) {
+        // Fail open: a database hiccup must not take the whole public site down.
+        console.warn('Blocklist unavailable, serving request:', err.message);
+        blockCache = { at: Date.now(), ips: blockCache.ips, inFlight: null };
+      }
+    })();
   }
+  return blockCache.inFlight;
+}
+
+// Keeps a refresh running after the response on Vercel. Elsewhere (local tests) it simply runs.
+function runInBackground(promise) {
+  try {
+    waitUntil(promise);
+  } catch {
+    /* not on Vercel: the promise still runs */
+  }
+}
+
+async function loadBlockedIps() {
+  if (blockCache.at === 0) await refreshBlockedIps();
+  else if (Date.now() - blockCache.at >= BLOCK_TTL_MS) runInBackground(refreshBlockedIps());
   return blockCache.ips;
 }
 
