@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Check, CircleX, LoaderCircle, Send } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../lib/utils';
-import { HoverBorderGradient } from './hover-border-gradient';
+import { HoverBorderFrame } from './hover-border-gradient';
 
 export type StatefulButtonStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -64,8 +64,8 @@ export function StatefulButton({
   if (!hoverBorder) return button;
 
   return (
-    <HoverBorderGradient containerClassName="w-full rounded-full">
+    <HoverBorderFrame containerClassName="w-full">
       {button}
-    </HoverBorderGradient>
+    </HoverBorderFrame>
   );
 }

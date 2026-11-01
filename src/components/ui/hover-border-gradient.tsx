@@ -58,3 +58,51 @@ export const HoverBorderGradient = ({
     </div>
   );
 };
+
+/**
+ * Same glowing border, but a plain <div> frame. Use it around a component that
+ * already renders its own <button> (e.g. StatefulButton), so buttons are never nested.
+ */
+export const HoverBorderFrame = ({
+  children,
+  containerClassName,
+  duration = 1,
+}: {
+  children: React.ReactNode;
+  containerClassName?: string;
+  duration?: number;
+}) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [hovered, setHovered] = useState(false);
+  const [pos, setPos] = useState({ x: 50, y: 50 });
+
+  const handleMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPos({
+      x: ((event.clientX - rect.left) / rect.width) * 100,
+      y: ((event.clientY - rect.top) / rect.height) * 100,
+    });
+  };
+
+  return (
+    <div
+      ref={ref}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onMouseMove={handleMove}
+      className={cn('relative inline-flex overflow-hidden rounded-full p-px', containerClassName)}
+    >
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        animate={{
+          background: `radial-gradient(circle at ${pos.x}% ${pos.y}%, var(--color-accent-bright) 0%, transparent 60%)`,
+          opacity: hovered ? 1 : 0.35,
+        }}
+        transition={{ duration }}
+      />
+      <div className="relative z-10 flex w-full">{children}</div>
+    </div>
+  );
+};
