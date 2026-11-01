@@ -142,11 +142,11 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
               />
             </div>
             {acceptingEntries ? (
-            <HoverBorderFrame containerClassName="shrink-0">
+            <HoverBorderFrame containerClassName="w-full shrink-0 sm:w-auto">
               <button
                 type="button"
                 onClick={openForm}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent px-5 py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 sm:w-auto"
               >
                 <PenLine className="h-4 w-4" />
                 leave a message
