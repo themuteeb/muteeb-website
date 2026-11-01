@@ -7,6 +7,7 @@ import { sanitizeInput } from '../lib/crypto';
 import { uploadImage } from '../lib/imageUpload';
 import { StatefulButton, type StatefulButtonStatus } from './ui/stateful-button';
 import { ImageCropModal } from './ui/ImageCropModal';
+import { AdminAnalytics } from './AdminAnalytics';
 import { PALETTE_IDS, SECTION_IDS, type SectionKey, type SiteSettings } from '../lib/siteSettings';
 
 interface AdminModalProps {
@@ -64,7 +65,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [loginStatus, setLoginStatus] = useState<StatefulButtonStatus>('idle');
   const [authError, setAuthError] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    'site' | 'profile' | 'typewriter' | 'quick_facts' | 'projects' | 'skills' | 'thoughts' | 'messages' | 'guestbook' | 'backup'
+    'analytics' | 'site' | 'profile' | 'typewriter' | 'quick_facts' | 'projects' | 'skills' | 'thoughts' | 'messages' | 'guestbook' | 'backup'
   >('site');
 
   const [failedAttempts, setFailedAttempts] = useState<number>(() => {
@@ -678,6 +679,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           <div className="space-y-4">
             <div className="flex flex-wrap gap-1.5 border-b border-line pb-2">
               {[
+                { id: 'analytics', name: 'ANALYTICS' },
                 { id: 'site', name: 'SITE CONTROLS' },
                 { id: 'profile', name: 'PROFILE & BRANDING' },
                 { id: 'typewriter', name: 'TICKER ROLES' },
@@ -1131,6 +1133,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 )}
               </div>
             )}
+
+            {activeTab === 'analytics' && <AdminAnalytics passcode={adminPasscode} />}
 
             {activeTab === 'site' && (
               <div className="space-y-6">

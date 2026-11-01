@@ -245,12 +245,14 @@ globalThis.fetch = async (input, init = {}) => {
 // Import the REAL modules under test (after env + fetch are in place).
 // ---------------------------------------------------------------------------
 let sec;
-let settingsHandler, profileHandler, projectsHandler, skillsHandler, thoughtsHandler,
+let trackHandler, analyticsHandler, settingsHandler, profileHandler, projectsHandler, skillsHandler, thoughtsHandler,
     guestbookHandler, messagesHandler, uploadHandler;
 try {
   sec = await import('../api/_security.js');
   profileHandler = (await import('../api/profile.js')).default;
   settingsHandler = (await import('../api/settings.js')).default;
+  trackHandler = (await import('../api/track.js')).default;
+  analyticsHandler = (await import('../api/analytics.js')).default;
   projectsHandler = (await import('../api/projects.js')).default;
   skillsHandler = (await import('../api/skills.js')).default;
   thoughtsHandler = (await import('../api/thoughts.js')).default;
@@ -844,6 +846,27 @@ await test('28. settings: saving keeps the session epoch (saving never signs any
   assertEqual(r.statusCode, 200, 'owner save ok');
   assertEqual(db.tables.profile[0].site_settings._sessionEpoch, 77, 'epoch preserved across a settings save');
   assertEqual(db.tables.profile[0].site_settings.accentHex, '#22d472', 'new setting stored');
+});
+
+// ---------------------------------------------------------------------------
+// Visitor analytics
+// ---------------------------------------------------------------------------
+await test('29. analytics: public tracking rejects malformed session ids and events', async () => {
+  resetDb({});
+  let r = await call(trackHandler, { method: 'POST', body: { sessionId: 'short', kind: 'view', path: '/' } });
+  assertEqual(r.statusCode, 400, 'short session id refused');
+  r = await call(trackHandler, { method: 'POST', body: { sessionId: 'abcdefghijklmnop1234', kind: 'delete', path: '/' } });
+  assertEqual(r.statusCode, 400, 'unknown event refused');
+});
+
+await test('30. analytics: the admin analytics endpoint is owner-only', async () => {
+  resetDb({});
+  let r = await call(analyticsHandler, { method: 'GET' });
+  assertEqual(r.statusCode, 401, 'public read refused');
+  r = await call(analyticsHandler, { method: 'POST', headers: ADMIN, body: {} });
+  assertEqual(r.statusCode, 405, 'only GET is accepted');
+  r = await call(analyticsHandler, { method: 'GET', headers: { 'Cache-Control': 'x' } });
+  assertEqual(r.statusCode, 401, 'no header refused');
 });
 
 // ---------------------------------------------------------------------------
