@@ -82,7 +82,8 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      if (isAdmin) {
+      res.setHeader('Vary', 'X-Admin-Auth');
+      if (isAdmin || req.headers['x-admin-auth']) {
         res.setHeader('Cache-Control', 'private, no-store');
       } else {
         // Short CDN cache so a maintenance toggle reaches visitors within about a minute.
