@@ -65,7 +65,9 @@ Closing the studio or reloading the page clears that session.
 
 The admin studio's **SITE CONTROLS** tab can turn the website off (visitors see a
 maintenance page; the admin studio stays reachable), set the default colour palette,
-show or hide sections, close the guestbook, and show an announcement banner.
+show or hide sections, close the guestbook, and show an announcement banner. It also sets a
+custom accent colour (overrides the palette), the browser tab title, and the search-result
+description. Empty title or description falls back to the built-in text.
 
 Run once in Supabase (SQL Editor) before using it:
 
@@ -102,7 +104,15 @@ Setup:
 3. Redeploy. Until every variable is set, the login returns "not configured" and the admin studio stays closed.
 
 Codes expire after 10 minutes, lock after 3 wrong tries, and at most 5 codes can be requested per 15 minutes.
-Changing `ADMIN_2FA_SECRET` signs everyone out.
+Wrong passwords are throttled server-side (10 per 15 minutes, stored in `admin_login_failures`).
+Run `supabase/migrations/2026-11-02_login_failures.sql` in Supabase for this.
+
+**Sign out all sessions:** SITE CONTROLS → *sign out all sessions* ends every admin login on
+every device, including yours. Changing `ADMIN_2FA_SECRET` also signs everyone out.
+
+Security cannot be made perfect. The remaining risks sit outside the code: the Gmail inbox
+that receives codes, the accounts behind Vercel, GitHub, Supabase and Resend (turn on 2FA
+for each), and any key that has been pasted into chat (rotate it).
 
 ## Keeping the database awake
 

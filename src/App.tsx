@@ -107,10 +107,16 @@ const saveCache = (data: PublicCache) => {
   }
 };
 
+// Built-in page title and description from index.html; restored when the owner clears its overrides.
+const DEFAULT_PAGE_TITLE = typeof document !== 'undefined' ? document.title : '';
+const DEFAULT_META_DESCRIPTION = typeof document !== 'undefined'
+  ? document.querySelector('meta[name="description"]')?.getAttribute('content') || ''
+  : '';
+
 export default function App() {
   const [cached] = useState<PublicCache | null>(() => loadCache());
   const { adminPasscode, setAdminPasscode } = useAuth();
-  const { applySiteDefaultTheme } = useTheme();
+  const { applySiteDefaultTheme, applySiteAccent } = useTheme();
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => loadCachedSiteSettings());
 
   const [profile, setProfile] = useState<Profile | null>(cached?.profile || null);
@@ -206,6 +212,7 @@ export default function App() {
         setSiteSettings(nextSettings);
         saveCachedSiteSettings(nextSettings);
         applySiteDefaultTheme(nextSettings.palette);
+        applySiteAccent(nextSettings.accentHex);
       }
 
       const adminAuthRejected = Boolean(
@@ -275,7 +282,27 @@ export default function App() {
     setSiteSettings(saved);
     saveCachedSiteSettings(saved);
     applySiteDefaultTheme(saved.palette);
+    applySiteAccent(saved.accentHex);
   };
+
+  // Owner-only: revokes every admin session (this one included) via the server epoch.
+  const handleSignOutAll = async () => {
+    const res = await adminRequest('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'signOutAll' }),
+    });
+    if (!res.ok) throw new Error('Could not sign out other sessions.');
+    clearAdminSession();
+    setIsAdminOpen(false);
+  };
+
+  // Keep the browser tab title and meta description in step with the owner's settings.
+  useEffect(() => {
+    document.title = siteSettings.pageTitle || DEFAULT_PAGE_TITLE;
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', siteSettings.metaDescription || DEFAULT_META_DESCRIPTION);
+  }, [siteSettings.pageTitle, siteSettings.metaDescription]);
 
   useEffect(() => {
     const refresh = window.setTimeout(() => void fetchAllData(), 0);
@@ -601,6 +628,7 @@ export default function App() {
           onDeleteMessage={handleDeleteMessage}
           siteSettings={siteSettings}
           onUpdateSiteSettings={handleUpdateSiteSettings}
+          onSignOutAll={handleSignOutAll}
           onAdminVerified={async (passcode) => {
             setAdminPasscode(passcode);
             await fetchAllData(passcode);

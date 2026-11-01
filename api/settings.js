@@ -7,17 +7,26 @@ import {
 // single profile row (column `site_settings`, see supabase/migrations).
 export const PALETTES = ['neon', 'white', 'pink', 'violet', 'mono'];
 export const SECTION_KEYS = ['now', 'work', 'stack', 'thoughts', 'guestbook', 'contact'];
+const HEX_COLOUR = /^#[0-9a-fA-F]{6}$/;
 
 export const DEFAULT_SITE_SETTINGS = {
   siteEnabled: true,
   maintenanceMessage: 'The site is being updated. Please check back soon.',
   announcement: '',
   palette: 'neon',
+  accentHex: '',
+  pageTitle: '',
+  metaDescription: '',
   guestbookOpen: true,
   sections: { now: true, work: true, stack: true, thoughts: true, guestbook: true, contact: true },
 };
 
-const TOP_KEYS = ['siteEnabled', 'maintenanceMessage', 'announcement', 'palette', 'guestbookOpen', 'sections'];
+const TOP_KEYS = [
+  'siteEnabled', 'maintenanceMessage', 'announcement', 'palette', 'accentHex',
+  'pageTitle', 'metaDescription', 'guestbookOpen', 'sections',
+];
+// Internal bookkeeping stored alongside the settings. Never returned or accepted from clients.
+const INTERNAL_KEY = '_sessionEpoch';
 
 /**
  * Strict validation. Unknown keys and wrong types are rejected, never coerced.
@@ -39,13 +48,26 @@ export function validateSiteSettings(input) {
     out[key] = input[key];
   }
 
-  for (const [key, limit] of [['maintenanceMessage', 200], ['announcement', 200]]) {
+  const textFields = [
+    ['maintenanceMessage', 200],
+    ['announcement', 200],
+    ['pageTitle', 80],
+    ['metaDescription', 200],
+  ];
+  for (const [key, limit] of textFields) {
     if (input[key] === undefined) continue;
     if (typeof input[key] !== 'string' || input[key].length > limit) {
       return { error: `${key} must be a string of at most ${limit} characters` };
     }
-    // Empty is allowed (hides the announcement); strip control characters.
+    // Empty is allowed; strip control characters.
     out[key] = input[key].replace(/[\u0000-\u001f\u007f]/g, '').trim();
+  }
+
+  if (input.accentHex !== undefined) {
+    if (input.accentHex !== '' && (typeof input.accentHex !== 'string' || !HEX_COLOUR.test(input.accentHex))) {
+      return { error: 'accentHex must be empty or a #rrggbb colour' };
+    }
+    out.accentHex = input.accentHex.toLowerCase();
   }
 
   if (input.palette !== undefined) {
@@ -66,10 +88,21 @@ export function validateSiteSettings(input) {
   return { value: out };
 }
 
-/** Merge a stored value over the defaults, dropping anything that no longer validates. */
+/** Public view: only validated settings, never internal bookkeeping. */
 function normaliseStored(stored) {
-  const result = validateSiteSettings(stored && typeof stored === 'object' ? stored : {});
+  const { [INTERNAL_KEY]: _ignored, ...settings } = stored && typeof stored === 'object' ? stored : {};
+  const result = validateSiteSettings(settings);
   return result.value || DEFAULT_SITE_SETTINGS;
+}
+
+async function readProfileRow() {
+  const { data, error } = await supabase
+    .from('profile')
+    .select('id, site_settings')
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
 }
 
 export default async function handler(req, res) {
@@ -78,7 +111,7 @@ export default async function handler(req, res) {
     return corsOk ? res.status(204).end() : res.status(403).end();
   }
 
-  const isAdmin = isAdminRequest(req);
+  const isAdmin = await isAdminRequest(req);
 
   try {
     if (req.method === 'GET') {
@@ -90,15 +123,12 @@ export default async function handler(req, res) {
         res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=300');
       }
 
-      const { data, error } = await supabase
-        .from('profile')
-        .select('site_settings')
-        .limit(1)
-        .maybeSingle();
-
-      // If the column is missing or the read fails, keep the site up with defaults.
-      if (error) {
-        console.warn('Settings read fell back to defaults:', error.message);
+      let data;
+      try {
+        data = await readProfileRow();
+      } catch (err) {
+        // If the column is missing or the read fails, keep the site up with defaults.
+        console.warn('Settings read fell back to defaults:', err.message);
         return res.status(200).json(DEFAULT_SITE_SETTINGS);
       }
       return res.status(200).json(normaliseStored(data?.site_settings));
@@ -116,19 +146,41 @@ export default async function handler(req, res) {
       const { value, error } = validateSiteSettings(body);
       if (error) return res.status(400).json({ error });
 
-      const { data: existing, error: readError } = await supabase
-        .from('profile')
-        .select('id')
-        .limit(1)
-        .maybeSingle();
-      if (readError) throw readError;
-
+      const existing = await readProfileRow();
+      // Keep the session epoch when saving: a settings save must not sign anyone out.
+      const stored = { ...value, [INTERNAL_KEY]: existing?.site_settings?.[INTERNAL_KEY] ?? 0 };
       const { error: writeError } = existing
-        ? await supabase.from('profile').update({ site_settings: value }).eq('id', existing.id)
-        : await supabase.from('profile').insert([{ site_settings: value }]);
+        ? await supabase.from('profile').update({ site_settings: stored }).eq('id', existing.id)
+        : await supabase.from('profile').insert([{ site_settings: stored }]);
       if (writeError) throw writeError;
 
       return res.status(200).json(value);
+    }
+
+    if (req.method === 'POST') {
+      // Owner-only: { action: 'signOutAll' } revokes every outstanding admin session.
+      if (!isAdmin) {
+        return res.status(401).json({ error: 'Unauthorized. Admin authentication required.' });
+      }
+      res.setHeader('Cache-Control', 'private, no-store');
+
+      const { ok, status, error: bodyError, body } = parseBody(req);
+      if (!ok) return res.status(status).json({ error: bodyError });
+      if (body.action !== 'signOutAll') {
+        return res.status(400).json({ error: 'Unknown action' });
+      }
+
+      const existing = await readProfileRow();
+      const current = existing?.site_settings && typeof existing.site_settings === 'object'
+        ? existing.site_settings
+        : {};
+      const nextEpoch = Date.now();
+      const { error: writeError } = existing
+        ? await supabase.from('profile').update({ site_settings: { ...current, [INTERNAL_KEY]: nextEpoch } }).eq('id', existing.id)
+        : await supabase.from('profile').insert([{ site_settings: { [INTERNAL_KEY]: nextEpoch } }]);
+      if (writeError) throw writeError;
+
+      return res.status(200).json({ signedOutAll: true });
     }
 
     res.status(405).json({ error: 'Method not allowed' });
@@ -136,4 +188,3 @@ export default async function handler(req, res) {
     sendServerError(res, err);
   }
 }
-

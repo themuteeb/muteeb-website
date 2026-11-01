@@ -14,6 +14,7 @@
 // ============================================================================
 
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import supabase from './db-client.js';
 
 // ---------------------------------------------------------------- constants ---
 
@@ -57,6 +58,10 @@ export function timingSafeStrEqual(a, b) {
 // After the password AND the emailed 6-digit code are verified (api/auth.js), the
 // owner receives a signed session token. The X-Admin-Auth header carries that token.
 // The password alone never grants admin API access.
+//
+// Each token records the session "epoch" that was current when it was issued. The
+// epoch is stored in the profile row (site_settings._sessionEpoch). Bumping it signs
+// out every outstanding session at once.
 
 const SESSION_PREFIX = 's1';
 export const ADMIN_SESSION_HOURS = 8;
@@ -69,38 +74,52 @@ function sessionSignature(secret, payload) {
   return createHmac('sha256', secret).update(`admin-session|${payload}`).digest('hex');
 }
 
+/** Current session epoch, or null if it can't be read (callers must then deny). */
+export async function getSessionEpoch() {
+  const { data, error } = await supabase
+    .from('profile')
+    .select('site_settings')
+    .limit(1)
+    .maybeSingle();
+  if (error) return null;
+  const epoch = Number(data?.site_settings?._sessionEpoch);
+  return Number.isFinite(epoch) ? epoch : 0;
+}
+
 /** Create a signed admin session token that expires after ADMIN_SESSION_HOURS. */
-export function issueSessionToken(secret, now = Date.now()) {
+export function issueSessionToken(secret, epoch, now = Date.now()) {
   const exp = Math.floor(now / 1000) + ADMIN_SESSION_HOURS * 3600;
-  const payload = b64urlEncode(JSON.stringify({ exp }));
+  const payload = b64urlEncode(JSON.stringify({ exp, ep: epoch }));
   return `${SESSION_PREFIX}.${payload}.${sessionSignature(secret, payload)}`;
 }
 
-/** Verify a session token: signature (constant time) and expiry. */
-export function verifySessionToken(token, secret, now = Date.now()) {
-  if (!secret || typeof token !== 'string') return false;
+/** Verify a token: signature (constant time), expiry, and that its epoch is still current. */
+export function verifySessionToken(token, secret, currentEpoch, now = Date.now()) {
+  if (!secret || typeof token !== 'string' || typeof currentEpoch !== 'number') return false;
   const parts = token.split('.');
   if (parts.length !== 3 || parts[0] !== SESSION_PREFIX) return false;
   const [, payload, signature] = parts;
   if (!timingSafeStrEqual(signature, sessionSignature(secret, payload))) return false;
   try {
-    const { exp } = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    return Number.isInteger(exp) && exp > Math.floor(now / 1000);
+    const { exp, ep } = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return Number.isInteger(exp) && exp > Math.floor(now / 1000) && ep === currentEpoch;
   } catch {
     return false;
   }
 }
 
 /**
- * Is this request from the site owner with a valid, unexpired 2FA session?
- * Fails closed when ADMIN_2FA_SECRET is unset.
+ * Is this request from the site owner with a valid, unexpired, unrevoked 2FA session?
+ * Fails closed when ADMIN_2FA_SECRET is unset or the session epoch can't be read.
  */
-export function isAdminRequest(req) {
+export async function isAdminRequest(req) {
   const secret = process.env.ADMIN_2FA_SECRET;
   if (!secret) return false;
   const header = req && req.headers ? req.headers['x-admin-auth'] : undefined;
   if (typeof header !== 'string' || header.length === 0) return false;
-  return verifySessionToken(header, secret);
+  const epoch = await getSessionEpoch();
+  if (epoch === null) return false;
+  return verifySessionToken(header, secret, epoch);
 }
 
 // -------------------------------------------------------------------- CORS ----
@@ -165,7 +184,7 @@ export function setPublicReadCache(req, res) {
   // Any request carrying the admin header (valid or not) must never be shared-cached.
   // Vary keeps the CDN's cached visitor copy separate from admin requests.
   res.setHeader('Vary', 'X-Admin-Auth');
-  if (isAdminRequest(req) || (req && req.headers && req.headers['x-admin-auth'])) {
+  if (req && req.headers && req.headers['x-admin-auth']) {
     res.setHeader('Cache-Control', 'private, no-store');
   } else {
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=3600');

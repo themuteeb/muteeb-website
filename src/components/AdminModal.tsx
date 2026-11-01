@@ -12,6 +12,7 @@ import { PALETTE_IDS, SECTION_IDS, type SectionKey, type SiteSettings } from '..
 interface AdminModalProps {
   siteSettings: SiteSettings;
   onUpdateSiteSettings: (updates: SiteSettings) => Promise<void>;
+  onSignOutAll: () => Promise<void>;
   profile: Profile | null;
   projects: Project[];
   thoughts: Thought[];
@@ -53,6 +54,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onAdminVerified,
   siteSettings,
   onUpdateSiteSettings,
+  onSignOutAll,
   onClose,
 }) => {
   const { bgAccentClass, borderAccentClass, textAccentClass, playSound } = useTheme();
@@ -196,6 +198,24 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const siteDirty = JSON.stringify(siteDraft) !== JSON.stringify(siteSettings);
+
+  const [signOutStatus, setSignOutStatus] = useState<StatefulButtonStatus>('idle');
+  const [signOutError, setSignOutError] = useState('');
+  const handleSignOutAll = async () => {
+    if (signOutStatus === 'loading') return;
+    if (!window.confirm('Sign out every admin session, including this one? You will need to log in again with a new emailed code.')) return;
+    setSignOutError('');
+    try {
+      setSignOutStatus('loading');
+      await onSignOutAll();
+      setSignOutStatus('idle');
+    } catch (err) {
+      console.error(err);
+      setSignOutError(err instanceof Error ? err.message : 'Could not sign out other sessions.');
+      setSignOutStatus('error');
+      window.setTimeout(() => setSignOutStatus('idle'), 1600);
+    }
+  };
 
   // Two-step owner login: password -> emailed 6-digit code -> session token.
   const [twoFactor, setTwoFactor] = useState<{ challengeId: string; sentTo: string } | null>(null);
@@ -1207,6 +1227,55 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   </label>
                 </div>
 
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Branding and search</div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase text-zinc-300">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Accent colour</span>
+                      <input
+                        type="color"
+                        aria-label="Accent colour"
+                        value={siteDraft.accentHex || '#0891b2'}
+                        onChange={(e) => setSiteDraft((d) => ({ ...d, accentHex: e.target.value.toLowerCase() }))}
+                        className="h-9 w-14 cursor-pointer rounded-lg border border-line bg-black p-1"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => { setSiteDraft((d) => ({ ...d, accentHex: '' })); playSound('click'); }}
+                      disabled={!siteDraft.accentHex}
+                      className="rounded-full border border-line bg-black px-3 py-1.5 text-[11px] font-bold uppercase text-zinc-400 disabled:opacity-40"
+                    >
+                      use palette colour
+                    </button>
+                    <span className="text-[10px] font-bold uppercase text-zinc-500">
+                      {siteDraft.accentHex ? `Custom ${siteDraft.accentHex}` : 'Using the palette above'}
+                    </span>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Browser tab title, empty uses default ({siteDraft.pageTitle.length}/80)</span>
+                      <input
+                        type="text"
+                        maxLength={80}
+                        value={siteDraft.pageTitle}
+                        onChange={(e) => setSiteDraft((d) => ({ ...d, pageTitle: e.target.value }))}
+                        className="w-full bg-black border border-line px-3 py-2 text-xs text-white focus:outline-none focus:border-accent"
+                      />
+                    </label>
+                    <label className="block space-y-1">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Search description, empty uses default ({siteDraft.metaDescription.length}/200)</span>
+                      <textarea
+                        rows={3}
+                        maxLength={200}
+                        value={siteDraft.metaDescription}
+                        onChange={(e) => setSiteDraft((d) => ({ ...d, metaDescription: e.target.value }))}
+                        className="w-full bg-black border border-line px-3 py-2 text-xs text-white focus:outline-none focus:border-accent resize-none"
+                      />
+                    </label>
+                  </div>
+                </div>
+
                 {siteSaveError && (
                   <div role="alert" className="p-3 bg-red-950 border border-red-500 text-red-400 text-xs font-bold uppercase">
                     {siteSaveError}
@@ -1228,6 +1297,27 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     />
                   </div>
                   {siteDirty && <span className="text-[10px] font-bold uppercase text-zinc-400">Unsaved changes</span>}
+                </div>
+
+                <div className="space-y-2 border-t border-line pt-6">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Sessions</div>
+                  <p className="text-xs text-zinc-400">Admin logins last 8 hours. Signing out all sessions ends every login, including this one, on every device.</p>
+                  {signOutError && (
+                    <div role="alert" className="p-3 bg-red-950 border border-red-500 text-red-400 text-xs font-bold uppercase">
+                      {signOutError}
+                    </div>
+                  )}
+                  <div className="w-full sm:w-72">
+                    <StatefulButton
+                      type="button"
+                      status={signOutStatus}
+                      onClick={() => void handleSignOutAll()}
+                      idleContent="sign out all sessions"
+                      loadingContent="signing out…"
+                      errorContent="sign out failed"
+                      className="py-3"
+                    />
+                  </div>
                 </div>
               </div>
             )}

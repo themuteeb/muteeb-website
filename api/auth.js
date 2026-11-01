@@ -1,7 +1,7 @@
 import { createHmac, randomInt, randomUUID } from 'node:crypto';
 import supabase from './db-client.js';
 import {
-  setupCors, parseBody, sendServerError, timingSafeStrEqual, issueSessionToken,
+  setupCors, parseBody, sendServerError, timingSafeStrEqual, issueSessionToken, getSessionEpoch,
 } from './_security.js';
 
 // Two-step owner login:
@@ -11,6 +11,8 @@ const CODE_TTL_MS = 10 * 60 * 1000;
 const MAX_CODE_ATTEMPTS = 3;
 const MAX_STARTS_PER_WINDOW = 5;
 const START_WINDOW_MS = 15 * 60 * 1000;
+// Server-side throttle on wrong passwords (the browser lockout alone is easy to bypass).
+const MAX_FAILED_PASSWORDS = 10;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function codeHash(secret, challengeId, code) {
@@ -71,13 +73,24 @@ export default async function handler(req, res) {
 
   try {
     if (body.action === 'start') {
+      const since = new Date(Date.now() - START_WINDOW_MS).toISOString();
+      const { count: failCount, error: failReadError } = await supabase
+        .from('admin_login_failures')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', since);
+      if (failReadError) throw failReadError;
+      if ((failCount || 0) >= MAX_FAILED_PASSWORDS) {
+        return res.status(429).json({ error: 'Too many failed attempts. Try again in 15 minutes.' });
+      }
+
       const passcode = typeof body.passcode === 'string' ? body.passcode.trim() : '';
       if (!passcode || !timingSafeStrEqual(passcode, process.env.ADMIN_PASSWORD)) {
+        const { error: failInsertError } = await supabase.from('admin_login_failures').insert([{}]);
+        if (failInsertError) throw failInsertError;
         return res.status(401).json({ error: 'Incorrect password' });
       }
 
       // Limit how many login codes can be requested, so inboxes can't be flooded.
-      const since = new Date(Date.now() - START_WINDOW_MS).toISOString();
       const { count, error: countError } = await supabase
         .from('admin_2fa_challenges')
         .select('id', { count: 'exact', head: true })
@@ -156,7 +169,9 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'This code has already been used. Log in again.' });
       }
 
-      return res.status(200).json({ token: issueSessionToken(secret) });
+      const epoch = await getSessionEpoch();
+      if (epoch === null) throw new Error('session epoch unavailable');
+      return res.status(200).json({ token: issueSessionToken(secret, epoch) });
     }
 
     return res.status(400).json({ error: 'Unknown action' });

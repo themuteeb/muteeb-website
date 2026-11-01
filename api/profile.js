@@ -66,7 +66,7 @@ export default async function handler(req, res) {
     return corsOk ? res.status(204).end() : res.status(403).end();
   }
 
-  const isAdmin = isAdminRequest(req);
+  const isAdmin = (await isAdminRequest(req));
 
   try {
     if (req.method === 'GET') {

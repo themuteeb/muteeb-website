@@ -9,9 +9,17 @@ export interface SiteSettings {
   maintenanceMessage: string;
   announcement: string;
   palette: ThemePreset;
+  /** Empty string = use the palette. Otherwise a #rrggbb accent that overrides it. */
+  accentHex: string;
+  /** Empty string = the built-in title. */
+  pageTitle: string;
+  /** Empty string = the built-in description. */
+  metaDescription: string;
   guestbookOpen: boolean;
   sections: Record<SectionKey, boolean>;
 }
+
+const HEX_COLOUR = /^#[0-9a-fA-F]{6}$/;
 
 export const PALETTE_IDS: ThemePreset[] = ['neon', 'white', 'pink', 'violet', 'mono'];
 export const SECTION_IDS: SectionKey[] = ['now', 'work', 'stack', 'thoughts', 'guestbook', 'contact'];
@@ -21,6 +29,9 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   maintenanceMessage: 'The site is being updated. Please check back soon.',
   announcement: '',
   palette: 'neon',
+  accentHex: '',
+  pageTitle: '',
+  metaDescription: '',
   guestbookOpen: true,
   sections: { now: true, work: true, stack: true, thoughts: true, guestbook: true, contact: true },
 };
@@ -38,6 +49,9 @@ export function normalizeSiteSettings(raw: unknown): SiteSettings {
     maintenanceMessage: typeof src.maintenanceMessage === 'string' ? src.maintenanceMessage : DEFAULT_SITE_SETTINGS.maintenanceMessage,
     announcement: typeof src.announcement === 'string' ? src.announcement : DEFAULT_SITE_SETTINGS.announcement,
     palette: PALETTE_IDS.includes(src.palette as ThemePreset) ? (src.palette as ThemePreset) : DEFAULT_SITE_SETTINGS.palette,
+    accentHex: typeof src.accentHex === 'string' && HEX_COLOUR.test(src.accentHex) ? src.accentHex.toLowerCase() : '',
+    pageTitle: typeof src.pageTitle === 'string' ? src.pageTitle.slice(0, 80) : '',
+    metaDescription: typeof src.metaDescription === 'string' ? src.metaDescription.slice(0, 200) : '',
     guestbookOpen: typeof src.guestbookOpen === 'boolean' ? src.guestbookOpen : DEFAULT_SITE_SETTINGS.guestbookOpen,
     sections,
   };

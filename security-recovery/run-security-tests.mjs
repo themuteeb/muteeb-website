@@ -245,11 +245,12 @@ globalThis.fetch = async (input, init = {}) => {
 // Import the REAL modules under test (after env + fetch are in place).
 // ---------------------------------------------------------------------------
 let sec;
-let profileHandler, projectsHandler, skillsHandler, thoughtsHandler,
+let settingsHandler, profileHandler, projectsHandler, skillsHandler, thoughtsHandler,
     guestbookHandler, messagesHandler, uploadHandler;
 try {
   sec = await import('../api/_security.js');
   profileHandler = (await import('../api/profile.js')).default;
+  settingsHandler = (await import('../api/settings.js')).default;
   projectsHandler = (await import('../api/projects.js')).default;
   skillsHandler = (await import('../api/skills.js')).default;
   thoughtsHandler = (await import('../api/thoughts.js')).default;
@@ -267,7 +268,7 @@ try {
 // ---------------------------------------------------------------------------
 // Admin API access requires a 2FA session token, not the password.
 const { issueSessionToken } = await import('../api/_security.js');
-const ADMIN = { 'x-admin-auth': issueSessionToken(process.env.ADMIN_2FA_SECRET) };
+const ADMIN = { 'x-admin-auth': issueSessionToken(process.env.ADMIN_2FA_SECRET, 0) };
 const WRONG_ADMIN = { 'x-admin-auth': 'totally-wrong-pass' };
 
 function call(handler, { method = 'GET', body, headers = {}, origin } = {}) {
@@ -324,38 +325,38 @@ async function test(name, fn) {
 // ============================================================================
 // The 25 tests
 // ============================================================================
-console.log('security-recovery suite — 25 tests\n');
+console.log('security-recovery suite\n');
 
 // ---------------------------------------------------------------- helpers ---
 
 await test('1. admin auth: missing X-Admin-Auth header is unauthorized', async () => {
-  assert(!sec.isAdminRequest({ headers: {} }), 'empty headers must be unauthorized');
-  assert(!sec.isAdminRequest({}), 'request without headers object must be unauthorized');
-  assert(!sec.isAdminRequest(null), 'null request must be unauthorized');
-  assert(!sec.isAdminRequest({ headers: { 'x-admin-auth': '' } }), 'empty header must be unauthorized');
+  assert(!await sec.isAdminRequest({ headers: {} }), 'empty headers must be unauthorized');
+  assert(!await sec.isAdminRequest({}), 'request without headers object must be unauthorized');
+  assert(!await sec.isAdminRequest(null), 'null request must be unauthorized');
+  assert(!await sec.isAdminRequest({ headers: { 'x-admin-auth': '' } }), 'empty header must be unauthorized');
 });
 
 await test('2. admin auth: wrong passcode is unauthorized', async () => {
-  assert(!sec.isAdminRequest({ headers: WRONG_ADMIN }), 'wrong passcode must be rejected');
-  assert(!sec.isAdminRequest({ headers: { 'x-admin-auth': 'correct-admin-pas' } }), 'prefix of passcode must be rejected');
+  assert(!await sec.isAdminRequest({ headers: WRONG_ADMIN }), 'wrong passcode must be rejected');
+  assert(!await sec.isAdminRequest({ headers: { 'x-admin-auth': 'correct-admin-pas' } }), 'prefix of passcode must be rejected');
 });
 
 await test('3. admin auth: valid 2FA session is authorized; bare password is not', async () => {
-  assert(sec.isAdminRequest({ headers: ADMIN }), 'valid session token must be accepted');
-  assert(!sec.isAdminRequest({ headers: { 'x-admin-auth': 'correct-admin-pass' } }), 'password alone must not grant admin API access');
-  const expired = sec.issueSessionToken(process.env.ADMIN_2FA_SECRET, Date.now() - 9 * 3600 * 1000);
-  assert(!sec.isAdminRequest({ headers: { 'x-admin-auth': expired } }), 'expired session must be rejected');
+  assert(await sec.isAdminRequest({ headers: ADMIN }), 'valid session token must be accepted');
+  assert(!await sec.isAdminRequest({ headers: { 'x-admin-auth': 'correct-admin-pass' } }), 'password alone must not grant admin API access');
+  const expired = sec.issueSessionToken(process.env.ADMIN_2FA_SECRET, 0, Date.now() - 9 * 3600 * 1000);
+  assert(!await sec.isAdminRequest({ headers: { 'x-admin-auth': expired } }), 'expired session must be rejected');
   const forged = ADMIN['x-admin-auth'].slice(0, -1) + (ADMIN['x-admin-auth'].endsWith('0') ? '1' : '0');
-  assert(!sec.isAdminRequest({ headers: { 'x-admin-auth': forged } }), 'tampered session must be rejected');
+  assert(!await sec.isAdminRequest({ headers: { 'x-admin-auth': forged } }), 'tampered session must be rejected');
 });
 
 await test('4. admin auth: fails closed when ADMIN_2FA_SECRET env is unset', async () => {
   const prev = process.env.ADMIN_2FA_SECRET;
   try {
     delete process.env.ADMIN_2FA_SECRET;
-    assert(!sec.isAdminRequest({ headers: ADMIN }), 'must not be admin when env is unset');
+    assert(!await sec.isAdminRequest({ headers: ADMIN }), 'must not be admin when env is unset');
     process.env.ADMIN_2FA_SECRET = '';
-    assert(!sec.isAdminRequest({ headers: ADMIN }), 'must not be admin when env is empty');
+    assert(!await sec.isAdminRequest({ headers: ADMIN }), 'must not be admin when env is empty');
   } finally {
     process.env.ADMIN_2FA_SECRET = prev;
   }
@@ -805,6 +806,44 @@ await test('25. upload: owner-only public-bucket writes (type/size/folder/path c
   r = await call(uploadHandler, { method: 'DELETE', headers: ADMIN, body: { path: storedKey } });
   assertEqual(r.statusCode, 200, 'valid admin delete ok');
   assert(!(storedKey in db.storage), 'object removed');
+});
+
+
+// ---------------------------------------------------------------------------
+// Session revocation and settings privacy
+// ---------------------------------------------------------------------------
+await test('26. sessions: signing out all sessions revokes existing tokens', async () => {
+  const secret = process.env.ADMIN_2FA_SECRET;
+  resetDb({ profile: [{ id: 1, site_settings: { _sessionEpoch: 500 } }] });
+  const oldToken = { 'x-admin-auth': sec.issueSessionToken(secret, 0) };
+  const newToken = { 'x-admin-auth': sec.issueSessionToken(secret, 500) };
+  assert(!(await sec.isAdminRequest({ headers: oldToken })), 'token from an older epoch must be rejected');
+  assert(await sec.isAdminRequest({ headers: newToken }), 'token for the current epoch is accepted');
+});
+
+await test('27. settings: sign-out-all is owner-only and internal epoch is never published', async () => {
+  resetDb({ profile: [{ id: 1, site_settings: { palette: 'pink', _sessionEpoch: 42 } }] });
+  let r = await call(settingsHandler, { method: 'POST', body: { action: 'signOutAll' } });
+  assertEqual(r.statusCode, 401, 'public sign-out-all must be refused');
+  assertEqual(db.tables.profile[0].site_settings._sessionEpoch, 42, 'epoch unchanged by public call');
+
+  const adminAt42 = { 'x-admin-auth': sec.issueSessionToken(process.env.ADMIN_2FA_SECRET, 42) };
+  r = await call(settingsHandler, { method: 'POST', headers: adminAt42, body: { action: 'signOutAll' } });
+  assertEqual(r.statusCode, 200, 'owner can sign out all sessions');
+  assert(db.tables.profile[0].site_settings._sessionEpoch > 42, 'epoch bumped');
+
+  r = await call(settingsHandler, { method: 'GET' });
+  assertEqual(r.statusCode, 200, 'public settings readable');
+  assert(!('_sessionEpoch' in r.jsonBody), 'public settings must not expose the session epoch');
+});
+
+await test('28. settings: saving keeps the session epoch (saving never signs anyone out)', async () => {
+  resetDb({ profile: [{ id: 1, site_settings: { _sessionEpoch: 77 } }] });
+  const adminAt77 = { 'x-admin-auth': sec.issueSessionToken(process.env.ADMIN_2FA_SECRET, 77) };
+  const r = await call(settingsHandler, { method: 'PUT', headers: adminAt77, body: { pageTitle: 'Muteeb', accentHex: '#22d472' } });
+  assertEqual(r.statusCode, 200, 'owner save ok');
+  assertEqual(db.tables.profile[0].site_settings._sessionEpoch, 77, 'epoch preserved across a settings save');
+  assertEqual(db.tables.profile[0].site_settings.accentHex, '#22d472', 'new setting stored');
 });
 
 // ---------------------------------------------------------------------------
