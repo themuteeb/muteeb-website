@@ -12,10 +12,14 @@ export const HoverBorderGradient = ({
   containerClassName,
   className,
   duration = 1,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  as: _as,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   containerClassName?: string;
   duration?: number;
+  /** Accepted for compatibility with the Aceternity demo; always renders a button. */
+  as?: 'button';
 }) => {
   const ref = useRef<HTMLButtonElement | null>(null);
   const [hovered, setHovered] = useState(false);

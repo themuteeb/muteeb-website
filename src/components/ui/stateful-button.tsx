@@ -2,11 +2,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Check, CircleX, LoaderCircle, Send } from 'lucide-react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../lib/utils';
+import { HoverBorderGradient } from './hover-border-gradient';
 
 export type StatefulButtonStatus = 'idle' | 'loading' | 'success' | 'error';
 
 interface StatefulButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   status: StatefulButtonStatus;
+  /** Wrap the button in an animated hover-border gradient. */
+  hoverBorder?: boolean;
   idleContent?: ReactNode;
   loadingContent?: ReactNode;
   successContent?: ReactNode;
@@ -15,6 +18,7 @@ interface StatefulButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function StatefulButton({
   status,
+  hoverBorder = false,
   idleContent = 'Send message',
   loadingContent = 'Sending…',
   successContent = 'Sent successfully',
@@ -30,7 +34,7 @@ export function StatefulButton({
     error: <><CircleX className="h-4 w-4" />{errorContent}</>,
   }[status];
 
-  return (
+  const button = (
     <button
       {...props}
       disabled={disabled || status !== 'idle'}
@@ -55,5 +59,13 @@ export function StatefulButton({
         </motion.span>
       </AnimatePresence>
     </button>
+  );
+
+  if (!hoverBorder) return button;
+
+  return (
+    <HoverBorderGradient containerClassName="w-full rounded-full">
+      {button}
+    </HoverBorderGradient>
   );
 }

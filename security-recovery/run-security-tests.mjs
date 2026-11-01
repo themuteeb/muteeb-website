@@ -28,6 +28,7 @@
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test-project.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.ADMIN_PASSWORD = 'correct-admin-pass';
+process.env.ADMIN_2FA_SECRET = 'test-2fa-secret-0123456789abcdef';
 process.env.FULLSTACK_PROJECT_REF = '';      // keep the disaster-restore path inert
 process.env.FULLSTACK_RESTORE_API_URL = '';
 process.env.CORS_ALLOWED_ORIGINS = '';
@@ -264,7 +265,9 @@ try {
 // ---------------------------------------------------------------------------
 // Tiny harness: Vercel-style req/res + assertions + test runner.
 // ---------------------------------------------------------------------------
-const ADMIN = { 'x-admin-auth': 'correct-admin-pass' };
+// Admin API access requires a 2FA session token, not the password.
+const { issueSessionToken } = await import('../api/_security.js');
+const ADMIN = { 'x-admin-auth': issueSessionToken(process.env.ADMIN_2FA_SECRET) };
 const WRONG_ADMIN = { 'x-admin-auth': 'totally-wrong-pass' };
 
 function call(handler, { method = 'GET', body, headers = {}, origin } = {}) {
@@ -337,19 +340,24 @@ await test('2. admin auth: wrong passcode is unauthorized', async () => {
   assert(!sec.isAdminRequest({ headers: { 'x-admin-auth': 'correct-admin-pas' } }), 'prefix of passcode must be rejected');
 });
 
-await test('3. admin auth: correct passcode is authorized', async () => {
-  assert(sec.isAdminRequest({ headers: ADMIN }), 'correct passcode must be accepted');
+await test('3. admin auth: valid 2FA session is authorized; bare password is not', async () => {
+  assert(sec.isAdminRequest({ headers: ADMIN }), 'valid session token must be accepted');
+  assert(!sec.isAdminRequest({ headers: { 'x-admin-auth': 'correct-admin-pass' } }), 'password alone must not grant admin API access');
+  const expired = sec.issueSessionToken(process.env.ADMIN_2FA_SECRET, Date.now() - 9 * 3600 * 1000);
+  assert(!sec.isAdminRequest({ headers: { 'x-admin-auth': expired } }), 'expired session must be rejected');
+  const forged = ADMIN['x-admin-auth'].slice(0, -1) + (ADMIN['x-admin-auth'].endsWith('0') ? '1' : '0');
+  assert(!sec.isAdminRequest({ headers: { 'x-admin-auth': forged } }), 'tampered session must be rejected');
 });
 
-await test('4. admin auth: fails closed when ADMIN_PASSWORD env is unset', async () => {
-  const prev = process.env.ADMIN_PASSWORD;
+await test('4. admin auth: fails closed when ADMIN_2FA_SECRET env is unset', async () => {
+  const prev = process.env.ADMIN_2FA_SECRET;
   try {
-    delete process.env.ADMIN_PASSWORD;
+    delete process.env.ADMIN_2FA_SECRET;
     assert(!sec.isAdminRequest({ headers: ADMIN }), 'must not be admin when env is unset');
-    process.env.ADMIN_PASSWORD = '';
+    process.env.ADMIN_2FA_SECRET = '';
     assert(!sec.isAdminRequest({ headers: ADMIN }), 'must not be admin when env is empty');
   } finally {
-    process.env.ADMIN_PASSWORD = prev;
+    process.env.ADMIN_2FA_SECRET = prev;
   }
 });
 

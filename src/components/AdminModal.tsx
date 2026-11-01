@@ -197,6 +197,23 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const siteDirty = JSON.stringify(siteDraft) !== JSON.stringify(siteSettings);
 
+  // Two-step owner login: password -> emailed 6-digit code -> session token.
+  const [twoFactor, setTwoFactor] = useState<{ challengeId: string; sentTo: string } | null>(null);
+  const [loginCode, setLoginCode] = useState('');
+  const [loginError, setLoginError] = useState('');
+
+  const recordFailedPasscode = () => {
+    const newFailed = failedAttempts + 1;
+    setFailedAttempts(newFailed);
+    localStorage.setItem('__sec_failed_attempts', String(newFailed));
+    if (newFailed >= 5) {
+      const lockoutTime = Date.now() + 24 * 60 * 60 * 1000;
+      setLockoutUntil(lockoutTime);
+      localStorage.setItem('__sec_lockout_until', String(lockoutTime));
+    }
+    setAuthError(true);
+  };
+
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loginStatus === 'loading') return;
@@ -207,49 +224,83 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
     const entered = password.trim();
     setLoginStatus('loading');
-
-    let isValid = false;
+    setLoginError('');
     try {
-      const verifyRes = await fetch('/api/profile', {
-        headers: { 'X-Admin-Auth': entered }
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', passcode: entered }),
       });
-      if (verifyRes.ok) {
-        const verifyData = await verifyRes.json();
-        if (verifyData && verifyData.__admin_verified === true) {
-          isValid = true;
-        }
-      }
-    } catch (err) {
-      console.error('Verify error:', err);
-    }
+      const data = (await res.json().catch(() => ({}))) as { challengeId?: string; sentTo?: string; error?: string };
 
-    if (isValid) {
-      setPassword('');
-      setAuthError(false);
-      setFailedAttempts(0);
-      localStorage.removeItem('__sec_failed_attempts');
-      localStorage.removeItem('__sec_lockout_until');
-      playSound('submit');
-      setLoginStatus('success');
-      window.setTimeout(() => {
+      if (res.ok && data.challengeId && data.sentTo) {
+        setPassword('');
+        setAuthError(false);
+        setTwoFactor({ challengeId: data.challengeId, sentTo: data.sentTo });
         setLoginStatus('idle');
-        setAdminPasscode(entered);
-        // Re-fetch admin-gated data (messages inbox, pending guestbook, etc.)
-        void onAdminVerified?.(entered);
-      }, 700);
-    } else {
-      const newFailed = failedAttempts + 1;
-      setFailedAttempts(newFailed);
-      localStorage.setItem('__sec_failed_attempts', String(newFailed));
-
-      if (newFailed >= 5) {
-        const lockoutTime = Date.now() + 24 * 60 * 60 * 1000;
-        setLockoutUntil(lockoutTime);
-        localStorage.setItem('__sec_lockout_until', String(lockoutTime));
+        playSound('click');
+        return;
       }
-      setAuthError(true);
+
+      if (res.status === 401) {
+        recordFailedPasscode();
+      } else {
+        setLoginError(data.error || 'Could not start login. Try again.');
+      }
       setLoginStatus('error');
       playSound('toggle');
+      window.setTimeout(() => setLoginStatus('idle'), 1600);
+    } catch (err) {
+      console.error('Login start error:', err);
+      setLoginError('Network error. Try again.');
+      setLoginStatus('error');
+      window.setTimeout(() => setLoginStatus('idle'), 1600);
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!twoFactor || loginStatus === 'loading') return;
+    setLoginStatus('loading');
+    setLoginError('');
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', challengeId: twoFactor.challengeId, code: loginCode.trim() }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { token?: string; error?: string };
+
+      if (res.ok && data.token) {
+        const token = data.token;
+        setLoginCode('');
+        setTwoFactor(null);
+        setFailedAttempts(0);
+        localStorage.removeItem('__sec_failed_attempts');
+        localStorage.removeItem('__sec_lockout_until');
+        playSound('submit');
+        setLoginStatus('success');
+        window.setTimeout(() => {
+          setLoginStatus('idle');
+          setAdminPasscode(token);
+          // Re-fetch admin-gated data (messages inbox, pending guestbook, etc.)
+          void onAdminVerified?.(token);
+        }, 700);
+        return;
+      }
+
+      setLoginError(data.error || 'Could not verify the code.');
+      // The code is spent or expired: send the owner back to the password step.
+      if (res.status === 401 && /log in again|already been used/i.test(data.error || '')) {
+        setTwoFactor(null);
+        setLoginCode('');
+      }
+      setLoginStatus('error');
+      window.setTimeout(() => setLoginStatus('idle'), 1600);
+    } catch (err) {
+      console.error('Login verify error:', err);
+      setLoginError('Network error. Try again.');
+      setLoginStatus('error');
       window.setTimeout(() => setLoginStatus('idle'), 1600);
     }
   };
@@ -525,6 +576,47 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   REMAINING LOCKOUT: {timeRemainingText}
                 </div>
               </div>
+            ) : twoFactor ? (
+              <form onSubmit={handleVerifyCode} className="space-y-4">
+                <p className="text-xs font-bold uppercase leading-relaxed text-zinc-300">
+                  Enter the 6-digit code sent to <span className="text-white">{twoFactor.sentTo}</span>
+                </p>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  required
+                  autoFocus
+                  placeholder="000000"
+                  value={loginCode}
+                  onChange={(e) => {
+                    setLoginCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                    setLoginError('');
+                  }}
+                  className="w-full px-4 py-3 bg-black border border-line text-white text-lg tracking-[0.5em] text-center font-bold focus:outline-none focus:border-accent"
+                />
+                {loginError && (
+                  <div role="alert" className="p-3 bg-red-950 border border-red-500 text-red-400 text-xs font-bold uppercase">
+                    {loginError}
+                  </div>
+                )}
+                <StatefulButton
+                  type="submit"
+                  status={loginStatus}
+                  idleContent="verify code"
+                  loadingContent="verifying…"
+                  successContent="access granted"
+                  errorContent="code rejected"
+                  className="py-3"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setTwoFactor(null); setLoginCode(''); setLoginError(''); }}
+                  className="text-[10px] font-bold uppercase text-zinc-400 hover:text-white"
+                >
+                  ← back to password
+                </button>
+              </form>
             ) : (
               <form onSubmit={handleAdminLogin} className="space-y-4">
                 <div className="space-y-2">
@@ -542,6 +634,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 {authError && (
                   <div className="p-3 bg-rose-950 border border-rose-500 text-rose-300 text-xs font-bold uppercase">
                     INCORRECT PASSWORD ({Math.max(0, 5 - failedAttempts)} REMAINING)
+                  </div>
+                )}
+                {loginError && (
+                  <div role="alert" className="p-3 bg-red-950 border border-red-500 text-red-400 text-xs font-bold uppercase">
+                    {loginError}
                   </div>
                 )}
 
