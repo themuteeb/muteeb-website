@@ -35,7 +35,7 @@ export default async function handler(req, res) {
 
   // The upload endpoint writes to a PUBLIC bucket with the service-role key:
   // there is no recovery path for abuse, so it is owner-only.
-  if (!isAdminRequest(req)) {
+  if (!(await isAdminRequest(req))) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

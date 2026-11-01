@@ -13,6 +13,7 @@ interface ThemeContextType {
   borderAccentClass: string;
   textAccentClass: string;
   applySiteDefaultTheme: (theme: ThemePreset) => void;
+  applySiteAccent: (hex: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -47,6 +48,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   });
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  // Owner's custom accent (#rrggbb). Empty string means no override.
+  const [siteAccent, setSiteAccent] = useState<string>(() => {
+    try {
+      const cached = JSON.parse(window.localStorage.getItem(SITE_SETTINGS_CACHE_KEY) || 'null') as { accentHex?: unknown } | null;
+      return typeof cached?.accentHex === 'string' && /^#[0-9a-fA-F]{6}$/.test(cached.accentHex) ? cached.accentHex : '';
+    } catch {
+      return '';
+    }
+  });
 
   // Audio synthesizer using Web Audio API for high-tech micro clicks
   const playSound = (type: 'click' | 'toggle' | 'submit' | 'hover' = 'click') => {
@@ -125,6 +135,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const applySiteAccent = (hex: string) => {
+    setSiteAccent(/^#[0-9a-fA-F]{6}$/.test(hex) ? hex.toLowerCase() : '');
+  };
+
   const toggleSound = () => {
     setSoundEnabled(prev => !prev);
   };
@@ -132,13 +146,23 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     // push accent colours into the design-system CSS variables so `text-accent` etc react
-    const c = THEME_COLORS[theme];
     const root = document.documentElement;
-    root.style.setProperty('--color-accent', c.accent);
-    root.style.setProperty('--color-accent-bright', c.bright);
-    root.style.setProperty('--color-accent-deep', c.deep);
-    root.style.setProperty('--color-accent-foreground', c.foreground);
-  }, [theme]);
+    if (siteAccent) {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(siteAccent.slice(i, i + 2), 16));
+      const shade = (v: number, f: number) => Math.round(v * f).toString(16).padStart(2, '0');
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      root.style.setProperty('--color-accent', siteAccent);
+      root.style.setProperty('--color-accent-bright', siteAccent);
+      root.style.setProperty('--color-accent-deep', `#${shade(r, 0.75)}${shade(g, 0.75)}${shade(b, 0.75)}`);
+      root.style.setProperty('--color-accent-foreground', luminance > 0.6 ? '#09090b' : '#ffffff');
+    } else {
+      const c = THEME_COLORS[theme];
+      root.style.setProperty('--color-accent', c.accent);
+      root.style.setProperty('--color-accent-bright', c.bright);
+      root.style.setProperty('--color-accent-deep', c.deep);
+      root.style.setProperty('--color-accent-foreground', c.foreground);
+    }
+  }, [theme, siteAccent]);
 
   const themeClasses = {
     accentClass: 'text-accent',
@@ -156,6 +180,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         toggleSound,
         playSound,
         applySiteDefaultTheme,
+        applySiteAccent,
         ...themeClasses,
       }}
     >

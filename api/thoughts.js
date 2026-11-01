@@ -113,7 +113,7 @@ export default async function handler(req, res) {
       }
 
       // Everything else on POST creates content: admin only.
-      if (!isAdminRequest(req)) {
+      if (!(await isAdminRequest(req))) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -131,7 +131,7 @@ export default async function handler(req, res) {
     }
 
     // --- PUT / DELETE: admin only -------------------------------------------
-    if (!isAdminRequest(req)) {
+    if (!(await isAdminRequest(req))) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 

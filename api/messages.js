@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       // The inbox contains sender e-mail addresses (PII). It is ONLY
       // readable by the site owner — the public page never loads it.
-      if (!isAdminRequest(req)) {
+      if (!(await isAdminRequest(req))) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'DELETE') {
       // Deleting inbox messages is an owner operation.
-      if (!isAdminRequest(req)) {
+      if (!(await isAdminRequest(req))) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 

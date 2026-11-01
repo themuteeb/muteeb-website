@@ -118,7 +118,7 @@ export default async function handler(req, res) {
     }
 
     // --- everything below mutates data: admin only --------------------------
-    if (!isAdminRequest(req)) {
+    if (!(await isAdminRequest(req))) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
