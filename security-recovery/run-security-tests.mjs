@@ -942,6 +942,24 @@ await test('35. edge middleware: blocked IPs get 403; admin and unknown IPs pass
 });
 
 // ---------------------------------------------------------------------------
+// Admin analytics: each list gets its own data
+// ---------------------------------------------------------------------------
+await test('36. analytics report: visitors and blocked IPs are not mixed up', async () => {
+  resetDb({
+    site_daily_stats: [{ day: '2026-11-01', visits: 2, views: 4 }],
+    site_sessions: [{ session_id: 'tab-AAAAAAAAAAAAAAAA', ip: '203.0.113.20', last_seen: new Date().toISOString(), first_seen: new Date().toISOString(), views: 3, last_path: '/', referrer: '', country: 'IN', region: 'JK', city: 'Jammu', device: 'desktop', browser: 'Chrome' }],
+    blocked_ips: [{ ip: '198.51.100.7', reason: 'test', created_at: new Date().toISOString() }],
+  });
+  const r = await call(analyticsHandler, { method: 'GET', headers: ADMIN });
+  assertEqual(r.statusCode, 200, 'report loads');
+  assertEqual(r.jsonBody.recentVisitors.length, 1, 'visitor list has the visitor');
+  assertEqual(r.jsonBody.recentVisitors[0].ip, '203.0.113.20', 'visitor list shows the visitor IP');
+  assertEqual(r.jsonBody.liveUsers, 1, 'live count sees the active visitor');
+  assertEqual(r.jsonBody.blockedIps.length, 1, 'blocked list has the blocked IP');
+  assertEqual(r.jsonBody.blockedIps[0].ip, '198.51.100.7', 'blocked list shows the blocked IP');
+});
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 console.log('');
