@@ -121,10 +121,10 @@
   -webkit-backdrop-filter: blur(16px) saturate(140%);
 }
 
-/* Navbar dropdown panel: desktop keeps its original blur; on phones it is more blurred. */
+/* Navbar bar and dropdown menu share one blur amount on every screen size (same as the bar). */
 .navbar-menu-panel {
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(155%);
+  -webkit-backdrop-filter: blur(24px) saturate(155%);
 }
 
 @media (max-width: 639px) {
@@ -132,8 +132,6 @@
     background:
       linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05) 45%, rgba(255, 255, 255, 0.02)),
       rgba(12, 20, 26, 0.86);
-    backdrop-filter: blur(32px) saturate(180%) brightness(1.08);
-    -webkit-backdrop-filter: blur(32px) saturate(180%) brightness(1.08);
   }
 }
 
