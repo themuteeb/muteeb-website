@@ -1,7 +1,6 @@
 import supabase from '../server/db-client.js';
 import {
-  setupCors, isAdminRequest, parseBody, sendServerError,
-} from '../server/_security.js';
+  setupCors, isAdminRequest, parseBody, sendServerError, denyIfBlocked } from '../server/_security.js';
 
 // Site-wide controls managed from the admin studio. Stored as jsonb on the
 // single profile row (column `site_settings`, see supabase/migrations).
@@ -110,6 +109,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return corsOk ? res.status(204).end() : res.status(403).end();
   }
+  if (await denyIfBlocked(req, res)) return;
 
   const isAdmin = await isAdminRequest(req);
 

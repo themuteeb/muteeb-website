@@ -127,6 +127,8 @@ export default function App() {
   const [guestbook, setGuestbook] = useState<GuestbookEntry[]>(cached?.guestbook || []);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  // True when the owner has blocked this visitor's IP address.
+  const [accessBlocked, setAccessBlocked] = useState(false);
   const [activeSection] = useState('hero');
 
   useEffect(() => {
@@ -208,7 +210,9 @@ export default function App() {
         fetch('/api/settings', { headers }),
       ]);
 
+      if (setRes.status === 403) setAccessBlocked(true);
       if (setRes.ok) {
+        setAccessBlocked(false);
         const nextSettings = normalizeSiteSettings(await setRes.json());
         setSiteSettings(nextSettings);
         saveCachedSiteSettings(nextSettings);
@@ -566,6 +570,19 @@ export default function App() {
   // Maintenance mode hides the site from visitors. The owner (logged into the
   // admin studio) still sees everything, and the admin entry points always work.
   const siteOffForVisitor = !siteSettings.siteEnabled && !adminPasscode;
+
+  if (accessBlocked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-canvas p-6 text-center font-mono">
+        <div className="max-w-md space-y-3">
+          <div className="text-sm font-bold uppercase tracking-widest text-red-400">access restricted</div>
+          <p className="font-sans text-sm leading-relaxed text-ink-3">
+            Access to this site from your network has been restricted by the site owner.
+          </p>
+        </div>
+      </div>
+    );
+  }
   const sections = siteSettings.sections;
 
   return (

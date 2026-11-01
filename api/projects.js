@@ -1,5 +1,5 @@
 import supabase from '../server/db-client.js';
-import { setupCors, isAdminRequest, parseBody, cleanText, isSafeUrl, isPositiveInt, sendServerError, setPublicReadCache } from '../server/_security.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, isSafeUrl, isPositiveInt, sendServerError, setPublicReadCache, denyIfBlocked } from '../server/_security.js';
 
 const COLUMN_LIMITS = {
   title: 200,
@@ -103,6 +103,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return corsOk ? res.status(204).end() : res.status(403).end();
   }
+  if (await denyIfBlocked(req, res)) return;
 
   try {
     if (req.method === 'GET') {

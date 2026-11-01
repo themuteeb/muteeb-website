@@ -268,3 +268,59 @@ export function sendServerError(res, err) {
   console.error('API error:', err && (err.stack || err.message || err));
   res.status(500).json({ error: 'Internal server error' });
 }
+
+// ------------------------------------------------------------ IP blocklist ---
+// Owner-managed list in table `blocked_ips`. Cached per serverless instance for a
+// minute, so a change can take up to about a minute to apply everywhere.
+const BLOCK_CACHE_MS = 60 * 1000;
+let blockCache = { at: 0, ips: new Set() };
+
+/** The visitor's IP as set by Vercel's proxy (not spoofable by the client). */
+export function getClientIp(req) {
+  const realIp = req?.headers?.['x-real-ip'];
+  if (typeof realIp === 'string' && realIp.trim()) return realIp.trim().slice(0, 64);
+  const forwarded = req?.headers?.['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.trim()) return forwarded.split(',')[0].trim().slice(0, 64);
+  return '';
+}
+
+/** IPv4 or IPv6 literal. Hostnames and ranges are rejected. */
+export function isValidIp(value) {
+  if (typeof value !== 'string' || value.length > 45) return false;
+  const v4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+  const v6 = /^[0-9a-fA-F:]{2,39}$/;
+  return v4.test(value) || (value.includes(':') && v6.test(value));
+}
+
+export function invalidateBlockCache() {
+  blockCache = { at: 0, ips: new Set() };
+}
+
+async function loadBlockedIps() {
+  if (Date.now() - blockCache.at < BLOCK_CACHE_MS) return blockCache.ips;
+  try {
+    const { data, error } = await supabase.from('blocked_ips').select('ip').limit(5000);
+    if (error) throw error;
+    blockCache = { at: Date.now(), ips: new Set((data || []).map((row) => row.ip)) };
+  } catch (err) {
+    // Fail open: a database hiccup must not take the whole public site down.
+    console.warn('Blocklist unavailable, serving request:', err.message);
+    blockCache = { at: Date.now(), ips: blockCache.ips };
+  }
+  return blockCache.ips;
+}
+
+/**
+ * Returns true (and sends 403) when the visitor's IP is blocked. Admin requests
+ * with a valid session are never blocked, so the owner cannot lock themselves out.
+ */
+export async function denyIfBlocked(req, res) {
+  if (await isAdminRequest(req)) return false;
+  const ip = getClientIp(req);
+  if (!ip) return false;
+  const blocked = await loadBlockedIps();
+  if (!blocked.has(ip)) return false;
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.status(403).json({ error: 'Access from your network is restricted.', blocked: true });
+  return true;
+}

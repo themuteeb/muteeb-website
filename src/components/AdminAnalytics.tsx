@@ -26,6 +26,7 @@ interface AnalyticsData {
   monthly: Array<Totals & { key: string }>;
   yearly: Array<Totals & { key: string }>;
   recentVisitors: Visitor[];
+  blockedIps: Array<{ ip: string; reason: string; created_at: string }>;
 }
 
 const REFRESH_MS = 30 * 1000;
@@ -44,6 +45,10 @@ export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [manualIp, setManualIp] = useState('');
+  const [manualReason, setManualReason] = useState('');
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionMessage, setActionMessage] = useState('');
 
   const load = useCallback(async () => {
     if (!passcode) return;
@@ -59,6 +64,47 @@ export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode
       setLoading(false);
     }
   }, [passcode]);
+
+  // Block (PUT) or unblock (DELETE) an IP, then refresh the data.
+  const changeBlock = async (method: 'PUT' | 'DELETE', ip: string, reason = '') => {
+    if (!passcode || actionBusy) return false;
+    setActionBusy(true);
+    setActionMessage('');
+    try {
+      const res = await fetch('/api/analytics', {
+        method,
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Auth': passcode },
+        body: JSON.stringify(method === 'PUT' ? { ip, reason } : { ip }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(body.error || 'Could not update the blocklist.');
+      setActionMessage(method === 'PUT' ? `Blocked ${ip}. Takes effect within about a minute.` : `Unblocked ${ip}.`);
+      await load();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update the blocklist.');
+      return false;
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const blockVisitor = (ip: string) => {
+    if (!ip) return;
+    if (!window.confirm(`Block ${ip}? That visitor will be refused the site's data within about a minute.`)) return;
+    void changeBlock('PUT', ip, 'blocked from analytics');
+  };
+
+  const submitManualBlock = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const ip = manualIp.trim();
+    if (!ip) return;
+    if (!window.confirm(`Block ${ip}?`)) return;
+    if (await changeBlock('PUT', ip, manualReason.trim())) {
+      setManualIp('');
+      setManualReason('');
+    }
+  };
 
   useEffect(() => {
     const first = window.setTimeout(() => void load(), 0);
@@ -124,14 +170,81 @@ export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode
             </div>
           </div>
 
+          <div className="space-y-3 rounded-xl border border-line bg-black p-4">
+            <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              Block an IP address ({data.blockedIps.length} blocked)
+            </div>
+            <form onSubmit={(e) => void submitManualBlock(e)} className="flex flex-wrap items-end gap-2">
+              <label className="block space-y-1">
+                <span className="text-[10px] font-bold uppercase text-zinc-500">IP address</span>
+                <input
+                  type="text"
+                  value={manualIp}
+                  onChange={(e) => setManualIp(e.target.value)}
+                  placeholder="203.0.113.7"
+                  maxLength={45}
+                  className="w-56 bg-black border border-line px-3 py-2 font-mono text-xs text-white focus:outline-none focus:border-accent"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-[10px] font-bold uppercase text-zinc-500">Reason (optional)</span>
+                <input
+                  type="text"
+                  value={manualReason}
+                  onChange={(e) => setManualReason(e.target.value)}
+                  maxLength={120}
+                  className="w-56 bg-black border border-line px-3 py-2 text-xs text-white focus:outline-none focus:border-accent"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={actionBusy || !manualIp.trim()}
+                className="rounded-full border border-red-500/60 bg-red-950/50 px-4 py-2 text-[11px] font-bold uppercase text-red-400 disabled:opacity-40"
+              >
+                block ip
+              </button>
+            </form>
+            {actionMessage && <p role="status" className="text-xs font-bold uppercase text-emerald-300">{actionMessage}</p>}
+            <p className="text-[11px] text-zinc-500">
+              Blocked visitors get a restricted-access notice and no site data. Admin logins are never blocked.
+              Cached pages can still show for about a minute, and static site files are not IP-filtered.
+            </p>
+            {data.blockedIps.length > 0 && (
+              <div className="overflow-x-auto rounded-lg border border-line">
+                <table className="w-full min-w-[480px]">
+                  <thead><tr><th className={th}>IP</th><th className={th}>Reason</th><th className={th}>Blocked</th><th className={th}></th></tr></thead>
+                  <tbody>
+                    {data.blockedIps.map((b) => (
+                      <tr key={b.ip} className="border-t border-line">
+                        <td className={`${td} font-mono`}>{b.ip}</td>
+                        <td className={td}>{b.reason || '—'}</td>
+                        <td className={td}>{fmt(b.created_at)}</td>
+                        <td className={td}>
+                          <button
+                            type="button"
+                            disabled={actionBusy}
+                            onClick={() => void changeBlock('DELETE', b.ip)}
+                            className="rounded-full border border-line bg-black px-3 py-1 text-[10px] font-bold uppercase text-zinc-300 disabled:opacity-40"
+                          >
+                            unblock
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2">
             <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Live now ({data.liveVisitors.length})</div>
-            <VisitorTable rows={data.liveVisitors} th={th} td={td} />
+            <VisitorTable rows={data.liveVisitors} th={th} td={td} onBlock={blockVisitor} busy={actionBusy} />
           </div>
 
           <div className="space-y-2">
             <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Recent visitors (latest {data.recentVisitors.length})</div>
-            <VisitorTable rows={data.recentVisitors} th={th} td={td} />
+            <VisitorTable rows={data.recentVisitors} th={th} td={td} onBlock={blockVisitor} busy={actionBusy} />
           </div>
         </>
       )}
@@ -139,7 +252,7 @@ export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode
   );
 };
 
-const VisitorTable: React.FC<{ rows: Visitor[]; th: string; td: string }> = ({ rows, th, td }) => (
+const VisitorTable: React.FC<{ rows: Visitor[]; th: string; td: string; onBlock: (ip: string) => void; busy: boolean }> = ({ rows, th, td, onBlock, busy }) => (
   <div className="overflow-x-auto rounded-xl border border-line">
     <table className="w-full min-w-[720px]">
       <thead>
@@ -147,10 +260,11 @@ const VisitorTable: React.FC<{ rows: Visitor[]; th: string; td: string }> = ({ r
           <th className={th}>Last seen</th><th className={th}>IP</th><th className={th}>Location</th>
           <th className={th}>Device</th><th className={th}>Browser</th><th className={th}>Page</th>
           <th className={th}>Views</th><th className={th}>From</th><th className={th}>First seen</th>
+          <th className={th}></th>
         </tr>
       </thead>
       <tbody>
-        {rows.length === 0 && <tr><td className={td} colSpan={9}>Nobody yet.</td></tr>}
+        {rows.length === 0 && <tr><td className={td} colSpan={10}>Nobody yet.</td></tr>}
         {rows.map((v) => (
           <tr key={v.session_id} className="border-t border-line">
             <td className={td}>{fmt(v.last_seen)}</td>
@@ -162,6 +276,18 @@ const VisitorTable: React.FC<{ rows: Visitor[]; th: string; td: string }> = ({ r
             <td className={td}>{v.views}</td>
             <td className={td}>{v.referrer || 'direct'}</td>
             <td className={td}>{fmt(v.first_seen)}</td>
+            <td className={td}>
+              {v.ip && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onBlock(v.ip)}
+                  className="rounded-full border border-red-500/60 bg-red-950/50 px-3 py-1 text-[10px] font-bold uppercase text-red-400 disabled:opacity-40"
+                >
+                  block
+                </button>
+              )}
+            </td>
           </tr>
         ))}
       </tbody>

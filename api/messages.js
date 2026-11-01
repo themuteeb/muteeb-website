@@ -1,13 +1,13 @@
 import supabase from '../server/db-client.js';
 import {
-  setupCors, isAdminRequest, parseBody, cleanText, isValidEmail, isPositiveInt, sendServerError,
-} from '../server/_security.js';
+  setupCors, isAdminRequest, parseBody, cleanText, isValidEmail, isPositiveInt, sendServerError, denyIfBlocked } from '../server/_security.js';
 
 export default async function handler(req, res) {
   const corsOk = setupCors(req, res);
   if (req.method === 'OPTIONS') {
     return corsOk ? res.status(204).end() : res.status(403).end();
   }
+  if (await denyIfBlocked(req, res)) return;
 
   try {
     if (req.method === 'GET') {

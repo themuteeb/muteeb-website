@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import supabase from '../server/db-client.js';
-import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, ALLOWED_AVATAR_COLORS, ALLOWED_BADGES, sendServerError, setPublicReadCache } from '../server/_security.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, ALLOWED_AVATAR_COLORS, ALLOWED_BADGES, sendServerError, setPublicReadCache, denyIfBlocked } from '../server/_security.js';
 
 const GUESTBOOK_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 const RATE_LIMIT_TOMBSTONE_NAME = '__GUESTBOOK_RATE_LIMIT__';
@@ -46,6 +46,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return corsOk ? res.status(204).end() : res.status(403).end();
   }
+  if (await denyIfBlocked(req, res)) return;
 
   const isAdmin = (await isAdminRequest(req));
 
