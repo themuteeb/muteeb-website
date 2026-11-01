@@ -89,8 +89,16 @@ export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode
     }
   };
 
-  const blockVisitor = (ip: string) => {
+  const blockedSet = new Set((data?.blockedIps || []).map((b) => b.ip));
+
+  // One button per visitor: "block" when the IP is free, "unblock" when it is already blocked.
+  const toggleVisitorBlock = (ip: string, isBlocked: boolean) => {
     if (!ip) return;
+    if (isBlocked) {
+      if (!window.confirm(`Unblock ${ip}?`)) return;
+      void changeBlock('DELETE', ip);
+      return;
+    }
     if (!window.confirm(`Block ${ip}? That visitor will be refused the site's data within about a minute.`)) return;
     void changeBlock('PUT', ip, 'blocked from analytics');
   };
@@ -239,12 +247,12 @@ export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode
 
           <div className="space-y-2">
             <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Live now ({data.liveVisitors.length})</div>
-            <VisitorTable rows={data.liveVisitors} th={th} td={td} onBlock={blockVisitor} busy={actionBusy} />
+            <VisitorTable rows={data.liveVisitors} th={th} td={td} blocked={blockedSet} onToggle={toggleVisitorBlock} busy={actionBusy} />
           </div>
 
           <div className="space-y-2">
             <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Recent visitors (latest {data.recentVisitors.length})</div>
-            <VisitorTable rows={data.recentVisitors} th={th} td={td} onBlock={blockVisitor} busy={actionBusy} />
+            <VisitorTable rows={data.recentVisitors} th={th} td={td} blocked={blockedSet} onToggle={toggleVisitorBlock} busy={actionBusy} />
           </div>
         </>
       )}
@@ -252,21 +260,46 @@ export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode
   );
 };
 
-const VisitorTable: React.FC<{ rows: Visitor[]; th: string; td: string; onBlock: (ip: string) => void; busy: boolean }> = ({ rows, th, td, onBlock, busy }) => (
+const VisitorTable: React.FC<{
+  rows: Visitor[];
+  th: string;
+  td: string;
+  blocked: Set<string>;
+  onToggle: (ip: string, isBlocked: boolean) => void;
+  busy: boolean;
+}> = ({ rows, th, td, blocked, onToggle, busy }) => (
   <div className="overflow-x-auto rounded-xl border border-line">
     <table className="w-full min-w-[720px]">
       <thead>
         <tr>
-          <th className={th}>Last seen</th><th className={th}>IP</th><th className={th}>Location</th>
+          <th className={th}>Action</th><th className={th}>Last seen</th><th className={th}>IP</th><th className={th}>Location</th>
           <th className={th}>Device</th><th className={th}>Browser</th><th className={th}>Page</th>
           <th className={th}>Views</th><th className={th}>From</th><th className={th}>First seen</th>
-          <th className={th}></th>
         </tr>
       </thead>
       <tbody>
         {rows.length === 0 && <tr><td className={td} colSpan={10}>Nobody yet.</td></tr>}
         {rows.map((v) => (
           <tr key={v.session_id} className="border-t border-line">
+            <td className={td}>
+              {v.ip && (() => {
+                const isBlocked = blocked.has(v.ip);
+                return (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onToggle(v.ip, isBlocked)}
+                    className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase disabled:opacity-40 ${
+                      isBlocked
+                        ? 'border-line bg-black text-zinc-300'
+                        : 'border-red-500/60 bg-red-950/50 text-red-400'
+                    }`}
+                  >
+                    {isBlocked ? 'unblock' : 'block'}
+                  </button>
+                );
+              })()}
+            </td>
             <td className={td}>{fmt(v.last_seen)}</td>
             <td className={`${td} font-mono`}>{v.ip || '—'}</td>
             <td className={td}>{place(v)}</td>
@@ -276,18 +309,6 @@ const VisitorTable: React.FC<{ rows: Visitor[]; th: string; td: string; onBlock:
             <td className={td}>{v.views}</td>
             <td className={td}>{v.referrer || 'direct'}</td>
             <td className={td}>{fmt(v.first_seen)}</td>
-            <td className={td}>
-              {v.ip && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => onBlock(v.ip)}
-                  className="rounded-full border border-red-500/60 bg-red-950/50 px-3 py-1 text-[10px] font-bold uppercase text-red-400 disabled:opacity-40"
-                >
-                  block
-                </button>
-              )}
-            </td>
           </tr>
         ))}
       </tbody>
