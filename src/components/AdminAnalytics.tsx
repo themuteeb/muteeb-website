@@ -30,8 +30,11 @@ interface AnalyticsData {
 }
 
 const REFRESH_MS = 30 * 1000;
-const fmt = (iso: string) =>
-  new Date(iso).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
+const fmt = (iso: string | null | undefined) => {
+  const date = iso ? new Date(iso) : null;
+  if (!date || Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
+};
 const place = (v: Visitor) => [v.city, v.region, v.country].filter(Boolean).join(', ') || '—';
 
 const Card: React.FC<{ label: string; value: number | string }> = ({ label, value }) => (
