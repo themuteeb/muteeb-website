@@ -114,6 +114,19 @@ Security cannot be made perfect. The remaining risks sit outside the code: the G
 that receives codes, the accounts behind Vercel, GitHub, Supabase and Resend (turn on 2FA
 for each), and any key that has been pasted into chat (rotate it).
 
+## Visitor analytics (admin portal)
+
+The admin portal's **ANALYTICS** tab shows live users, visits today, all-time visits and page
+views, totals by month and year (IST), and a visitor list with IP address, approximate
+location (from Vercel's geo headers), device, browser, page, and referrer host.
+
+- Migration: run `supabase/migrations/2026-11-03_site_analytics.sql` in Supabase (SQL Editor).
+- `POST /api/track` (public) records one view per browser tab and a heartbeat each minute.
+  Bots are ignored. Only the server can write to the tables.
+- `GET /api/analytics` (owner only, never cached) returns the data.
+- Visitor IP addresses are stored in `site_sessions` and are kept indefinitely. Deleting them
+  is a manual SQL step. Under India's DPDP Act, visitors should be told this is collected.
+
 ## Keeping the database awake
 
 Supabase free projects pause after about a week without API activity. The workflow

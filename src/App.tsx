@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { startVisitTracking } from './lib/visitTracking';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
 import {
@@ -298,6 +299,9 @@ export default function App() {
   };
 
   // Keep the browser tab title and meta description in step with the owner's settings.
+  // Anonymous visit counting for the admin analytics panel.
+  useEffect(() => startVisitTracking(), []);
+
   useEffect(() => {
     document.title = siteSettings.pageTitle || DEFAULT_PAGE_TITLE;
     const meta = document.querySelector('meta[name="description"]');
