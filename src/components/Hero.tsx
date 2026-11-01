@@ -291,7 +291,7 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => playSound('click')}
-                    title={`Instagram ${profile.instagram_handle}`}
+                    aria-label={`Instagram ${profile.instagram_handle}`}
                     className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-ink-3 transition-all duration-300 hover:border-accent/50 hover:text-accent"
                   >
                     <Instagram className="h-4 w-4" />
