@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
+import { useTheme } from './contexts/ThemeContext';
+import {
+  type SiteSettings,
+  loadCachedSiteSettings,
+  normalizeSiteSettings,
+  saveCachedSiteSettings,
+} from './lib/siteSettings';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { ProjectsSection } from './components/ProjectsSection';
@@ -103,6 +110,8 @@ const saveCache = (data: PublicCache) => {
 export default function App() {
   const [cached] = useState<PublicCache | null>(() => loadCache());
   const { adminPasscode, setAdminPasscode } = useAuth();
+  const { applySiteDefaultTheme } = useTheme();
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => loadCachedSiteSettings());
 
   const [profile, setProfile] = useState<Profile | null>(cached?.profile || null);
   const [projects, setProjects] = useState<Project[]>(cached?.projects || []);
@@ -181,7 +190,7 @@ export default function App() {
     try {
       const pass = passcodeOverride ?? adminPasscode ?? '';
       const headers: Record<string, string> = pass ? { 'X-Admin-Auth': pass } : {};
-      const [pRes, projRes, tRes, sRes, gRes, mRes] = await Promise.all([
+      const [pRes, projRes, tRes, sRes, gRes, mRes, setRes] = await Promise.all([
         fetch('/api/profile', { headers }),
         fetch('/api/projects'),
         fetch('/api/thoughts'),
@@ -189,7 +198,15 @@ export default function App() {
         fetch('/api/guestbook', { headers }),
         // Inbox is PII; the API returns it only after server-side auth.
         fetch('/api/messages', { headers }),
+        fetch('/api/settings', { headers }),
       ]);
+
+      if (setRes.ok) {
+        const nextSettings = normalizeSiteSettings(await setRes.json());
+        setSiteSettings(nextSettings);
+        saveCachedSiteSettings(nextSettings);
+        applySiteDefaultTheme(nextSettings.palette);
+      }
 
       const adminAuthRejected = Boolean(
         pass && [pRes, gRes, mRes].some((response) => response.status === 401),
@@ -246,6 +263,18 @@ export default function App() {
     } catch (err) {
       console.error('Error fetching data from API:', err);
     }
+  };
+
+  const handleUpdateSiteSettings = async (updates: SiteSettings) => {
+    const res = await adminRequest('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    const saved = normalizeSiteSettings(await res.json());
+    setSiteSettings(saved);
+    saveCachedSiteSettings(saved);
+    applySiteDefaultTheme(saved.palette);
   };
 
   useEffect(() => {
@@ -503,25 +532,54 @@ export default function App() {
     if (contactElem) contactElem.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Maintenance mode hides the site from visitors. The owner (logged into the
+  // admin studio) still sees everything, and the admin entry points always work.
+  const siteOffForVisitor = !siteSettings.siteEnabled && !adminPasscode;
+  const sections = siteSettings.sections;
+
   return (
     <div className="min-h-screen bg-canvas font-sans text-ink antialiased">
-      <Navbar activeSection={activeSection} />
+      {siteOffForVisitor ? (
+        <main className="flex min-h-screen items-center justify-center p-6 text-center">
+          <div className="max-w-md space-y-4">
+            <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.25em] text-accent">{'// maintenance'}</div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-ink">Be right back</h1>
+            <p className="font-sans text-sm leading-relaxed text-ink-3">{siteSettings.maintenanceMessage}</p>
+          </div>
+        </main>
+      ) : (
+        <>
+          {(siteSettings.announcement || (!siteSettings.siteEnabled && adminPasscode)) && (
+            <div className="border-b border-line bg-surface-2 px-4 py-2 text-center font-mono text-[11px] uppercase tracking-[0.12em] text-ink">
+              {!siteSettings.siteEnabled && adminPasscode ? 'Site is OFF for visitors (owner preview)' : siteSettings.announcement}
+            </div>
+          )}
 
-      <Hero profile={profile} onOpenContact={scrollToContact} />
+          <Navbar activeSection={activeSection} sections={sections} />
 
-      <ProjectsSection projects={projects} />
+          <Hero profile={profile} onOpenContact={scrollToContact} />
 
-      <NowSection profile={profile} />
+          {sections.work && <ProjectsSection projects={projects} />}
 
-      <TechMatrix skills={skills} />
+          {sections.now && <NowSection profile={profile} />}
 
-      <ThoughtsSection thoughts={thoughts} onLikeThought={handleLikeThought} />
+          {sections.stack && <TechMatrix skills={skills} />}
 
-      <GuestbookSection entries={guestbook} onAddEntry={handleAddGuestbook} />
+          {sections.thoughts && <ThoughtsSection thoughts={thoughts} onLikeThought={handleLikeThought} />}
 
-      <ContactTerminal email={profile?.email} onSendMessage={handleSendMessage} />
+          {sections.guestbook && (
+            <GuestbookSection
+              entries={guestbook}
+              onAddEntry={handleAddGuestbook}
+              acceptingEntries={siteSettings.guestbookOpen}
+            />
+          )}
 
-      <Footer profile={profile} />
+          {sections.contact && <ContactTerminal email={profile?.email} onSendMessage={handleSendMessage} />}
+
+          <Footer profile={profile} />
+        </>
+      )}
 
       {isAdminOpen && (
         <AdminModal
@@ -541,6 +599,8 @@ export default function App() {
           onDeleteGuestbook={handleDeleteGuestbook}
           onApproveGuestbook={handleApproveGuestbook}
           onDeleteMessage={handleDeleteMessage}
+          siteSettings={siteSettings}
+          onUpdateSiteSettings={handleUpdateSiteSettings}
           onAdminVerified={async (passcode) => {
             setAdminPasscode(passcode);
             await fetchAllData(passcode);

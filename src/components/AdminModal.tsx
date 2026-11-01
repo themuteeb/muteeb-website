@@ -7,8 +7,11 @@ import { sanitizeInput } from '../lib/crypto';
 import { uploadImage } from '../lib/imageUpload';
 import { StatefulButton, type StatefulButtonStatus } from './ui/stateful-button';
 import { ImageCropModal } from './ui/ImageCropModal';
+import { PALETTE_IDS, SECTION_IDS, type SectionKey, type SiteSettings } from '../lib/siteSettings';
 
 interface AdminModalProps {
+  siteSettings: SiteSettings;
+  onUpdateSiteSettings: (updates: SiteSettings) => Promise<void>;
   profile: Profile | null;
   projects: Project[];
   thoughts: Thought[];
@@ -48,6 +51,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onApproveGuestbook,
   onDeleteMessage,
   onAdminVerified,
+  siteSettings,
+  onUpdateSiteSettings,
   onClose,
 }) => {
   const { bgAccentClass, borderAccentClass, textAccentClass, playSound } = useTheme();
@@ -57,8 +62,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [loginStatus, setLoginStatus] = useState<StatefulButtonStatus>('idle');
   const [authError, setAuthError] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    'profile' | 'typewriter' | 'quick_facts' | 'projects' | 'skills' | 'thoughts' | 'messages' | 'guestbook' | 'backup'
-  >('profile');
+    'site' | 'profile' | 'typewriter' | 'quick_facts' | 'projects' | 'skills' | 'thoughts' | 'messages' | 'guestbook' | 'backup'
+  >('site');
 
   const [failedAttempts, setFailedAttempts] = useState<number>(() => {
     try {
@@ -145,6 +150,52 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [editingSkill, setEditingSkill] = useState<Partial<Skill> | null>(null);
 
   const [messageSearch, setMessageSearch] = useState('');
+
+  // Site controls: local draft, saved explicitly.
+  const [siteDraft, setSiteDraft] = useState<SiteSettings>(siteSettings);
+  const [siteDraftSource, setSiteDraftSource] = useState<SiteSettings>(siteSettings);
+  const [siteSaveStatus, setSiteSaveStatus] = useState<StatefulButtonStatus>('idle');
+  const [siteSaveError, setSiteSaveError] = useState('');
+  // Reset the draft when the saved settings change (e.g. after a refresh).
+  if (siteDraftSource !== siteSettings) {
+    setSiteDraftSource(siteSettings);
+    setSiteDraft(siteSettings);
+  }
+
+  const SITE_SECTION_LABELS: Record<SectionKey, string> = {
+    now: 'Now & quick facts',
+    work: 'Projects',
+    stack: 'Tools / stack',
+    thoughts: 'Writings',
+    guestbook: 'Guestbook',
+    contact: 'Contact form',
+  };
+  const PALETTE_SWATCHES: Record<string, string> = {
+    neon: '#0891b2',
+    white: '#ffffff',
+    pink: '#ec4899',
+    violet: '#7c3aed',
+    mono: '#475569',
+  };
+
+  const handleSaveSiteSettings = async () => {
+    if (siteSaveStatus === 'loading') return;
+    setSiteSaveError('');
+    try {
+      setSiteSaveStatus('loading');
+      playSound('submit');
+      await onUpdateSiteSettings(siteDraft);
+      setSiteSaveStatus('success');
+      window.setTimeout(() => setSiteSaveStatus('idle'), 1400);
+    } catch (err) {
+      console.error(err);
+      setSiteSaveError(err instanceof Error ? err.message : 'Could not save site controls.');
+      setSiteSaveStatus('error');
+      window.setTimeout(() => setSiteSaveStatus('idle'), 1600);
+    }
+  };
+
+  const siteDirty = JSON.stringify(siteDraft) !== JSON.stringify(siteSettings);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -510,6 +561,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           <div className="space-y-4">
             <div className="flex flex-wrap gap-1.5 border-b border-line pb-2">
               {[
+                { id: 'site', name: 'SITE CONTROLS' },
                 { id: 'profile', name: 'PROFILE & BRANDING' },
                 { id: 'typewriter', name: 'TICKER ROLES' },
                 { id: 'quick_facts', name: 'QUICK FACTS' },
@@ -960,6 +1012,126 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     NO GUESTBOOK ENTRIES YET.
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'site' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-black uppercase text-white">Site controls</h3>
+                  <p className="mt-1 text-xs text-zinc-400">Changes go live for visitors after you save. The admin studio always stays reachable.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Availability</div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {([
+                      ['siteEnabled', 'Website online', 'Off shows a maintenance page to visitors.'],
+                      ['guestbookOpen', 'Guestbook accepting entries', 'Off hides the "leave a message" button.'],
+                    ] as const).map(([key, label, desc]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        aria-pressed={siteDraft[key]}
+                        onClick={() => { setSiteDraft((d) => ({ ...d, [key]: !d[key] })); playSound('toggle'); }}
+                        className={`flex items-start justify-between gap-3 rounded-xl border p-3 text-left transition-colors ${siteDraft[key] ? `${borderAccentClass} bg-black` : 'border-line bg-black opacity-70'}`}
+                      >
+                        <span>
+                          <span className="block text-xs font-bold uppercase text-white">{label}</span>
+                          <span className="mt-1 block text-[10px] text-zinc-400">{desc}</span>
+                        </span>
+                        <span className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase ${siteDraft[key] ? 'bg-emerald-600 text-white' : 'bg-zinc-700 text-zinc-300'}`}>
+                          {siteDraft[key] ? 'ON' : 'OFF'}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Visible sections</div>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {SECTION_IDS.map((key) => (
+                      <button
+                        key={key}
+                        type="button"
+                        aria-pressed={siteDraft.sections[key]}
+                        onClick={() => {
+                          setSiteDraft((d) => ({ ...d, sections: { ...d.sections, [key]: !d.sections[key] } }));
+                          playSound('toggle');
+                        }}
+                        className={`flex items-center justify-between rounded-xl border px-3 py-2 text-xs font-bold uppercase ${siteDraft.sections[key] ? `${borderAccentClass} bg-black text-white` : 'border-line bg-black text-zinc-500'}`}
+                      >
+                        {SITE_SECTION_LABELS[key]}
+                        <span>{siteDraft.sections[key] ? 'SHOWN' : 'HIDDEN'}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Default colour palette (visitors can still pick their own)</div>
+                  <div className="flex flex-wrap gap-2">
+                    {PALETTE_IDS.map((id) => (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={siteDraft.palette === id}
+                        onClick={() => { setSiteDraft((d) => ({ ...d, palette: id })); playSound('click'); }}
+                        className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase ${siteDraft.palette === id ? `${borderAccentClass} bg-black text-white` : 'border-line bg-black text-zinc-400'}`}
+                      >
+                        <span className="h-3 w-3 rounded-full border border-white/30" style={{ background: PALETTE_SWATCHES[id] }} />
+                        {id}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Maintenance message ({siteDraft.maintenanceMessage.length}/200)</span>
+                    <textarea
+                      rows={3}
+                      maxLength={200}
+                      value={siteDraft.maintenanceMessage}
+                      onChange={(e) => setSiteDraft((d) => ({ ...d, maintenanceMessage: e.target.value }))}
+                      className="w-full bg-black border border-line px-3 py-2 text-xs text-white focus:outline-none focus:border-accent resize-none"
+                    />
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Announcement banner, empty hides it ({siteDraft.announcement.length}/200)</span>
+                    <textarea
+                      rows={3}
+                      maxLength={200}
+                      value={siteDraft.announcement}
+                      onChange={(e) => setSiteDraft((d) => ({ ...d, announcement: e.target.value }))}
+                      className="w-full bg-black border border-line px-3 py-2 text-xs text-white focus:outline-none focus:border-accent resize-none"
+                    />
+                  </label>
+                </div>
+
+                {siteSaveError && (
+                  <div role="alert" className="p-3 bg-red-950 border border-red-500 text-red-400 text-xs font-bold uppercase">
+                    {siteSaveError}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="w-full sm:w-72">
+                    <StatefulButton
+                      type="button"
+                      status={siteSaveStatus}
+                      onClick={() => void handleSaveSiteSettings()}
+                      disabled={!siteDirty}
+                      idleContent="save site controls"
+                      loadingContent="saving…"
+                      successContent="site updated"
+                      errorContent="save failed"
+                      className="py-3"
+                    />
+                  </div>
+                  {siteDirty && <span className="text-[10px] font-bold uppercase text-zinc-400">Unsaved changes</span>}
+                </div>
               </div>
             )}
 

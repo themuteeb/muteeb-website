@@ -1,7 +1,5 @@
 import supabase from './db-client.js';
-import {
-  setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, sendServerError,
-} from './_security.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, sendServerError, setPublicReadCache } from './_security.js';
 
 // Column whitelist for admin edits. `likes_count` is deliberately excluded:
 // the ONLY write path for it is the atomic public "like" below, so nobody
@@ -50,6 +48,7 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
+      setPublicReadCache(req, res);
       const { data, error } = await supabase
         .from('thoughts')
         .select('*')

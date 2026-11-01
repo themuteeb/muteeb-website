@@ -7,6 +7,8 @@ import { FlipWords } from './ui/flip-words';
 import { EncryptedText } from './ui/encrypted-text';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { GridBackground } from './ui/grid-background';
+import { MagneticButton } from './ui/magnetic-button';
+import { HoverBorderGradient } from './ui/hover-border-gradient';
 
 // helper to treat "nil" / "null" strings as missing
 const clean = (v: string | undefined | null, fallback: string) => {
@@ -268,16 +270,19 @@ export const Hero: React.FC<HeroProps> = ({ profile, onOpenContact }) => {
               transition={{ duration: 0.5, delay: 0.75 }}
               className="mt-9 flex flex-wrap items-center gap-4"
             >
-              <button
-                onClick={() => {
-                  playSound('submit');
-                  onOpenContact();
-                }}
-                className="flex items-center gap-2.5 rounded-full border border-line bg-surface px-7 py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-ink-2 transition-all duration-300 hover:border-accent/50 hover:text-accent"
-              >
-                <Sparkles className="h-4 w-4" />
-                <span>say hi</span>
-              </button>
+              <MagneticButton>
+                <HoverBorderGradient
+                  containerClassName="rounded-full"
+                  onClick={() => {
+                    playSound('submit');
+                    onOpenContact();
+                  }}
+                  className="flex items-center gap-2.5 rounded-full bg-surface px-7 py-3.5 font-mono text-xs font-bold uppercase tracking-[0.14em] text-ink-2 transition-colors duration-300 hover:text-accent"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span>say hi</span>
+                </HoverBorderGradient>
+              </MagneticButton>
 
               <div className="flex items-center gap-2">
                 {profile?.instagram_handle && (

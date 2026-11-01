@@ -17,6 +17,7 @@ import { StatefulButton, type StatefulButtonStatus } from './ui/stateful-button'
 
 interface GuestbookProps {
   entries: GuestbookEntry[];
+  acceptingEntries?: boolean;
   onAddEntry: (entry: {
     name: string;
     message: string;
@@ -36,7 +37,7 @@ const AVATAR_STYLES: Record<string, string> = {
   amber: 'border-amber-400/40 bg-amber-400/10 text-amber-300',
 };
 
-export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry }) => {
+export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry, acceptingEntries = true }) => {
   const { playSound } = useTheme();
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
@@ -139,6 +140,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
                 stagger={0.035}
               />
             </div>
+            {acceptingEntries ? (
             <button
               type="button"
               onClick={openForm}
@@ -147,6 +149,11 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
               <PenLine className="h-4 w-4" />
               leave a message
             </button>
+            ) : (
+              <p className="shrink-0 rounded-full border border-line px-4 py-2 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-3">
+                guestbook is closed
+              </p>
+            )}
           </div>
 
           <div className="space-y-6">

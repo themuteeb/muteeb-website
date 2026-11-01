@@ -1,9 +1,6 @@
 import { createHmac } from 'node:crypto';
 import supabase from './db-client.js';
-import {
-  setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt,
-  ALLOWED_AVATAR_COLORS, ALLOWED_BADGES, sendServerError,
-} from './_security.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, ALLOWED_AVATAR_COLORS, ALLOWED_BADGES, sendServerError, setPublicReadCache } from './_security.js';
 
 const GUESTBOOK_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 const RATE_LIMIT_TOMBSTONE_NAME = '__GUESTBOOK_RATE_LIMIT__';
@@ -54,6 +51,7 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
+      setPublicReadCache(req, res);
       let query = supabase.from('guestbook').select('*').order('created_at', { ascending: false });
 
       // Public users only see approved entries; the owner sees all (incl. pending).

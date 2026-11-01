@@ -119,6 +119,19 @@ export function isCorsAllowed(req) {
 }
 
 /** Helper used at the top of every handler: sets CORS headers, reports allow. */
+/**
+ * Public read endpoints: let Vercel's CDN serve the last response instantly
+ * (even if the database is slow or waking up), refreshing in the background.
+ * Admin responses are never shared-cached.
+ */
+export function setPublicReadCache(req, res) {
+  if (isAdminRequest(req)) {
+    res.setHeader('Cache-Control', 'private, no-store');
+  } else {
+    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=3600');
+  }
+}
+
 export function setupCors(req, res) {
   const headers = corsHeaders(req);
   for (const [key, value] of Object.entries(headers)) res.setHeader(key, value);

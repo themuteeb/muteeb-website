@@ -28,6 +28,7 @@ create table if not exists public.profile (
   typewriter_roles   jsonb,  -- string[]
   now_focus          jsonb,  -- { title, desc }[]
   quick_facts        jsonb,  -- string[]
+  site_settings      jsonb,  -- owner site controls (see api/settings.js)
   admin_passcode     text,
   github_url         text,
   twitter_url        text,
