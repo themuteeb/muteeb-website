@@ -107,7 +107,7 @@ async function handleReport(req, res) {
   res.setHeader('Cache-Control', 'private, no-store');
 
   try {
-    const [dailyRes, sessionsRes, blockedRes] = await Promise.all([
+    const [dailyRes, blockedRes, sessionsRes] = await Promise.all([
       supabase.from('site_daily_stats').select('day, visits, views').order('day', { ascending: false }),
       supabase.from('blocked_ips').select('ip, reason, created_at').order('created_at', { ascending: false }).limit(500),
       supabase

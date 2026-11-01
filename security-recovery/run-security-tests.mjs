@@ -913,6 +913,53 @@ await test('34. blocklist: an IP that logged into the admin panel is never block
 });
 
 // ---------------------------------------------------------------------------
+// Edge middleware: blocked IPs are refused before any page is served
+// ---------------------------------------------------------------------------
+await test('35. edge middleware: blocked IPs get 403; admin and unknown IPs pass; fails open', async () => {
+  const realFetch = globalThis.fetch;
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.test';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
+  const lists = { blocked_ips: [{ ip: '198.51.100.7' }, { ip: '198.51.100.8' }], admin_ips: [{ ip: '198.51.100.8' }] };
+  globalThis.fetch = async (url) => {
+    const table = String(url).split('/rest/v1/')[1].split('?')[0];
+    return new Response(JSON.stringify(lists[table] || []), { status: 200 });
+  };
+  try {
+    const mw = (await import('../middleware.js?case=ok')).default;
+    const req = (ip) => new Request('https://muteeb.in/', { headers: ip ? { 'x-real-ip': ip } : {} });
+    const blocked = await mw(req('198.51.100.7'));
+    assertEqual(blocked.status, 403, 'blocked IP refused');
+    assert((await blocked.text()).includes('access restricted'), 'restricted page served');
+    assertEqual(await mw(req('198.51.100.9')), undefined, 'other IP passes');
+    assertEqual(await mw(req('198.51.100.8')), undefined, 'admin IP passes even if listed');
+
+    globalThis.fetch = async () => { throw new Error('network down'); };
+    const failOpen = (await import('../middleware.js?case=down')).default;
+    assertEqual(await failOpen(req('198.51.100.7')), undefined, 'fails open when the blocklist is unreadable');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Admin analytics: each list gets its own data
+// ---------------------------------------------------------------------------
+await test('36. analytics report: visitors and blocked IPs are not mixed up', async () => {
+  resetDb({
+    site_daily_stats: [{ day: '2026-11-01', visits: 2, views: 4 }],
+    site_sessions: [{ session_id: 'tab-AAAAAAAAAAAAAAAA', ip: '203.0.113.20', last_seen: new Date().toISOString(), first_seen: new Date().toISOString(), views: 3, last_path: '/', referrer: '', country: 'IN', region: 'JK', city: 'Jammu', device: 'desktop', browser: 'Chrome' }],
+    blocked_ips: [{ ip: '198.51.100.7', reason: 'test', created_at: new Date().toISOString() }],
+  });
+  const r = await call(analyticsHandler, { method: 'GET', headers: ADMIN });
+  assertEqual(r.statusCode, 200, 'report loads');
+  assertEqual(r.jsonBody.recentVisitors.length, 1, 'visitor list has the visitor');
+  assertEqual(r.jsonBody.recentVisitors[0].ip, '203.0.113.20', 'visitor list shows the visitor IP');
+  assertEqual(r.jsonBody.liveUsers, 1, 'live count sees the active visitor');
+  assertEqual(r.jsonBody.blockedIps.length, 1, 'blocked list has the blocked IP');
+  assertEqual(r.jsonBody.blockedIps[0].ip, '198.51.100.7', 'blocked list shows the blocked IP');
+});
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 console.log('');

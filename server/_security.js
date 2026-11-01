@@ -270,9 +270,9 @@ export function sendServerError(res, err) {
 }
 
 // ------------------------------------------------------------ IP blocklist ---
-// Owner-managed list in table `blocked_ips`. Cached per serverless instance for a
-// minute, so a change can take up to about a minute to apply everywhere.
-const BLOCK_CACHE_MS = 60 * 1000;
+// Owner-managed list in table `blocked_ips`. Cached per serverless instance for 5 seconds,
+// so a block or unblock applies everywhere within about 5 seconds.
+const BLOCK_CACHE_MS = 5 * 1000;
 let blockCache = { at: 0, ips: new Set() };
 let adminIpCache = { at: 0, ips: new Set() };
 

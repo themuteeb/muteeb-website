@@ -1,6 +1,8 @@
 // Sends one page view per browser tab, then a heartbeat every minute while the tab is visible.
 const SESSION_KEY = 'muteeb-visit-id';
-const HEARTBEAT_MS = 60 * 1000;
+export const BLOCKED_EVENT = 'muteeb:blocked';
+// Short heartbeat so a newly blocked visitor's open tab is restricted within about 15 seconds.
+const HEARTBEAT_MS = 15 * 1000;
 
 function newId(): string {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -32,9 +34,14 @@ function send(kind: 'view' | 'ping') {
     headers: { 'Content-Type': 'application/json' },
     body,
     keepalive: true,
-  }).catch(() => {
-    /* analytics must never affect the site */
-  });
+  })
+    .then((res) => {
+      // The server refuses blocked IPs with 403: tell the page to show the restricted notice.
+      if (res.status === 403) window.dispatchEvent(new Event(BLOCKED_EVENT));
+    })
+    .catch(() => {
+      /* analytics must never affect the site */
+    });
 }
 
 /** Starts tracking. Returns a cleanup function. */

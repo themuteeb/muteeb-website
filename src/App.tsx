@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { startVisitTracking } from './lib/visitTracking';
+import { startVisitTracking, BLOCKED_EVENT } from './lib/visitTracking';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
 import {
@@ -302,9 +302,36 @@ export default function App() {
     setIsAdminOpen(false);
   };
 
+  // A blocked visitor's tab re-checks access; once the owner unblocks them, reload to show the site.
+  useEffect(() => {
+    if (!accessBlocked) return;
+    const check = async () => {
+      try {
+        // Unique URL so no CDN cache answers; the check must reach the server with this visitor's IP.
+        const res = await fetch(`/api/settings?check=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) window.location.reload();
+      } catch {
+        /* still offline or blocked: keep the notice */
+      }
+    };
+    const timer = window.setInterval(() => void check(), 15000);
+    window.addEventListener('focus', check);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', check);
+    };
+  }, [accessBlocked]);
+
   // Keep the browser tab title and meta description in step with the owner's settings.
   // Anonymous visit counting for the admin analytics panel.
   useEffect(() => startVisitTracking(), []);
+
+  // The tracker reports a 403 as soon as the owner blocks this visitor; show the notice at once.
+  useEffect(() => {
+    const onBlocked = () => setAccessBlocked(true);
+    window.addEventListener(BLOCKED_EVENT, onBlocked);
+    return () => window.removeEventListener(BLOCKED_EVENT, onBlocked);
+  }, []);
 
   useEffect(() => {
     document.title = siteSettings.pageTitle || DEFAULT_PAGE_TITLE;
