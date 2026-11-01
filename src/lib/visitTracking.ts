@@ -27,7 +27,7 @@ function send(kind: 'view' | 'ping') {
     path: window.location.pathname || '/',
     referrer: document.referrer || '',
   });
-  fetch('/api/track', {
+  fetch('/api/analytics', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body,

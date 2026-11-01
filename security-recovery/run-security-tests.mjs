@@ -251,8 +251,9 @@ try {
   sec = await import('../api/_security.js');
   profileHandler = (await import('../api/profile.js')).default;
   settingsHandler = (await import('../api/settings.js')).default;
-  trackHandler = (await import('../api/track.js')).default;
-  analyticsHandler = (await import('../api/analytics.js')).default;
+  const analyticsModule = (await import('../api/analytics.js')).default;
+  trackHandler = analyticsModule;
+  analyticsHandler = analyticsModule;
   projectsHandler = (await import('../api/projects.js')).default;
   skillsHandler = (await import('../api/skills.js')).default;
   thoughtsHandler = (await import('../api/thoughts.js')).default;
@@ -863,8 +864,8 @@ await test('30. analytics: the admin analytics endpoint is owner-only', async ()
   resetDb({});
   let r = await call(analyticsHandler, { method: 'GET' });
   assertEqual(r.statusCode, 401, 'public read refused');
-  r = await call(analyticsHandler, { method: 'POST', headers: ADMIN, body: {} });
-  assertEqual(r.statusCode, 405, 'only GET is accepted');
+  r = await call(analyticsHandler, { method: 'PUT', headers: ADMIN, body: {} });
+  assertEqual(r.statusCode, 405, 'only GET and POST are accepted');
   r = await call(analyticsHandler, { method: 'GET', headers: { 'Cache-Control': 'x' } });
   assertEqual(r.statusCode, 401, 'no header refused');
 });
