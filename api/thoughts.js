@@ -1,5 +1,5 @@
-import supabase from './db-client.js';
-import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, sendServerError, setPublicReadCache } from './_security.js';
+import supabase from '../server/db-client.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, sendServerError, setPublicReadCache } from '../server/_security.js';
 
 // Column whitelist for admin edits. `likes_count` is deliberately excluded:
 // the ONLY write path for it is the atomic public "like" below, so nobody

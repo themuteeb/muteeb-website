@@ -121,7 +121,7 @@ views, totals by month and year (IST), and a visitor list with IP address, appro
 location (from Vercel's geo headers), device, browser, page, and referrer host.
 
 - Migration: run `supabase/migrations/2026-11-03_site_analytics.sql` in Supabase (SQL Editor).
-- `POST /api/track` (public) records one view per browser tab and a heartbeat each minute.
+- `POST /api/analytics` (public) records one view per browser tab and a heartbeat each minute.
   Bots are ignored. Only the server can write to the tables.
 - `GET /api/analytics` (owner only, never cached) returns the data.
 - Visitor IP addresses are stored in `site_sessions` and are kept indefinitely. Deleting them
@@ -154,7 +154,7 @@ The site is protected in three layers:
    matching the `ADMIN_PASSWORD` env var (constant-time compare, fails closed when
    the env var is unset). Public endpoints are read-only and return no secrets
    (`admin_passcode` is stripped from every response).
-3. **Shared hardening helpers** (`api/_security.js`) — origin allowlist CORS
+3. **Shared hardening helpers** (`server/_security.js`) — origin allowlist CORS
    (never `*`, unknown origins get no headers / 403 preflight), input validation
    (lengths, e-mail format, http(s)-only URLs, whitelisted visual options),
    strict JSON body parsing, and 500s that never echo internals.

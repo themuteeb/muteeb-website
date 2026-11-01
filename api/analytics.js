@@ -1,5 +1,5 @@
-import supabase from './db-client.js';
-import { setupCors, isAdminRequest, parseBody, sendServerError } from './_security.js';
+import supabase from '../server/db-client.js';
+import { setupCors, isAdminRequest, parseBody, sendServerError } from '../server/_security.js';
 
 // One function for visitor analytics (kept to one file: Vercel Hobby allows 12 functions).
 //   POST /api/analytics  public: records a page view or heartbeat from one browser tab.

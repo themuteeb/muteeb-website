@@ -1,5 +1,5 @@
-import supabase from './db-client.js';
-import { setupCors, isAdminRequest, parseBody, cleanText, isSafeUrl, isPositiveInt, sendServerError, setPublicReadCache } from './_security.js';
+import supabase from '../server/db-client.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, isSafeUrl, isPositiveInt, sendServerError, setPublicReadCache } from '../server/_security.js';
 
 const COLUMN_LIMITS = {
   title: 200,

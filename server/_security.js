@@ -1,5 +1,5 @@
 // ============================================================================
-// api/_security.js — shared hardening helpers for every /api function
+// server/_security.js — shared hardening helpers for every /api function
 // ----------------------------------------------------------------------------
 // muteeb.in is protected in three layers:
 //   1. Supabase RLS (enabled, no public policies — the anon key, which the

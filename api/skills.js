@@ -1,5 +1,5 @@
-import supabase from './db-client.js';
-import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, sendServerError, setPublicReadCache } from './_security.js';
+import supabase from '../server/db-client.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, sendServerError, setPublicReadCache } from '../server/_security.js';
 
 const VALID_COLUMNS = ['name', 'category', 'level', 'icon', 'display_order'];
 
