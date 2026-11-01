@@ -61,6 +61,25 @@ The passcode is verified by the API and kept only in page memory for the active
 admin session; saving content updates React state without reloading the document.
 Closing the studio or reloading the page clears that session.
 
+## Site controls
+
+The admin studio's **SITE CONTROLS** tab can turn the website off (visitors see a
+maintenance page; the admin studio stays reachable), set the default colour palette,
+show or hide sections, close the guestbook, and show an announcement banner.
+
+Run once in Supabase (SQL Editor) before using it:
+
+```sql
+alter table public.profile add column if not exists site_settings jsonb;
+```
+
+(also in `supabase/migrations/`). Settings are read from `/api/settings` (public, cached
+about 30 seconds) and written with `PUT /api/settings` (owner only, strictly validated).
+If the column is missing, the site keeps running with the default settings.
+
+`vercel.json` sets HSTS, `nosniff`, `X-Frame-Options: DENY`, a strict referrer policy and
+a restrictive permissions policy on every response.
+
 ## Keeping the database awake
 
 Supabase free projects pause after about a week without API activity. The workflow

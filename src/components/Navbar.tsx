@@ -15,11 +15,13 @@ import { NavbarMenu, type NavbarMenuItem } from './ui/navbar-menu';
 
 interface NavbarProps {
   activeSection: string;
+  sections?: Record<string, boolean>;
 }
 
 const SECTION_IDS = ['hero', 'work', 'stack', 'thoughts', 'guestbook', 'contact'];
 
-export const Navbar: React.FC<NavbarProps> = () => {
+export const Navbar: React.FC<NavbarProps> = ({ sections }) => {
+  const isVisible = (key: string) => sections?.[key] !== false;
   const { theme, setTheme, soundEnabled, toggleSound, playSound } = useTheme();
 
   const themeOptions: { id: ThemePreset; name: string; color: string }[] = [
@@ -128,6 +130,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
             >
               About
             </button>
+{isVisible('work') && (
             <button
               type="button"
               onClick={() => scrollTo('#work')}
@@ -136,9 +139,10 @@ export const Navbar: React.FC<NavbarProps> = () => {
             >
               Projects
             </button>
+)}
             <NavbarMenu
               label="Explore"
-              items={exploreItems}
+              items={exploreItems.filter((item) => isVisible(item.href?.slice(1) ?? ''))}
               onItemClick={(item) => item.href && scrollTo(item.href)}
             />
           </nav>
@@ -174,6 +178,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </button>
 
+{isVisible('contact') && (
             <button
               type="button"
               onClick={() => scrollTo('#contact')}
@@ -184,6 +189,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <Mail className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Say hi</span>
             </button>
+)}
           </div>
         </div>
       </div>

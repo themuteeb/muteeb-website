@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ThemePreset } from '../types';
+import { SITE_SETTINGS_CACHE_KEY } from '../lib/siteSettings';
 
 interface ThemeContextType {
   theme: ThemePreset;
@@ -11,6 +12,7 @@ interface ThemeContextType {
   bgAccentClass: string;
   borderAccentClass: string;
   textAccentClass: string;
+  applySiteDefaultTheme: (theme: ThemePreset) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -32,8 +34,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
       if (savedTheme === 'lime') return 'white';
       if (savedTheme === 'coral') return 'pink';
-      return savedTheme && Object.prototype.hasOwnProperty.call(THEME_COLORS, savedTheme)
-        ? savedTheme as ThemePreset
+      if (savedTheme && Object.prototype.hasOwnProperty.call(THEME_COLORS, savedTheme)) {
+        return savedTheme as ThemePreset;
+      }
+      // No visitor choice yet: use the palette the owner set for the site (cached).
+      const cachedSite = JSON.parse(window.localStorage.getItem(SITE_SETTINGS_CACHE_KEY) || 'null') as { palette?: unknown } | null;
+      return cachedSite && typeof cachedSite.palette === 'string' && Object.prototype.hasOwnProperty.call(THEME_COLORS, cachedSite.palette)
+        ? (cachedSite.palette as ThemePreset)
         : 'neon';
     } catch {
       return 'neon';
@@ -96,7 +103,26 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setTheme = (newTheme: ThemePreset) => {
     setThemeState(newTheme);
+    try {
+      // Only an explicit visitor choice is remembered.
+      window.localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    } catch {
+      // The current tab still gets the selected accent when storage is unavailable.
+    }
     playSound('toggle');
+  };
+
+  // Owner's site-wide palette: applies silently, and only while the visitor has not chosen one.
+  const applySiteDefaultTheme = (siteTheme: ThemePreset) => {
+    let hasVisitorChoice = false;
+    try {
+      hasVisitorChoice = Boolean(window.localStorage.getItem(THEME_STORAGE_KEY));
+    } catch {
+      hasVisitorChoice = false;
+    }
+    if (!hasVisitorChoice && Object.prototype.hasOwnProperty.call(THEME_COLORS, siteTheme)) {
+      setThemeState(siteTheme);
+    }
   };
 
   const toggleSound = () => {
@@ -112,11 +138,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--color-accent-bright', c.bright);
     root.style.setProperty('--color-accent-deep', c.deep);
     root.style.setProperty('--color-accent-foreground', c.foreground);
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-    } catch {
-      // The current tab still gets the selected accent when storage is unavailable.
-    }
   }, [theme]);
 
   const themeClasses = {
@@ -134,6 +155,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         soundEnabled,
         toggleSound,
         playSound,
+        applySiteDefaultTheme,
         ...themeClasses,
       }}
     >
