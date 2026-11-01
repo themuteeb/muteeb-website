@@ -302,6 +302,25 @@ export default function App() {
     setIsAdminOpen(false);
   };
 
+  // A blocked visitor's tab re-checks access; once the owner unblocks them, reload to show the site.
+  useEffect(() => {
+    if (!accessBlocked) return;
+    const check = async () => {
+      try {
+        const res = await fetch('/api/settings', { cache: 'no-store' });
+        if (res.ok) window.location.reload();
+      } catch {
+        /* still offline or blocked: keep the notice */
+      }
+    };
+    const timer = window.setInterval(() => void check(), 15000);
+    window.addEventListener('focus', check);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', check);
+    };
+  }, [accessBlocked]);
+
   // Keep the browser tab title and meta description in step with the owner's settings.
   // Anonymous visit counting for the admin analytics panel.
   useEffect(() => startVisitTracking(), []);
