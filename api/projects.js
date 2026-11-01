@@ -1,7 +1,5 @@
 import supabase from './db-client.js';
-import {
-  setupCors, isAdminRequest, parseBody, cleanText, isSafeUrl, isPositiveInt, sendServerError,
-} from './_security.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, isSafeUrl, isPositiveInt, sendServerError, setPublicReadCache } from './_security.js';
 
 const COLUMN_LIMITS = {
   title: 200,
@@ -108,6 +106,7 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
+      setPublicReadCache(req, res);
       const { data, error } = await supabase
         .from('projects')
         .select('*')

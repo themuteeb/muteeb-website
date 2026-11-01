@@ -1,7 +1,5 @@
 import supabase from './db-client.js';
-import {
-  setupCors, isAdminRequest, parseBody, cleanText, sendServerError,
-} from './_security.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, sendServerError, setPublicReadCache } from './_security.js';
 
 // Column whitelist for owner updates. `admin_passcode` is deliberately NOT
 // here: it can never be read back (stripped below) and never written via API.
@@ -72,6 +70,7 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
+      setPublicReadCache(req, res);
       const { data, error } = await supabase
         .from('profile')
         .select('*')

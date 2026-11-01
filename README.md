@@ -61,6 +61,21 @@ The passcode is verified by the API and kept only in page memory for the active
 admin session; saving content updates React state without reloading the document.
 Closing the studio or reloading the page clears that session.
 
+## Keeping the database awake
+
+Supabase free projects pause after about a week without API activity. The workflow
+`.github/workflows/keep-supabase-awake.yml` runs every 3 days and reads from the
+database. It needs two repository secrets (GitHub → Settings → Secrets and variables → Actions):
+
+| Secret              | Value                                   |
+| ------------------- | --------------------------------------- |
+| `SUPABASE_URL`      | Same as `NEXT_PUBLIC_SUPABASE_URL`      |
+| `SUPABASE_ANON_KEY` | Same as `VITE_SUPABASE_ANON_KEY`        |
+
+Public read endpoints (`/api/profile`, `/api/projects`, `/api/thoughts`, `/api/skills`,
+`/api/guestbook`) send `Cache-Control: public, s-maxage=60, stale-while-revalidate=3600`,
+so repeat visitors get content from the CDN immediately. Admin responses are never cached.
+
 ## Security
 
 The site is protected in three layers:

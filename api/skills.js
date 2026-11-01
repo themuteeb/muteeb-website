@@ -1,7 +1,5 @@
 import supabase from './db-client.js';
-import {
-  setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, sendServerError,
-} from './_security.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, sendServerError, setPublicReadCache } from './_security.js';
 
 const VALID_COLUMNS = ['name', 'category', 'level', 'icon', 'display_order'];
 
@@ -49,6 +47,7 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
+      setPublicReadCache(req, res);
       const { data, error } = await supabase
         .from('skills')
         .select('*')
