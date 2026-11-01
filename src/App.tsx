@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { startVisitTracking } from './lib/visitTracking';
+import { startVisitTracking, BLOCKED_EVENT } from './lib/visitTracking';
 import { useAuth } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
 import {
@@ -307,7 +307,8 @@ export default function App() {
     if (!accessBlocked) return;
     const check = async () => {
       try {
-        const res = await fetch('/api/settings', { cache: 'no-store' });
+        // Unique URL so no CDN cache answers; the check must reach the server with this visitor's IP.
+        const res = await fetch(`/api/settings?check=${Date.now()}`, { cache: 'no-store' });
         if (res.ok) window.location.reload();
       } catch {
         /* still offline or blocked: keep the notice */
@@ -324,6 +325,13 @@ export default function App() {
   // Keep the browser tab title and meta description in step with the owner's settings.
   // Anonymous visit counting for the admin analytics panel.
   useEffect(() => startVisitTracking(), []);
+
+  // The tracker reports a 403 as soon as the owner blocks this visitor; show the notice at once.
+  useEffect(() => {
+    const onBlocked = () => setAccessBlocked(true);
+    window.addEventListener(BLOCKED_EVENT, onBlocked);
+    return () => window.removeEventListener(BLOCKED_EVENT, onBlocked);
+  }, []);
 
   useEffect(() => {
     document.title = siteSettings.pageTitle || DEFAULT_PAGE_TITLE;
