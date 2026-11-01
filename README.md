@@ -80,6 +80,30 @@ If the column is missing, the site keeps running with the default settings.
 `vercel.json` sets HSTS, `nosniff`, `X-Frame-Options: DENY`, a strict referrer policy and
 a restrictive permissions policy on every response.
 
+## Admin two-factor login (email codes via Resend)
+
+Owner login is two steps: the admin password, then a 6-digit code emailed through
+[Resend](https://resend.com). A successful login gives an 8-hour session. The password
+alone no longer unlocks the admin API.
+
+Setup:
+
+1. Run `supabase/migrations/2026-11-01_admin_2fa.sql` in Supabase (SQL Editor).
+2. In Vercel (project → Settings → Environment Variables), set as **Secret** for Production and Preview:
+
+| Variable | Value |
+| --- | --- |
+| `ADMIN_PASSWORD` | the admin password (step 1) |
+| `RESEND_API_KEY` | Resend API key with sending access |
+| `ADMIN_2FA_EMAIL` | the inbox that receives login codes |
+| `ADMIN_2FA_FROM` | sender on a verified Resend domain, e.g. `alerts@muteeb.in` |
+| `ADMIN_2FA_SECRET` | random 64+ character string, used to sign sessions and codes |
+
+3. Redeploy. Until every variable is set, the login returns "not configured" and the admin studio stays closed.
+
+Codes expire after 10 minutes, lock after 3 wrong tries, and at most 5 codes can be requested per 15 minutes.
+Changing `ADMIN_2FA_SECRET` signs everyone out.
+
 ## Keeping the database awake
 
 Supabase free projects pause after about a week without API activity. The workflow

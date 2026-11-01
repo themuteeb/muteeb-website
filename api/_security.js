@@ -13,7 +13,7 @@
 //     admin auth (X-Admin-Auth header matching the ADMIN_PASSWORD env var)
 // ============================================================================
 
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
 // ---------------------------------------------------------------- constants ---
 
@@ -53,17 +53,54 @@ export function timingSafeStrEqual(a, b) {
   return timingSafeEqual(ha, hb);
 }
 
+// ------------------------------------------------------------ admin session ---
+// After the password AND the emailed 6-digit code are verified (api/auth.js), the
+// owner receives a signed session token. The X-Admin-Auth header carries that token.
+// The password alone never grants admin API access.
+
+const SESSION_PREFIX = 's1';
+export const ADMIN_SESSION_HOURS = 8;
+
+function b64urlEncode(text) {
+  return Buffer.from(text, 'utf8').toString('base64url');
+}
+
+function sessionSignature(secret, payload) {
+  return createHmac('sha256', secret).update(`admin-session|${payload}`).digest('hex');
+}
+
+/** Create a signed admin session token that expires after ADMIN_SESSION_HOURS. */
+export function issueSessionToken(secret, now = Date.now()) {
+  const exp = Math.floor(now / 1000) + ADMIN_SESSION_HOURS * 3600;
+  const payload = b64urlEncode(JSON.stringify({ exp }));
+  return `${SESSION_PREFIX}.${payload}.${sessionSignature(secret, payload)}`;
+}
+
+/** Verify a session token: signature (constant time) and expiry. */
+export function verifySessionToken(token, secret, now = Date.now()) {
+  if (!secret || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  if (parts.length !== 3 || parts[0] !== SESSION_PREFIX) return false;
+  const [, payload, signature] = parts;
+  if (!timingSafeStrEqual(signature, sessionSignature(secret, payload))) return false;
+  try {
+    const { exp } = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return Number.isInteger(exp) && exp > Math.floor(now / 1000);
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Is this request from the site owner?
- * Reads ADMIN_PASSWORD lazily (fail closed if unset), requires the
- * X-Admin-Auth header, and compares it in constant time.
+ * Is this request from the site owner with a valid, unexpired 2FA session?
+ * Fails closed when ADMIN_2FA_SECRET is unset.
  */
 export function isAdminRequest(req) {
-  const configured = process.env.ADMIN_PASSWORD;
-  if (!configured) return false;
+  const secret = process.env.ADMIN_2FA_SECRET;
+  if (!secret) return false;
   const header = req && req.headers ? req.headers['x-admin-auth'] : undefined;
   if (typeof header !== 'string' || header.length === 0) return false;
-  return timingSafeStrEqual(header, configured);
+  return verifySessionToken(header, secret);
 }
 
 // -------------------------------------------------------------------- CORS ----
