@@ -10,6 +10,7 @@ import {
   GuestbookRateLimitError,
 } from '../lib/guestbookRateLimit';
 import { FormStatus, type FormStatusMessage } from './FormStatus';
+import { HoverBorderGradient } from './ui/hover-border-gradient';
 import { TextGenerateEffect } from './ui/text-generate-effect';
 import { CardStack } from './ui/card-stack';
 import { AnimatedModal } from './ui/animated-modal';
@@ -141,14 +142,15 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
               />
             </div>
             {acceptingEntries ? (
-            <button
+            <HoverBorderGradient
+              containerClassName="shrink-0 rounded-full"
               type="button"
               onClick={openForm}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] text-accent-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] text-accent-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
             >
               <PenLine className="h-4 w-4" />
               leave a message
-            </button>
+            </HoverBorderGradient>
             ) : (
               <p className="shrink-0 rounded-full border border-line px-4 py-2 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-3">
                 guestbook is closed
@@ -295,6 +297,7 @@ export const GuestbookSection: React.FC<GuestbookProps> = ({ entries, onAddEntry
               idleContent="post message"
               loadingContent="transmitting…"
               successContent="message sent"
+              hoverBorder
             />
           </form>
         </AnimatedModal>

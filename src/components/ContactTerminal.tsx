@@ -256,6 +256,7 @@ export const ContactTerminal: React.FC<ContactTerminalProps> = ({ email, onSendM
                     loadingContent="transmitting…"
                     successContent="message sent"
                     errorContent="failed — try again"
+                    hoverBorder
                     className="py-4"
                   />
                 </form>
