@@ -125,7 +125,10 @@ export function isCorsAllowed(req) {
  * Admin responses are never shared-cached.
  */
 export function setPublicReadCache(req, res) {
-  if (isAdminRequest(req)) {
+  // Any request carrying the admin header (valid or not) must never be shared-cached.
+  // Vary keeps the CDN's cached visitor copy separate from admin requests.
+  res.setHeader('Vary', 'X-Admin-Auth');
+  if (isAdminRequest(req) || (req && req.headers && req.headers['x-admin-auth'])) {
     res.setHeader('Cache-Control', 'private, no-store');
   } else {
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=3600');
