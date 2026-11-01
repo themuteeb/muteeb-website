@@ -1,7 +1,7 @@
-import supabase from './db-client.js';
+import supabase from '../server/db-client.js';
 import {
   setupCors, isAdminRequest, parseBody, sendServerError,
-} from './_security.js';
+} from '../server/_security.js';
 
 // Site-wide controls managed from the admin studio. Stored as jsonb on the
 // single profile row (column `site_settings`, see supabase/migrations).

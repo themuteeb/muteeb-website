@@ -248,7 +248,7 @@ let sec;
 let trackHandler, analyticsHandler, settingsHandler, profileHandler, projectsHandler, skillsHandler, thoughtsHandler,
     guestbookHandler, messagesHandler, uploadHandler;
 try {
-  sec = await import('../api/_security.js');
+  sec = await import('../server/_security.js');
   profileHandler = (await import('../api/profile.js')).default;
   settingsHandler = (await import('../api/settings.js')).default;
   const analyticsModule = (await import('../api/analytics.js')).default;
@@ -270,7 +270,7 @@ try {
 // Tiny harness: Vercel-style req/res + assertions + test runner.
 // ---------------------------------------------------------------------------
 // Admin API access requires a 2FA session token, not the password.
-const { issueSessionToken } = await import('../api/_security.js');
+const { issueSessionToken } = await import('../server/_security.js');
 const ADMIN = { 'x-admin-auth': issueSessionToken(process.env.ADMIN_2FA_SECRET, 0) };
 const WRONG_ADMIN = { 'x-admin-auth': 'totally-wrong-pass' };
 

@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
-import supabase from './db-client.js';
-import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, ALLOWED_AVATAR_COLORS, ALLOWED_BADGES, sendServerError, setPublicReadCache } from './_security.js';
+import supabase from '../server/db-client.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, isPositiveInt, ALLOWED_AVATAR_COLORS, ALLOWED_BADGES, sendServerError, setPublicReadCache } from '../server/_security.js';
 
 const GUESTBOOK_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 const RATE_LIMIT_TOMBSTONE_NAME = '__GUESTBOOK_RATE_LIMIT__';

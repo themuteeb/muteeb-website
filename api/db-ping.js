@@ -1,4 +1,4 @@
-import { setupCors, isAdminRequest } from './_security.js';
+import { setupCors, isAdminRequest } from '../server/_security.js';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 

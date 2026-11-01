@@ -1,7 +1,7 @@
-import supabase from './db-client.js';
+import supabase from '../server/db-client.js';
 import {
   setupCors, isAdminRequest, parseBody, cleanText, isValidEmail, isPositiveInt, sendServerError,
-} from './_security.js';
+} from '../server/_security.js';
 
 export default async function handler(req, res) {
   const corsOk = setupCors(req, res);

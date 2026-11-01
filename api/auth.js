@@ -1,8 +1,8 @@
 import { createHmac, randomInt, randomUUID } from 'node:crypto';
-import supabase from './db-client.js';
+import supabase from '../server/db-client.js';
 import {
   setupCors, parseBody, sendServerError, timingSafeStrEqual, issueSessionToken, getSessionEpoch,
-} from './_security.js';
+} from '../server/_security.js';
 
 // Two-step owner login:
 //   1. { action: 'start', passcode }            -> emails a 6-digit code, returns a challenge id

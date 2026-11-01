@@ -154,7 +154,7 @@ The site is protected in three layers:
    matching the `ADMIN_PASSWORD` env var (constant-time compare, fails closed when
    the env var is unset). Public endpoints are read-only and return no secrets
    (`admin_passcode` is stripped from every response).
-3. **Shared hardening helpers** (`api/_security.js`) — origin allowlist CORS
+3. **Shared hardening helpers** (`server/_security.js`) — origin allowlist CORS
    (never `*`, unknown origins get no headers / 403 preflight), input validation
    (lengths, e-mail format, http(s)-only URLs, whitelisted visual options),
    strict JSON body parsing, and 500s that never echo internals.

@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   setupCors, isAdminRequest, parseBody, cleanText,
   MAX_UPLOAD_BYTES, ALLOWED_UPLOAD_CONTENT_TYPES, ALLOWED_UPLOAD_FOLDERS, sendServerError,
-} from './_security.js';
+} from '../server/_security.js';
 
 const storageClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,

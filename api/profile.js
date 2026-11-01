@@ -1,5 +1,5 @@
-import supabase from './db-client.js';
-import { setupCors, isAdminRequest, parseBody, cleanText, sendServerError, setPublicReadCache } from './_security.js';
+import supabase from '../server/db-client.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, sendServerError, setPublicReadCache } from '../server/_security.js';
 
 // Column whitelist for owner updates. `admin_passcode` is deliberately NOT
 // here: it can never be read back (stripped below) and never written via API.
