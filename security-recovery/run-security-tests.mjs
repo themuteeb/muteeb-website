@@ -901,6 +901,18 @@ await test('33. blocklist: block actions are owner-only and refuse invalid or se
 });
 
 // ---------------------------------------------------------------------------
+// Admin IPs are never blocked
+// ---------------------------------------------------------------------------
+await test('34. blocklist: an IP that logged into the admin panel is never blocked or blockable', async () => {
+  resetDb({ profile: [{ id: 1, full_name: 'Muteeb' }], blocked_ips: [{ ip: '198.51.100.5' }], admin_ips: [{ ip: '198.51.100.5' }] });
+  sec.invalidateBlockCache();
+  let r = await call(profileHandler, { method: 'GET', headers: { 'x-real-ip': '198.51.100.5' } });
+  assertEqual(r.statusCode, 200, 'admin IP is served even when listed as blocked');
+  r = await call(analyticsHandler, { method: 'PUT', headers: { ...ADMIN, 'x-real-ip': '198.51.100.9' }, body: { ip: '198.51.100.5' } });
+  assertEqual(r.statusCode, 400, 'an admin IP cannot be added to the blocklist');
+});
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 console.log('');

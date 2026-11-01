@@ -2,6 +2,7 @@ import { createHmac, randomInt, randomUUID } from 'node:crypto';
 import supabase from '../server/db-client.js';
 import {
   setupCors, parseBody, sendServerError, timingSafeStrEqual, issueSessionToken, getSessionEpoch,
+  rememberAdminIp,
 } from '../server/_security.js';
 
 // Two-step owner login:
@@ -171,6 +172,7 @@ export default async function handler(req, res) {
 
       const epoch = await getSessionEpoch();
       if (epoch === null) throw new Error('session epoch unavailable');
+      await rememberAdminIp(req);
       return res.status(200).json({ token: issueSessionToken(secret, epoch) });
     }
 

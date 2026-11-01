@@ -571,18 +571,6 @@ export default function App() {
   // admin studio) still sees everything, and the admin entry points always work.
   const siteOffForVisitor = !siteSettings.siteEnabled && !adminPasscode;
 
-  if (accessBlocked) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-canvas p-6 text-center font-mono">
-        <div className="max-w-md space-y-3">
-          <div className="text-sm font-bold uppercase tracking-widest text-red-400">access restricted</div>
-          <p className="font-sans text-sm leading-relaxed text-ink-3">
-            Access to this site from your network has been restricted by the site owner.
-          </p>
-        </div>
-      </div>
-    );
-  }
   const sections = siteSettings.sections;
 
   return (
@@ -627,6 +615,17 @@ export default function App() {
 
           <Footer profile={profile} />
         </>
+      )}
+
+      {accessBlocked && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/90 p-6 text-center font-mono backdrop-blur-lg">
+          <div className="max-w-md space-y-3">
+            <div className="text-sm font-bold uppercase tracking-widest text-red-400">access restricted</div>
+            <p className="font-sans text-sm leading-relaxed text-ink-3">
+              Access to this site from your network has been restricted by the site owner.
+            </p>
+          </div>
+        </div>
       )}
 
       {isAdminOpen && (

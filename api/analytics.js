@@ -1,7 +1,7 @@
 import supabase from '../server/db-client.js';
 import {
   setupCors, isAdminRequest, parseBody, sendServerError, denyIfBlocked,
-  getClientIp, isValidIp, invalidateBlockCache, cleanText,
+  getClientIp, isValidIp, invalidateBlockCache, cleanText, isAdminIp,
 } from '../server/_security.js';
 
 // One function for visitor analytics and the IP blocklist (kept to one file: Vercel Hobby allows 12 functions).
@@ -163,6 +163,9 @@ async function handleBlock(req, res) {
     if (req.method === 'PUT') {
       if (ip === getClientIp(req)) {
         return res.status(400).json({ error: 'You cannot block the IP address you are using now.' });
+      }
+      if (await isAdminIp(ip)) {
+        return res.status(400).json({ error: 'This IP has logged into the admin panel, so it cannot be blocked.' });
       }
       const reason = cleanText(body.reason ?? '', 120) || '';
       const { error: writeError } = await supabase
