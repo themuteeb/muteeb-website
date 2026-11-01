@@ -941,6 +941,27 @@ await test('35. edge middleware: blocked IPs get 403; admin and unknown IPs pass
   }
 });
 
+await test('37. edge middleware: admin list is read only for blocked visitors', async () => {
+  const realFetch = globalThis.fetch;
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.test';
+  process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-key';
+  const calls = [];
+  globalThis.fetch = async (url) => {
+    const table = String(url).split('/rest/v1/')[1].split('?')[0];
+    calls.push(table);
+    return new Response(JSON.stringify(table === 'blocked_ips' ? [{ ip: '198.51.100.7' }] : []), { status: 200 });
+  };
+  try {
+    const mw = (await import('../middleware.js?case=lazy')).default;
+    await mw(new Request('https://muteeb.in/', { headers: { 'x-real-ip': '198.51.100.9' } }));
+    assertEqual(calls.filter((t) => t === 'admin_ips').length, 0, 'admin list not read for an unblocked visitor');
+    await mw(new Request('https://muteeb.in/', { headers: { 'x-real-ip': '198.51.100.7' } }));
+    assertEqual(calls.filter((t) => t === 'admin_ips').length, 1, 'admin list read for a blocked visitor');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Admin analytics: each list gets its own data
 // ---------------------------------------------------------------------------

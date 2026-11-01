@@ -354,9 +354,10 @@ export async function denyIfBlocked(req, res) {
   if (await isAdminRequest(req)) return false;
   const ip = getClientIp(req);
   if (!ip) return false;
-  if (await isAdminIp(ip)) return false;
+  // Most visitors are not blocked, so check the blocklist first and only then look at admin IPs.
   const blocked = await loadBlockedIps();
   if (!blocked.has(ip)) return false;
+  if (await isAdminIp(ip)) return false;
   res.setHeader('Cache-Control', 'private, no-store');
   res.status(403).json({ error: 'Access from your network is restricted.', blocked: true });
   return true;

@@ -1,4 +1,4 @@
-// Sends one page view per browser tab, then a heartbeat every minute while the tab is visible.
+// Sends one page view per browser tab, then a heartbeat every 15 seconds while the tab is visible.
 const SESSION_KEY = 'muteeb-visit-id';
 export const BLOCKED_EVENT = 'muteeb:blocked';
 // Short heartbeat so a newly blocked visitor's open tab is restricted within about 15 seconds.

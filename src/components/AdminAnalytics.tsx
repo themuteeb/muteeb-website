@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useThemedDialog } from './ui/themed-dialog';
 
 interface Visitor {
   session_id: string;
@@ -45,6 +46,7 @@ const Card: React.FC<{ label: string; value: number | string }> = ({ label, valu
 );
 
 export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode }) => {
+  const dialog = useThemedDialog();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -95,14 +97,14 @@ export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode
   const blockedSet = new Set((data?.blockedIps || []).map((b) => b.ip));
 
   // One button per visitor: "block" when the IP is free, "unblock" when it is already blocked.
-  const toggleVisitorBlock = (ip: string, isBlocked: boolean) => {
+  const toggleVisitorBlock = async (ip: string, isBlocked: boolean) => {
     if (!ip) return;
     if (isBlocked) {
-      if (!window.confirm(`Unblock ${ip}?`)) return;
+      if (!(await dialog.confirm(`Unblock ${ip}?`))) return;
       void changeBlock('DELETE', ip);
       return;
     }
-    if (!window.confirm(`Block ${ip}? That visitor will be refused the site's data within about a minute.`)) return;
+    if (!(await dialog.confirm(`Block ${ip}? That visitor will be refused the site's data and shown a restricted notice.`))) return;
     void changeBlock('PUT', ip, 'blocked from analytics');
   };
 
@@ -110,7 +112,7 @@ export const AdminAnalytics: React.FC<{ passcode: string | null }> = ({ passcode
     event.preventDefault();
     const ip = manualIp.trim();
     if (!ip) return;
-    if (!window.confirm(`Block ${ip}?`)) return;
+    if (!(await dialog.confirm(`Block ${ip}?`))) return;
     if (await changeBlock('PUT', ip, manualReason.trim())) {
       setManualIp('');
       setManualReason('');

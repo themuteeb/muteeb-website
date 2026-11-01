@@ -4,12 +4,15 @@ import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { ThemedDialogProvider } from './components/ui/themed-dialog'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <ThemeProvider>
-        <App />
+        <ThemedDialogProvider>
+          <App />
+        </ThemedDialogProvider>
       </ThemeProvider>
     </AuthProvider>
   </StrictMode>,
