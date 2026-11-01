@@ -1,5 +1,5 @@
 import supabase from '../server/db-client.js';
-import { setupCors, isAdminRequest, parseBody, cleanText, sendServerError, setPublicReadCache } from '../server/_security.js';
+import { setupCors, isAdminRequest, parseBody, cleanText, sendServerError, setPublicReadCache, denyIfBlocked } from '../server/_security.js';
 
 // Column whitelist for owner updates. `admin_passcode` is deliberately NOT
 // here: it can never be read back (stripped below) and never written via API.
@@ -65,6 +65,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return corsOk ? res.status(204).end() : res.status(403).end();
   }
+  if (await denyIfBlocked(req, res)) return;
 
   const isAdmin = (await isAdminRequest(req));
 

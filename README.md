@@ -124,6 +124,13 @@ location (from Vercel's geo headers), device, browser, page, and referrer host.
 - `POST /api/analytics` (public) records one view per browser tab and a heartbeat each minute.
   Bots are ignored. Only the server can write to the tables.
 - `GET /api/analytics` (owner only, never cached) returns the data.
+- **IP blocklist:** run `supabase/migrations/2026-11-04_ip_blocklist.sql` first. In the ANALYTICS
+  tab, click **block** on a visitor, or type an IP under *Block an IP address*. The owner can
+  unblock from the list. `PUT`/`DELETE /api/analytics` (owner only) manage it. Public data
+  endpoints return 403 to blocked IPs, and the site shows a restricted-access notice. Admin
+  sessions are never blocked, and you cannot block the IP you are using. Changes take about a
+  minute. Static files and cached pages are not IP-filtered. For a hard edge block, add an IP
+  rule in Vercel's Firewall.
 - Visitor IP addresses are stored in `site_sessions` and are kept indefinitely. Deleting them
   is a manual SQL step. Under India's DPDP Act, visitors should be told this is collected.
 

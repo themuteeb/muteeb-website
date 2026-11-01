@@ -864,10 +864,40 @@ await test('30. analytics: the admin analytics endpoint is owner-only', async ()
   resetDb({});
   let r = await call(analyticsHandler, { method: 'GET' });
   assertEqual(r.statusCode, 401, 'public read refused');
-  r = await call(analyticsHandler, { method: 'PUT', headers: ADMIN, body: {} });
-  assertEqual(r.statusCode, 405, 'only GET and POST are accepted');
+  r = await call(analyticsHandler, { method: 'PATCH', headers: ADMIN, body: {} });
+  assertEqual(r.statusCode, 405, 'PATCH is not accepted');
   r = await call(analyticsHandler, { method: 'GET', headers: { 'Cache-Control': 'x' } });
   assertEqual(r.statusCode, 401, 'no header refused');
+});
+
+// ---------------------------------------------------------------------------
+// IP blocklist
+// ---------------------------------------------------------------------------
+await test('31. blocklist: a blocked visitor is refused public data; others are not', async () => {
+  resetDb({ profile: [{ id: 1, full_name: 'Muteeb' }], blocked_ips: [{ ip: '198.51.100.9' }] });
+  sec.invalidateBlockCache();
+  let r = await call(profileHandler, { method: 'GET', headers: { 'x-real-ip': '198.51.100.9' } });
+  assertEqual(r.statusCode, 403, 'blocked IP refused');
+  assert(r.jsonBody && r.jsonBody.blocked === true, 'blocked flag returned for the notice');
+  r = await call(profileHandler, { method: 'GET', headers: { 'x-real-ip': '198.51.100.10' } });
+  assertEqual(r.statusCode, 200, 'unblocked IP still served');
+});
+
+await test('32. blocklist: an admin session is never blocked (owner cannot lock themselves out)', async () => {
+  resetDb({ profile: [{ id: 1, full_name: 'Muteeb' }], blocked_ips: [{ ip: '198.51.100.9' }] });
+  sec.invalidateBlockCache();
+  const r = await call(profileHandler, { method: 'GET', headers: { ...ADMIN, 'x-real-ip': '198.51.100.9' } });
+  assertEqual(r.statusCode, 200, 'admin request from a blocked IP still works');
+});
+
+await test('33. blocklist: block actions are owner-only and refuse invalid or self addresses', async () => {
+  resetDb({});
+  let r = await call(analyticsHandler, { method: 'PUT', body: { ip: '198.51.100.9' } });
+  assertEqual(r.statusCode, 401, 'public block refused');
+  r = await call(analyticsHandler, { method: 'PUT', headers: ADMIN, body: { ip: 'not-an-ip' } });
+  assertEqual(r.statusCode, 400, 'invalid address refused');
+  r = await call(analyticsHandler, { method: 'PUT', headers: { ...ADMIN, 'x-real-ip': '198.51.100.9' }, body: { ip: '198.51.100.9' } });
+  assertEqual(r.statusCode, 400, 'the owner cannot block the IP they are using');
 });
 
 // ---------------------------------------------------------------------------

@@ -1,21 +1,18 @@
 import supabase from '../server/db-client.js';
-import { setupCors, isAdminRequest, parseBody, sendServerError } from '../server/_security.js';
+import {
+  setupCors, isAdminRequest, parseBody, sendServerError, denyIfBlocked,
+  getClientIp, isValidIp, invalidateBlockCache, cleanText,
+} from '../server/_security.js';
 
-// One function for visitor analytics (kept to one file: Vercel Hobby allows 12 functions).
-//   POST /api/analytics  public: records a page view or heartbeat from one browser tab.
-//   GET  /api/analytics  owner only: returns the admin analytics data. Never cached.
+// One function for visitor analytics and the IP blocklist (kept to one file: Vercel Hobby allows 12 functions).
+//   POST   /api/analytics  public: records a page view or heartbeat from one browser tab.
+//   GET    /api/analytics  owner only: returns the admin analytics data and blocked IPs.
+//   PUT    /api/analytics  owner only: block an IP  { ip, reason }.
+//   DELETE /api/analytics  owner only: unblock an IP { ip }.
 const SESSION_ID = /^[a-zA-Z0-9-]{16,64}$/;
 const BOT_UA = /bot|crawl|spider|slurp|headless|preview|monitor|lighthouse/i;
 const LIVE_WINDOW_MS = 3 * 60 * 1000;
 const RECENT_LIMIT = 500;
-
-function clientIp(req) {
-  const realIp = req.headers?.['x-real-ip'];
-  if (typeof realIp === 'string' && realIp.trim()) return realIp.trim().slice(0, 64);
-  const forwarded = req.headers?.['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.trim()) return forwarded.split(',')[0].trim().slice(0, 64);
-  return '';
-}
 
 function headerText(req, name) {
   const value = req.headers?.[name];
@@ -71,7 +68,7 @@ async function handleTrack(req, res) {
     p_kind: kind,
     p_path: path,
     p_referrer: refererHost(body.referrer),
-    p_ip: clientIp(req),
+    p_ip: getClientIp(req),
     p_country: headerText(req, 'x-vercel-ip-country'),
     p_region: headerText(req, 'x-vercel-ip-country-region'),
     p_city: headerText(req, 'x-vercel-ip-city'),
@@ -110,8 +107,9 @@ async function handleReport(req, res) {
   res.setHeader('Cache-Control', 'private, no-store');
 
   try {
-    const [dailyRes, sessionsRes] = await Promise.all([
+    const [dailyRes, sessionsRes, blockedRes] = await Promise.all([
       supabase.from('site_daily_stats').select('day, visits, views').order('day', { ascending: false }),
+      supabase.from('blocked_ips').select('ip, reason, created_at').order('created_at', { ascending: false }).limit(500),
       supabase
         .from('site_sessions')
         .select('session_id, first_seen, last_seen, views, last_path, referrer, ip, country, region, city, device, browser')
@@ -120,6 +118,7 @@ async function handleReport(req, res) {
     ]);
     if (dailyRes.error) throw dailyRes.error;
     if (sessionsRes.error) throw sessionsRes.error;
+    if (blockedRes.error) throw blockedRes.error;
 
     const daily = dailyRes.data || [];
     const sessions = sessionsRes.data || [];
@@ -141,7 +140,41 @@ async function handleReport(req, res) {
       monthly: groupTotals(daily, monthKey).slice(0, 24),
       yearly: groupTotals(daily, yearKey),
       recentVisitors: sessions,
+      blockedIps: blockedRes.data || [],
     });
+  } catch (err) {
+    sendServerError(res, err);
+  }
+}
+
+// Owner-only blocklist actions. The owner's own IP can never be blocked here.
+async function handleBlock(req, res) {
+  if (!(await isAdminRequest(req))) {
+    return res.status(401).json({ error: 'Unauthorized. Admin authentication required.' });
+  }
+  res.setHeader('Cache-Control', 'private, no-store');
+  const { ok, status, error, body } = parseBody(req);
+  if (!ok) return res.status(status).json({ error });
+
+  const ip = typeof body.ip === 'string' ? body.ip.trim() : '';
+  if (!isValidIp(ip)) return res.status(400).json({ error: 'Enter a valid IPv4 or IPv6 address.' });
+
+  try {
+    if (req.method === 'PUT') {
+      if (ip === getClientIp(req)) {
+        return res.status(400).json({ error: 'You cannot block the IP address you are using now.' });
+      }
+      const reason = cleanText(body.reason ?? '', 120) || '';
+      const { error: writeError } = await supabase
+        .from('blocked_ips')
+        .upsert([{ ip, reason }], { onConflict: 'ip' });
+      if (writeError) throw writeError;
+    } else {
+      const { error: deleteError } = await supabase.from('blocked_ips').delete().eq('ip', ip);
+      if (deleteError) throw deleteError;
+    }
+    invalidateBlockCache();
+    return res.status(200).json({ ip, blocked: req.method === 'PUT' });
   } catch (err) {
     sendServerError(res, err);
   }
@@ -152,11 +185,13 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return corsOk ? res.status(204).end() : res.status(403).end();
   }
+  if (await denyIfBlocked(req, res)) return;
   res.setHeader('Cache-Control', 'no-store');
 
   try {
     if (req.method === 'POST') return await handleTrack(req, res);
     if (req.method === 'GET') return await handleReport(req, res);
+    if (req.method === 'PUT' || req.method === 'DELETE') return await handleBlock(req, res);
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
     sendServerError(res, err);
