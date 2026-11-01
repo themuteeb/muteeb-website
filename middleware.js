@@ -4,7 +4,8 @@
 // through (fail open), so a database problem cannot take the whole site down.
 
 const CACHE_MS = 5 * 1000;
-let cache = { at: 0, blocked: new Set(), admins: new Set() };
+let blockedCache = { at: 0, ips: new Set() };
+let adminCache = { at: 0, ips: new Set() };
 
 const RESTRICTED_PAGE = `<!doctype html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex"><meta name="theme-color" content="#0a0a0a">
@@ -28,16 +29,29 @@ async function fetchIps(table) {
   return new Set(rows.map((row) => row.ip));
 }
 
-async function currentLists() {
-  if (Date.now() - cache.at < CACHE_MS) return cache;
+// Blocklist: if unreadable, keep the last good list (fail open, so a database problem can't take the site down).
+async function loadBlocked() {
+  if (Date.now() - blockedCache.at < CACHE_MS) return blockedCache.ips;
   try {
-    const [blocked, admins] = await Promise.all([fetchIps('blocked_ips'), fetchIps('admin_ips')]);
-    cache = { at: Date.now(), blocked, admins };
+    blockedCache = { at: Date.now(), ips: await fetchIps('blocked_ips') };
   } catch (err) {
     console.warn('Blocklist unavailable, serving request:', err.message);
-    cache = { at: Date.now(), blocked: cache.blocked, admins: cache.admins };
+    blockedCache = { at: Date.now(), ips: blockedCache.ips };
   }
-  return cache;
+  return blockedCache.ips;
+}
+
+// Admin IPs are only read for a visitor who is already blocked. If that read fails, the
+// visitor is let through, so the owner can never be locked out by a database problem.
+async function isAdminIp(ip) {
+  if (Date.now() - adminCache.at < CACHE_MS) return adminCache.ips.has(ip);
+  try {
+    adminCache = { at: Date.now(), ips: await fetchIps('admin_ips') };
+  } catch (err) {
+    console.warn('Admin IP list unavailable:', err.message);
+    return true;
+  }
+  return adminCache.ips.has(ip);
 }
 
 function clientIp(request) {
@@ -50,8 +64,9 @@ function clientIp(request) {
 export default async function middleware(request) {
   const ip = clientIp(request);
   if (!ip) return undefined;
-  const lists = await currentLists();
-  if (!lists.blocked.has(ip) || lists.admins.has(ip)) return undefined;
+  const blocked = await loadBlocked();
+  if (!blocked.has(ip)) return undefined;
+  if (await isAdminIp(ip)) return undefined;
   return new Response(RESTRICTED_PAGE, {
     status: 403,
     headers: {
@@ -62,6 +77,7 @@ export default async function middleware(request) {
   });
 }
 
+// Skip static assets (bundles, images, fonts): only page requests need the blocklist check.
 export const config = {
-  matcher: '/((?!_vercel/).*)',
+  matcher: '/((?!_vercel/|assets/|.*\.(?:png|jpe?g|gif|webp|avif|svg|ico|css|js|woff2?|ttf|otf|txt|xml|webmanifest|mp4|webm)$).*)',
 };
