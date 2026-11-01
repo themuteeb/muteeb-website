@@ -7,11 +7,13 @@ const CACHE_MS = 5 * 1000;
 let cache = { at: 0, blocked: new Set(), admins: new Set() };
 
 const RESTRICTED_PAGE = `<!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="robots" content="noindex">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="robots" content="noindex"><meta name="theme-color" content="#0a0a0a">
 <title>Access restricted</title></head>
-<body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#000;color:#f87171;font-family:monospace;text-align:center;padding:24px">
-<div><div style="font-weight:700;letter-spacing:.2em;text-transform:uppercase">access restricted</div>
-<p style="color:#9ca3af;font-family:sans-serif;font-size:14px;line-height:1.6;max-width:420px">Access to this site from your network has been restricted by the site owner.</p></div>
+<body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#0a0a0a;color:#f5f5f5;font-family:'JetBrains Mono',ui-monospace,monospace">
+<div style="max-width:420px;width:100%;text-align:center;border-radius:24px;padding:32px;border:1px solid rgba(235,255,246,0.23);background:linear-gradient(145deg,rgba(255,255,255,0.15),rgba(255,255,255,0.045) 42%,rgba(255,255,255,0.015)),rgba(8,14,18,0.42);box-shadow:0 24px 72px -34px rgba(0,0,0,0.88),inset 0 1px 0 rgba(255,255,255,0.24)">
+<div style="font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#22d3ee">// access restricted</div>
+<p style="margin:16px 0 0;font-family:'Sora',system-ui,sans-serif;font-size:14px;line-height:1.6;color:#b8b8b8">Access to this site from your network has been restricted by the site owner.</p>
+</div>
 </body></html>`;
 
 async function fetchIps(table) {

@@ -645,10 +645,10 @@ export default function App() {
       )}
 
       {accessBlocked && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/90 p-6 text-center font-mono backdrop-blur-lg">
-          <div className="max-w-md space-y-3">
-            <div className="text-sm font-bold uppercase tracking-widest text-red-400">access restricted</div>
-            <p className="font-sans text-sm leading-relaxed text-ink-3">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-canvas/95 p-6 font-mono backdrop-blur-lg">
+          <div role="alert" className="liquid-glass w-full max-w-md space-y-4 rounded-3xl p-8 text-center">
+            <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-accent">// access restricted</div>
+            <p className="font-sans text-sm leading-relaxed text-ink-2">
               Access to this site from your network has been restricted by the site owner.
             </p>
           </div>

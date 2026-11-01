@@ -8,6 +8,7 @@ import { uploadImage } from '../lib/imageUpload';
 import { StatefulButton, type StatefulButtonStatus } from './ui/stateful-button';
 import { ImageCropModal } from './ui/ImageCropModal';
 import { AdminAnalytics } from './AdminAnalytics';
+import { useThemedDialog } from './ui/themed-dialog';
 import { PALETTE_IDS, SECTION_IDS, type SectionKey, type SiteSettings } from '../lib/siteSettings';
 
 interface AdminModalProps {
@@ -60,6 +61,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 }) => {
   const { bgAccentClass, borderAccentClass, textAccentClass, playSound } = useTheme();
   const { isAdmin, adminPasscode, setAdminPasscode } = useAuth();
+  const dialog = useThemedDialog();
 
   const [password, setPassword] = useState('');
   const [loginStatus, setLoginStatus] = useState<StatefulButtonStatus>('idle');
@@ -204,7 +206,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [signOutError, setSignOutError] = useState('');
   const handleSignOutAll = async () => {
     if (signOutStatus === 'loading') return;
-    if (!window.confirm('Sign out every admin session, including this one? You will need to log in again with a new emailed code.')) return;
+    if (!(await dialog.confirm('Sign out every admin session, including this one? You will need to log in again with a new emailed code.'))) return;
     setSignOutError('');
     try {
       setSignOutStatus('loading');
@@ -239,7 +241,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     e.preventDefault();
     if (loginStatus === 'loading') return;
     if (isLockedOut || Date.now() < lockoutUntil) {
-      alert(`SECURITY LOCKOUT ENFORCED: 5 FAILED ATTEMPTS. ACCESS BLOCKED FOR ${timeRemainingText}`);
+      void dialog.alert(`SECURITY LOCKOUT ENFORCED: 5 FAILED ATTEMPTS. ACCESS BLOCKED FOR ${timeRemainingText}`);
       return;
     }
 
@@ -331,7 +333,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       await action();
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? `ACTION FAILED: ${err.message}` : 'ACTION FAILED. PLEASE TRY AGAIN.');
+      void dialog.alert(err instanceof Error ? `ACTION FAILED: ${err.message}` : 'ACTION FAILED. PLEASE TRY AGAIN.');
     }
   };
 
@@ -362,7 +364,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     } catch (err) {
       console.error(err);
       setProfileSaveStatus('error');
-      alert(err instanceof Error ? `SAVE FAILED: ${err.message}` : 'SAVE FAILED. PLEASE TRY AGAIN.');
+      void dialog.alert(err instanceof Error ? `SAVE FAILED: ${err.message}` : 'SAVE FAILED. PLEASE TRY AGAIN.');
       window.setTimeout(() => setProfileSaveStatus('idle'), 1600);
     }
   };
@@ -404,7 +406,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown upload error';
       console.error('Image upload failed:', message);
-      alert(`IMAGE UPLOAD FAILED: ${message}`);
+      void dialog.alert(`IMAGE UPLOAD FAILED: ${message}`);
     } finally {
       setUploadingImage(false);
     }
@@ -425,7 +427,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     e.target.value = '';
     if (!file) return;
     if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
-      alert('CHOOSE A PNG, JPEG, WEBP, OR GIF IMAGE.');
+      void dialog.alert('CHOOSE A PNG, JPEG, WEBP, OR GIF IMAGE.');
       return;
     }
 
@@ -462,7 +464,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     } catch (err) {
       console.error(err);
       setProjectSaveStatus('error');
-      alert(err instanceof Error ? `PROJECT SAVE FAILED: ${err.message}` : 'PROJECT SAVE FAILED. PLEASE TRY AGAIN.');
+      void dialog.alert(err instanceof Error ? `PROJECT SAVE FAILED: ${err.message}` : 'PROJECT SAVE FAILED. PLEASE TRY AGAIN.');
       window.setTimeout(() => setProjectSaveStatus('idle'), 1600);
     }
   };
@@ -474,7 +476,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     const summary = sanitizeInput(editingThought.summary || '', 300);
     const content = sanitizeInput(editingThought.content || '', 5000);
     if (!title || !summary || !content) {
-      alert('TITLE, SUMMARY, AND ARTICLE CONTENT ARE REQUIRED.');
+      void dialog.alert('TITLE, SUMMARY, AND ARTICLE CONTENT ARE REQUIRED.');
       return;
     }
 
@@ -503,7 +505,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     } catch (err) {
       console.error(err);
       setThoughtSaveStatus('error');
-      alert(err instanceof Error ? `WRITING SAVE FAILED: ${err.message}` : 'WRITING SAVE FAILED. PLEASE TRY AGAIN.');
+      void dialog.alert(err instanceof Error ? `WRITING SAVE FAILED: ${err.message}` : 'WRITING SAVE FAILED. PLEASE TRY AGAIN.');
       window.setTimeout(() => setThoughtSaveStatus('idle'), 1600);
     }
   };
@@ -527,7 +529,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     } catch (err) {
       console.error(err);
       setSkillSaveStatus('error');
-      alert(err instanceof Error ? `TOOL SAVE FAILED: ${err.message}` : 'TOOL SAVE FAILED. PLEASE TRY AGAIN.');
+      void dialog.alert(err instanceof Error ? `TOOL SAVE FAILED: ${err.message}` : 'TOOL SAVE FAILED. PLEASE TRY AGAIN.');
       window.setTimeout(() => setSkillSaveStatus('idle'), 1600);
     }
   };
