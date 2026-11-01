@@ -274,6 +274,7 @@ export function sendServerError(res, err) {
 // minute, so a change can take up to about a minute to apply everywhere.
 const BLOCK_CACHE_MS = 60 * 1000;
 let blockCache = { at: 0, ips: new Set() };
+let adminIpCache = { at: 0, ips: new Set() };
 
 /** The visitor's IP as set by Vercel's proxy (not spoofable by the client). */
 export function getClientIp(req) {
@@ -294,6 +295,41 @@ export function isValidIp(value) {
 
 export function invalidateBlockCache() {
   blockCache = { at: 0, ips: new Set() };
+  adminIpCache = { at: 0, ips: new Set() };
+}
+
+async function loadAdminIps() {
+  if (Date.now() - adminIpCache.at < BLOCK_CACHE_MS) return adminIpCache.ips;
+  try {
+    const { data, error } = await supabase.from('admin_ips').select('ip').limit(500);
+    if (error) throw error;
+    adminIpCache = { at: Date.now(), ips: new Set((data || []).map((row) => row.ip)) };
+  } catch (err) {
+    console.warn('Admin IP list unavailable:', err.message);
+    adminIpCache = { at: Date.now(), ips: adminIpCache.ips };
+  }
+  return adminIpCache.ips;
+}
+
+/** True when this IP has completed an admin login. Such IPs are never blocked. */
+export async function isAdminIp(ip) {
+  if (!ip) return false;
+  return (await loadAdminIps()).has(ip);
+}
+
+/** Record the caller's IP after a successful admin login. */
+export async function rememberAdminIp(req) {
+  const ip = getClientIp(req);
+  if (!ip || !isValidIp(ip)) return;
+  try {
+    const { error } = await supabase
+      .from('admin_ips')
+      .upsert([{ ip, last_seen: new Date().toISOString() }], { onConflict: 'ip' });
+    if (error) throw error;
+    adminIpCache = { at: 0, ips: new Set() };
+  } catch (err) {
+    console.warn('Could not record admin IP:', err.message);
+  }
 }
 
 async function loadBlockedIps() {
@@ -318,6 +354,7 @@ export async function denyIfBlocked(req, res) {
   if (await isAdminRequest(req)) return false;
   const ip = getClientIp(req);
   if (!ip) return false;
+  if (await isAdminIp(ip)) return false;
   const blocked = await loadBlockedIps();
   if (!blocked.has(ip)) return false;
   res.setHeader('Cache-Control', 'private, no-store');
