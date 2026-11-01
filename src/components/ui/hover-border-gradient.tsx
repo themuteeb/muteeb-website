@@ -36,13 +36,14 @@ export const HoverBorderGradient = ({
 
   return (
     <div className={cn('relative inline-flex overflow-hidden p-px', containerClassName)}>
+      {/* The glow follows the pointer instantly; only its fade is animated, so it never slides in from an old spot. */}
       <motion.div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        animate={{
+        style={{
           background: `radial-gradient(circle at ${pos.x}% ${pos.y}%, var(--color-accent-bright) 0%, transparent 60%)`,
-          opacity: hovered ? 1 : 0.35,
         }}
+        animate={{ opacity: hovered ? 1 : 0.35 }}
         transition={{ duration }}
       />
       <button
@@ -93,13 +94,14 @@ export const HoverBorderFrame = ({
       onMouseMove={handleMove}
       className={cn('relative inline-flex overflow-hidden rounded-full p-px', containerClassName)}
     >
+      {/* The glow follows the pointer instantly; only its fade is animated, so it never slides in from an old spot. */}
       <motion.div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        animate={{
+        style={{
           background: `radial-gradient(circle at ${pos.x}% ${pos.y}%, var(--color-accent-bright) 0%, transparent 60%)`,
-          opacity: hovered ? 1 : 0.35,
         }}
+        animate={{ opacity: hovered ? 1 : 0.35 }}
         transition={{ duration }}
       />
       <div className="relative z-10 flex w-full">{children}</div>
